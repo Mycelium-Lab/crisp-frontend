@@ -1,30 +1,119 @@
 <template>
-  <nav>
+  <header>
+    <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg"></router-link>
+    <router-link class="header-link" to="/about">About us</router-link>
+    <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
+    <router-link class="header-link" to="/swap">Get Return / Swap</router-link>
+    <router-link class="header-link" to="/liquidity">Manage Liquidity</router-link>
+  </header>
+  <div class="page">
+    <router-view/>
+  </div>
+  <!--<nav>
     <router-link to="/">Home</router-link> |
     <router-link to="/about">About</router-link>
   </nav>
-  <router-view/>
+  <router-view/>-->
 </template>
 
+<script>
+window.Buffer = window.Buffer || require("buffer").Buffer;
+
+export default {
+  name: 'App',
+  data () {
+    return {
+    }
+  },
+  methods: {
+  }
+}
+</script>
+
 <style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+@import "~@/assets/scss/main.scss";
+
+* {
+  padding: 0; margin: 0;
+  font-family: 'Montserrat', sans-serif;
 }
 
-nav {
-  padding: 30px;
+:root {
+  --select-border: #777;
+  --select-focus: blue;
+  --select-arrow: var(--select-border);
+}
 
-  a {
-    font-weight: bold;
-    color: #2c3e50;
+#app {
+  min-height: 100vh;
+  min-width: 100vw;
+  background: linear-gradient($gradientPrimary, $gradientSecondary)
+}
 
-    &.router-link-exact-active {
-      color: #42b983;
-    }
-  }
+header {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.header-link {
+  padding: 12px;
+  font-size: $textSize;
+  text-decoration: none;
+  color: $textColor !important;
+  height: 48px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24px;
+}
+
+.header-link:hover {
+  transition: 0.3s;
+  color: $textHoverColor !important;
+}
+
+.logo {
+  margin-left: 12px;
+  margin-right: 32px;
+  width: 48px;
+  height: 48px;
+}
+
+.page {
+  padding-top: 128px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.messages-wrapper, .balances-wrapper {
+  margin: auto;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  
+  border: $border;
+  border-radius: $borderRadius;
+  width: $interfaceBlocksWidth;
+  color: $textColor;
+  font-size: $textSize;
+  background-color: $cardBgColor;
+}
+
+.message, .balance {
+  min-height: 24px;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.message:hover {
+  opacity: 1;
+  cursor: pointer;
 }
 </style>
