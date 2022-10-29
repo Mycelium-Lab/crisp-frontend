@@ -1,6 +1,6 @@
 <template>
   <header>
-    <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg"></router-link>
+    <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
     <router-link class="header-link" to="/about">About us</router-link>
     <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
     <router-link class="header-link" to="/swap">Get Return / Swap</router-link>
@@ -101,6 +101,7 @@ header {
   border: $border;
   border-radius: $borderRadius;
   width: $interfaceBlocksWidth;
+  min-height: $defaultCardHeight;
   color: $textColor;
   font-size: $textSize;
   background-color: $cardBgColor;

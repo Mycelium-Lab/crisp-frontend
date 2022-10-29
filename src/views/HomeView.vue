@@ -20,6 +20,10 @@
     <div v-if="balances" class="balance">
       {{balances}}
     </div>
+    <div v-else-if="loading" class="balance balance-loading">
+      <span>Loading</span>
+      <img class="balance-loader" src="../assets/icons/loader.png">
+    </div>
     <div v-else class="balance">
       You have no balances!
     </div>
@@ -37,6 +41,8 @@ export default {
   name: 'HomeView',
   data () {
     return {
+      loading: false,
+
       messages: '',
       balances: '',
       selectedPage: 'routes'
@@ -44,7 +50,7 @@ export default {
   },
   async created () {
     const { connect, WalletConnection, Contract } = nearAPI
-
+    this.loading = true
     let nearConnection
     let walletConnection
     let account
@@ -86,6 +92,7 @@ export default {
         methodNames: METHOD_NAMES
       });
     }
+    this.loading = false
   },
   components: {
   }
@@ -157,5 +164,37 @@ select option {
   height: 100px;
   font-size: 20px;
   color: black;
+}
+
+.balances-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.balance-loading {
+  background: -webkit-linear-gradient(#BFB5BB, #FFF2FA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.balance-loader {
+  margin-top: 24px;
+  animation: spin 2s infinite reverse;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg)
+  }
+  100% {
+    transform: rotate(360deg)
+  }
 }
 </style>
