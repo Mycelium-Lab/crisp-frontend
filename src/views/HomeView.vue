@@ -33,12 +33,12 @@
 <script>
 // @ is an alias to /src
 // import HelloWorld from '@/components/HelloWorld.vue'
-import * as nearAPI from "near-api-js"
-import { CONTRACT_ID, METHOD_NAMES } from '../constants/index.js'
-import { CONFIG } from '../utils/index.js'
+
+import store from '../store'
 
 export default {
   name: 'HomeView',
+  store,
   data () {
     return {
       loading: false,
@@ -49,32 +49,14 @@ export default {
     }
   },
   async created () {
-    const { connect, WalletConnection, Contract } = nearAPI
     this.loading = true
-    let nearConnection
-    let walletConnection
-    let account
 
-    console.log(CONFIG.keyStore)
+    // const nearConnection = this.$store.state.nearConnection
+    const walletConnection = this.$store.state.walletConnection
+    const contract = this.$store.state.crispContract
 
-    // connect to NEAR
-    nearConnection = await connect(CONFIG);
-
-    // create wallet connection
-    walletConnection = await new WalletConnection(nearConnection, 'my-app');
-
-    if (walletConnection.isSignedIn()) {
-      account = await nearConnection.account(walletConnection.getAccountId())
-
-      const contract = await new Contract(
-        account,
-        "dev-1665751360038-15697305691965",
-        {
-          viewMethods: ['get_pools'],
-          changeMethods: ['get_balance_all_tokens']
-        }
-      )
-
+    console.log(contract)
+    if (contract) {
       const response = await contract.get_pools()
       console.log(response)
       this.messages = response
@@ -82,15 +64,10 @@ export default {
       await contract.get_balance_all_tokens(
         { account: walletConnection.getAccountId() }
       )
-        .then(messages => {
-          console.log(messages)
-          this.balances = messages
-        })
-    } else {
-      walletConnection.requestSignIn({
-        contractId: CONTRACT_ID,
-        methodNames: METHOD_NAMES
-      });
+      .then(messages => {
+        console.log(messages)
+        this.balances = messages
+      })
     }
     this.loading = false
   },

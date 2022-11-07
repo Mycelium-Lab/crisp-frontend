@@ -18,12 +18,17 @@
 
 <script>
 window.Buffer = window.Buffer || require("buffer").Buffer;
+import store from './store'
 
 export default {
   name: 'App',
+  store,
   data () {
     return {
     }
+  },
+  async created () {
+    await this.$store.dispatch('fetchCrispContract', store.state)
   },
   methods: {
   }
