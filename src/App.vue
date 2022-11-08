@@ -1,19 +1,14 @@
 <template>
   <header>
     <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
-    <router-link class="header-link" to="/about">About us</router-link>
+    <!--<router-link class="header-link" to="/about">About us</router-link>
     <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
-    <router-link class="header-link" to="/swap">Get Return / Swap</router-link>
-    <router-link class="header-link" to="/liquidity">Manage Liquidity</router-link>
+    <router-link class="header-link" to="/swap">Get Return / Swap</router-link>-->
+    <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
   </header>
   <div class="page">
     <router-view/>
   </div>
-  <!--<nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>-->
 </template>
 
 <script>

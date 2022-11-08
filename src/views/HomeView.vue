@@ -1,5 +1,8 @@
 <template>
-  <div class="select">
+  <div>
+    
+  </div>
+  <!--<div class="select">
     <div class="select-value">
       {{selectedPage}}
     </div>
@@ -27,7 +30,7 @@
     <div v-else class="balance">
       You have no balances!
     </div>
-  </div>
+  </div>-->
 </template>
 
 <script>
@@ -44,7 +47,7 @@ export default {
       loading: false,
 
       messages: '',
-      balances: '',
+      // balances: '',
       selectedPage: 'routes'
     }
   },
@@ -52,7 +55,7 @@ export default {
     this.loading = true
 
     // const nearConnection = this.$store.state.nearConnection
-    const walletConnection = this.$store.state.walletConnection
+    // const walletConnection = this.$store.state.walletConnection
     const contract = this.$store.state.crispContract
 
     console.log(contract)
@@ -61,13 +64,13 @@ export default {
       console.log(response)
       this.messages = response
 
-      await contract.get_balance_all_tokens(
-        { account: walletConnection.getAccountId() }
-      )
-      .then(messages => {
-        console.log(messages)
-        this.balances = messages
-      })
+      // await contract.get_balance_all_tokens(
+      //   { account: walletConnection.getAccountId() }
+      // )
+      // .then(messages => {
+      //   console.log(messages)
+      //   this.balances = messages
+      // })
     }
     this.loading = false
   },

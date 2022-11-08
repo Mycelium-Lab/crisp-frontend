@@ -24,12 +24,13 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
+      console.log(state.walletConnection.isSignedIn())
       if (state.walletConnection.isSignedIn()) {
         state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
   
         state.crispContract = await new Contract(
           state.account,
-          "dev-1665751360038-15697305691965",
+          CONTRACT_ID,
           {
             viewMethods: ['get_pools'],
             changeMethods: ['get_balance_all_tokens']
