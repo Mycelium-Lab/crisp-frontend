@@ -5,6 +5,7 @@
     <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
     <router-link class="header-link" to="/swap">Get Return / Swap</router-link>-->
     <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+    <button @click="signOut()" class="header-link">Sign out</button>
   </header>
   <div class="page">
     <router-view/>
@@ -26,6 +27,10 @@ export default {
     await this.$store.dispatch('fetchCrispContract', store.state)
   },
   methods: {
+    signOut: function () {
+      this.$store.state.walletConnection.signOut()
+      location.reload()
+    }
   }
 }
 </script>
@@ -69,6 +74,9 @@ header {
   align-items: center;
   justify-content: center;
   margin-right: 24px;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .header-link:hover {
