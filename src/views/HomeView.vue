@@ -1,6 +1,6 @@
 <template>
   <div>
-    
+
   </div>
   <!--<div class="select">
     <div class="select-value">
@@ -36,7 +36,6 @@
 <script>
 // @ is an alias to /src
 // import HelloWorld from '@/components/HelloWorld.vue'
-
 import store from '../store'
 
 export default {
@@ -45,17 +44,12 @@ export default {
   data () {
     return {
       loading: false,
-
       messages: '',
-      // balances: '',
       selectedPage: 'routes'
     }
   },
   async created () {
     this.loading = true
-
-    // const nearConnection = this.$store.state.nearConnection
-    // const walletConnection = this.$store.state.walletConnection
     const contract = this.$store.state.crispContract
 
     console.log(contract)
@@ -63,14 +57,6 @@ export default {
       const response = await contract.get_pools()
       console.log(response)
       this.messages = response
-
-      // await contract.get_balance_all_tokens(
-      //   { account: walletConnection.getAccountId() }
-      // )
-      // .then(messages => {
-      //   console.log(messages)
-      //   this.balances = messages
-      // })
     }
     this.loading = false
   },
