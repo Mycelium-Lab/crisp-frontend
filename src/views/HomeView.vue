@@ -1,43 +1,14 @@
 <template>
   <div>
-    <button @click="deposit()" class="deposit-btn">deposit</button>
+    
   </div>
-  <!--<div class="select">
-    <div class="select-value">
-      {{selectedPage}}
-    </div>
-    <select v-model="selectedPage" class="selector">
-      <option value="routes">get_routes()</option>
-      <option value="tokens">get_balance_all_tokens()</option>
-    </select>
-  </div>
-  <div v-if="selectedPage === 'routes'" class="messages-wrapper">
-    <div class="message" v-for="message in messages" :key="message.id">
-      ID: {{message.id}}
-      {{message.tokens[0]}}: {{message.liquidity[0]}}
-      /
-      {{message.tokens[1]}}: {{message.liquidity[1]}}
-    </div>
-  </div>
-  <div v-if="selectedPage === 'tokens'" class="balances-wrapper">
-    <div v-if="balances" class="balance">
-      {{balances}}
-    </div>
-    <div v-else-if="loading" class="balance balance-loading">
-      <span>Loading</span>
-      <img class="balance-loader" src="../assets/icons/loader.png">
-    </div>
-    <div v-else class="balance">
-      You have no balances!
-    </div>
-  </div>-->
 </template>
 
 <script>
 // @ is an alias to /src
-import * as nearAPI from "near-api-js"
-import { CONTRACT_ID } from '../constants/index.js'
 // import HelloWorld from '@/components/HelloWorld.vue'
+
+import { CONTRACT_ID } from '../constants/index.js'
 import store from '../store'
 
 export default {
@@ -66,48 +37,33 @@ export default {
   },
   methods: {
     deposit: async function () {
-      const { Contract } = nearAPI
-      const contract = this.$store.state.crispContract
-      const acc = this.$store.state.walletConnection.getAccountId()
+      // const { DEFAULT_FUNCTION_CALL_GAS } = nearAPI
+      // const contract = this.$store.state.crispContract
+      // const acc = this.$store.state.walletConnection.getAccountId()
+      // console.log(acc)
 
-      await contract.get_balance(
-        {
-          account_id: acc,
-          token: 'near-ft.testnet'
-        }
-      ).then((res) => {
-        console.log(res)
-      })
+      // await contract.get_balance(
+      //   {
+      //     account_id: acc,
+      //     token: 'near-ft.testnet'
+      //   }
+      // ).then((res) => {
+      //   console.log(res)
+      // })
 
-      // this.$store.state.walletConnection.requestSignIn({
-      //   contractId: 'near-ft.testnet',
-      //   methodNames: ['storage_deposit', 'ft_transfer_call']
-      // });
-
-      const tokenContract = await new Contract(
-        this.$store.state.account,
-        'near-ft.testnet',
-        {
-          changeMethods: ['storage_deposit', 'ft_transfer_call']
-        }
-      )
-
-      await tokenContract.storage_deposit(
-        {
-          account_id: CONTRACT_ID
-        }
-      ).then((resolve) => {
-        console.log(resolve)
-      })
-
-      await tokenContract.ft_transfer_call(
-        {
+      await this.$store.state.walletConnection.account().functionCall({
+        contractId: 'usn-ft.testnet',
+        methodName: 'ft_transfer_call',
+        args: {
           receiver_id: CONTRACT_ID,
           amount: '1000000000000',
           msg: ''
-        }
-      ).then((resolve) => {
-        console.log(resolve)
+        },
+        gas: 1,
+        // gas: DEFAULT_FUNCTION_CALL_GAS,
+        attachedDeposit: 1
+      }).then((res) => {
+        console.log(res)
       })
     }
   }

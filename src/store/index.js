@@ -25,6 +25,8 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
+      console.log(state.nearConnection)
+      console.log(state.walletConnection)
       console.log(state.walletConnection.isSignedIn())
       if (state.walletConnection.isSignedIn()) {
         state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
@@ -34,7 +36,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance'],
-            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call']
+            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw']
           }
         )
       } else {

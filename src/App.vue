@@ -1,11 +1,13 @@
 <template>
   <header>
-    <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
-    <!--<router-link class="header-link" to="/about">About us</router-link>
-    <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
-    <router-link class="header-link" to="/swap">Get Return / Swap</router-link>-->
-    <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
-    <button @click="signOut()" class="header-link">Sign out</button>
+    <div class="header-nav">
+      <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
+      <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+    </div>
+    <div class="header-nav">
+      <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
+      <button @click="signOut()" class="header-link">Sign out</button>
+    </div>
   </header>
   <div class="page">
     <router-view/>
@@ -60,8 +62,19 @@ header {
   width: 100%;
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-nav {
+  display: flex;
+  flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+}
+
+.header-nav:nth-child(2) {
+  justify-content: flex-end;
 }
 
 .header-link {
