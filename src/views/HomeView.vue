@@ -1,6 +1,6 @@
 <template>
   <div>
-
+    <button @click="deposit()" class="deposit-btn">deposit</button>
   </div>
   <!--<div class="select">
     <div class="select-value">
@@ -35,6 +35,8 @@
 
 <script>
 // @ is an alias to /src
+import * as nearAPI from "near-api-js"
+import { CONTRACT_ID } from '../constants/index.js'
 // import HelloWorld from '@/components/HelloWorld.vue'
 import store from '../store'
 
@@ -61,6 +63,53 @@ export default {
     this.loading = false
   },
   components: {
+  },
+  methods: {
+    deposit: async function () {
+      const { Contract } = nearAPI
+      const contract = this.$store.state.crispContract
+      const acc = this.$store.state.walletConnection.getAccountId()
+
+      await contract.get_balance(
+        {
+          account_id: acc,
+          token: 'near-ft.testnet'
+        }
+      ).then((res) => {
+        console.log(res)
+      })
+
+      // this.$store.state.walletConnection.requestSignIn({
+      //   contractId: 'near-ft.testnet',
+      //   methodNames: ['storage_deposit', 'ft_transfer_call']
+      // });
+
+      const tokenContract = await new Contract(
+        this.$store.state.account,
+        'near-ft.testnet',
+        {
+          changeMethods: ['storage_deposit', 'ft_transfer_call']
+        }
+      )
+
+      await tokenContract.storage_deposit(
+        {
+          account_id: CONTRACT_ID
+        }
+      ).then((resolve) => {
+        console.log(resolve)
+      })
+
+      await tokenContract.ft_transfer_call(
+        {
+          receiver_id: CONTRACT_ID,
+          amount: '1000000000000',
+          msg: ''
+        }
+      ).then((resolve) => {
+        console.log(resolve)
+      })
+    }
   }
 }
 </script>
