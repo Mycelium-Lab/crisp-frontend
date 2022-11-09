@@ -179,6 +179,8 @@ export default {
             const response = await contract.get_pools()
             console.log(response)
             this.pools = response
+        } else {
+            // ..
         }
         this.loading = false
     },

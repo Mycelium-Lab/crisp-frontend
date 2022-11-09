@@ -16,6 +16,16 @@ export default createStore({
   mutations: {
   },
   actions: {
+    async signIn ({state}) {
+      state.walletConnection.requestSignIn({
+        contractId: CONTRACT_ID,
+        methodNames: METHOD_NAMES
+      });
+    },
+    async signOut ({state}) {
+      state.walletConnection.signOut()
+      location.reload()
+    },
     async fetchCrispContract ({state}) {
       const { connect, WalletConnection, Contract } = nearAPI
       console.log(CONFIG.keyStore)
@@ -25,8 +35,6 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
-      console.log(state.nearConnection)
-      console.log(state.walletConnection)
       console.log(state.walletConnection.isSignedIn())
       if (state.walletConnection.isSignedIn()) {
         state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
@@ -40,10 +48,7 @@ export default createStore({
           }
         )
       } else {
-        state.walletConnection.requestSignIn({
-          contractId: CONTRACT_ID,
-          methodNames: METHOD_NAMES
-        });
+        // .. 
       }
     },
     async fetchBalances ({state}) {

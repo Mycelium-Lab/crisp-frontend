@@ -6,7 +6,8 @@
     </div>
     <div class="header-nav">
       <router-link class="header-link" to="/deposit">Deposit / Withdraw</router-link>
-      <button @click="signOut()" class="header-link">Sign out</button>
+      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>
+      <button v-else @click="signIn()" class="header-link">Sign in</button>
     </div>
   </header>
   <div class="page">
@@ -30,9 +31,11 @@ export default {
     await this.$store.dispatch('fetchBalances', store.state)
   },
   methods: {
-    signOut: function () {
-      this.$store.state.walletConnection.signOut()
-      location.reload()
+    signIn: async function () {
+      await this.$store.dispatch('signIn', store.state)
+    },
+    signOut: async function () {
+      await this.$store.dispatch('signOut', store.state)
     }
   }
 }
@@ -54,7 +57,7 @@ export default {
 
 #app {
   min-height: 100vh;
-  min-width: 100vw;
+  min-width: 99vw;
   background: linear-gradient($gradientPrimary, $gradientSecondary)
 }
 

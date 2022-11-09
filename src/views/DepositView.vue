@@ -69,45 +69,51 @@ export default {
   },
   methods: {
     allow: async function () {
-        await this.$store.state.walletConnection.account().functionCall({
-            contractId: this.token,
-            methodName: 'storage_deposit',
-            args: {
-                account_id: CONTRACT_ID
-            },
-            attachedDeposit: '1000000000000000000000000'
-        }).then(async (res) => {
-            console.log(res)
-        })
+        if (this.$store.state.account) {
+            await this.$store.state.walletConnection.account().functionCall({
+                contractId: this.token,
+                methodName: 'storage_deposit',
+                args: {
+                    account_id: CONTRACT_ID
+                },
+                attachedDeposit: '1000000000000000000000000'
+            }).then(async (res) => {
+                console.log(res)
+            })
+        }
     },
     deposit: async function () {
-        await this.$store.state.walletConnection.account().functionCall({
-            contractId: this.token,
-            methodName: 'ft_transfer_call',
-            args: {
-                receiver_id: CONTRACT_ID,
-                amount: this.amount,
-                msg: ''
-            },
-            gas: 1,
-            // gas: DEFAULT_FUNCTION_CALL_GAS,
-            attachedDeposit: this.amount
-        }).then((res) => {
-            console.log(res)
-        })
+        if (this.$store.state.account) {
+            await this.$store.state.walletConnection.account().functionCall({
+                contractId: this.token,
+                methodName: 'ft_transfer_call',
+                args: {
+                    receiver_id: CONTRACT_ID,
+                    amount: this.amount,
+                    msg: ''
+                },
+                gas: 1,
+                // gas: DEFAULT_FUNCTION_CALL_GAS,
+                attachedDeposit: this.amount
+            }).then((res) => {
+                console.log(res)
+            })
+        }
     },
     withdraw: async function () {
-        const contract = this.$store.state.crispContract
+        if (this.$store.state.account) {
+            const contract = this.$store.state.crispContract
 
-        if (contract) {
-            await contract.withdraw(
-                { 
-                    token: this.tokenW,
-                    amount: Number(this.amountW)
-                }
-            ).then(data => {
-                console.log(data)
-            })
+            if (contract) {
+                await contract.withdraw(
+                    { 
+                        token: this.tokenW,
+                        amount: Number(this.amountW)
+                    }
+                ).then(data => {
+                    console.log(data)
+                })
+            }
         }
     }
   }
