@@ -8,7 +8,8 @@ export default createStore({
     nearConnection: null,
     walletConnection: null,
     crispContract: null,
-    account: null
+    account: null,
+    tokenBalances: []
   },
   getters: {
   },
@@ -32,8 +33,8 @@ export default createStore({
           state.account,
           CONTRACT_ID,
           {
-            viewMethods: ['get_pools'],
-            changeMethods: ['get_balance_all_tokens']
+            viewMethods: ['get_pools', 'get_balance'],
+            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call']
           }
         )
       } else {
@@ -41,6 +42,18 @@ export default createStore({
           contractId: CONTRACT_ID,
           methodNames: METHOD_NAMES
         });
+      }
+    },
+    async fetchBalances ({state}) {
+      if (state.crispContract && state.walletConnection.isSignedIn()) {
+        console.log('fetching balances for account ' + state.walletConnection.getAccountId())
+        await state.crispContract.get_balance_all_tokens(
+          { account: state.walletConnection.getAccountId() }
+        )
+        .then((resolve) => {
+          console.log(resolve)
+          state.tokenBalances = resolve
+        })
       }
     }
   },
