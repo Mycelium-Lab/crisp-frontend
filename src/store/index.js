@@ -17,10 +17,12 @@ export default createStore({
   },
   actions: {
     async signIn ({state}) {
-      state.walletConnection.requestSignIn({
+      await state.walletConnection.requestSignIn({
         contractId: CONTRACT_ID,
         methodNames: METHOD_NAMES
-      });
+      }).then(() => {
+        // ..
+      })
     },
     async signOut ({state}) {
       state.walletConnection.signOut()
@@ -48,7 +50,7 @@ export default createStore({
           }
         )
       } else {
-        // .. 
+        // console.log('smths wrong')
       }
     },
     async fetchBalances ({state}) {

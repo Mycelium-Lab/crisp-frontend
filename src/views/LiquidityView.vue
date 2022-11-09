@@ -95,7 +95,7 @@
                     Rewards
                 </span>
                 <span class="list-header_unit">
-                    Sqrt price
+                    Price
                 </span>
             </div>
             <div class="list">
@@ -111,10 +111,10 @@
                         {{pool.liquidity}}
                     </span>
                     <span class="list-pool_unit">
-                        {{pool.protocol_fee}}
+                        {{pool.protocol_fee/100}}%
                     </span>
                     <span class="list-pool_unit">
-                        {{pool.rewards}}
+                        {{pool.rewards/100}}%
                     </span>
                     <span class="list-pool_unit">
                         {{pool.sqrt_price * pool.sqrt_price}}
