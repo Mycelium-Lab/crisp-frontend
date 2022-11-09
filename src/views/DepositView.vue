@@ -71,7 +71,11 @@ export default {
     allow: async function () {
         await this.$store.state.walletConnection.account().functionCall({
             contractId: this.token,
-            methodName: 'storage_deposit'
+            methodName: 'storage_deposit',
+            args: {
+                account_id: CONTRACT_ID
+            },
+            attachedDeposit: '1000000000000000000000000'
         }).then(async (res) => {
             console.log(res)
         })
