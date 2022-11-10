@@ -11,6 +11,9 @@
             </div>
             <div class="list-header">
                 <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
                     Token
                 </span>
                 <span class="list-header_unit">
@@ -20,7 +23,10 @@
             <div class="list">
                 <div class="pool" v-for="tokenObject in $store.state.tokenBalances" :key="tokenObject">
                     <span class="list-pool_unit">
-                        {{tokenObject.token}}
+                        <img class="icon" :src="tokenObject.icon">
+                    </span>
+                    <span class="list-pool_unit">
+                        {{tokenObject.token}} ({{tokenObject.symbol}})
                     </span>
                     <span class="list-pool_unit">
                         {{tokenObject.amount}}
@@ -104,7 +110,7 @@ export default {
                 args: {
                     account_id: CONTRACT_ID
                 },
-                attachedDeposit: '1000000000000000000000000'
+                attachedDeposit: '0.000000000000000000000001'
             }).then(async (res) => {
                 console.log(res)
             })
@@ -120,9 +126,10 @@ export default {
                     amount: this.amount,
                     msg: ''
                 },
-                gas: 1,
+                attachedDeposit: 1,
+                gas: 300000000000000,
                 // gas: DEFAULT_FUNCTION_CALL_GAS,
-                attachedDeposit: this.amount
+                // attachedDeposit: 0.000000000000000000000001
             }).then((res) => {
                 console.log(res)
             })
@@ -254,7 +261,6 @@ export default {
     background-color: $cardBgColor;
     border: $border;
     border-radius: $borderRadius;
-    padding: 16px;
     box-sizing: border-box;
 }
 
@@ -262,6 +268,13 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+    align-items: center;
+    padding: 16px;
+}
+
+.pool:hover {
+    background-color: $cardHoverBgColor;
+    border-radius: $borderRadius;
 }
 
 .title {
@@ -282,7 +295,16 @@ export default {
     font-size: $tinyTextSize;
 }
 
+.icon {
+    width: ($tinyTextSize*2);
+}
+
 .list-header_unit:first-child, .list-pool_unit:first-child {
-    width: 30%;
+    width: 12%;
+}
+
+.list-header_unit:first-child {
+    padding-left: 6px;
+    box-sizing: border-box;
 }
 </style>

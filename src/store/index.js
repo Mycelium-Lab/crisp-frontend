@@ -59,25 +59,44 @@ export default createStore({
         await state.crispContract.get_balance_all_tokens(
           { account: state.walletConnection.getAccountId() }
         )
-        .then((resolve) => {
+        .then(async (resolve) => {
           console.log(resolve)
+          // We have a string instead of array of objects. So, first we split it by using : and , symbols as separators
           const arr = resolve.split(/[:,,]/)
           const formatedArr = []
           const balanceObjects = []
+          // Resulting array units might still have empty spaces in them, so we remove those spaces
           arr.forEach((unit) => {
             const newUnit = unit.replace(/ /g, '')
             if (newUnit) formatedArr.push(newUnit)
           })
+          // At this point we have an array which looks like
+          // [token, amount, token, amount]
+          // We call ft_metadata() function for each odd (1st, 3rd, 5th ..) array index
           for (let i = 0; i < formatedArr.length; i++) {
-            balanceObjects.push({
-              token: formatedArr[i],
-              amount: formatedArr[i+1]
+            await state.walletConnection.account().viewFunction({
+              contractId: formatedArr[i],
+              methodName: 'ft_metadata',
+              args: {
+                account_id: state.account.accountId
+              },
+            },
+            state.account.accountId
+            ).then((res) => {
+              balanceObjects.push({
+                token: formatedArr[i],
+                amount: formatedArr[i+1],
+                icon: res.icon,
+                symbol: res.symbol,
+                decimals: res.decimals,
+                name: res.name
+              })
             })
+            // 2nd increment is placed inside the cycle body so this only affects odd array indexes
             i++
-            console.log(balanceObjects)
           }
+          console.log(balanceObjects)
           state.tokenBalances = balanceObjects
-          console.log(state.tokenBalances)
         })
       }
     }
