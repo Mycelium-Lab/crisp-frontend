@@ -61,7 +61,23 @@ export default createStore({
         )
         .then((resolve) => {
           console.log(resolve)
-          state.tokenBalances = resolve
+          const arr = resolve.split(/[:,,]/)
+          const formatedArr = []
+          const balanceObjects = []
+          arr.forEach((unit) => {
+            const newUnit = unit.replace(/ /g, '')
+            if (newUnit) formatedArr.push(newUnit)
+          })
+          for (let i = 0; i < formatedArr.length; i++) {
+            balanceObjects.push({
+              token: formatedArr[i],
+              amount: formatedArr[i+1]
+            })
+            i++
+            console.log(balanceObjects)
+          }
+          state.tokenBalances = balanceObjects
+          console.log(state.tokenBalances)
         })
       }
     }

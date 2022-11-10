@@ -1,5 +1,28 @@
 <template>
     <div class="wrapper">
+        <template v-if="$store.state.tokenBalances[0]">
+            <div class="heading">
+                <span class="title">Your balances</span>
+            </div>
+            <div class="list-header">
+                <span class="list-header_unit">
+                    Token
+                </span>
+                <span class="list-header_unit">
+                    Amount
+                </span>
+            </div>
+            <div class="list">
+                <div class="pool" v-for="tokenObject in $store.state.tokenBalances" :key="tokenObject">
+                    <span class="list-pool_unit">
+                        {{tokenObject.token}}
+                    </span>
+                    <span class="list-pool_unit">
+                        {{tokenObject.amount}}
+                    </span>
+                </div>
+            </div>
+        </template>
         <div class="modal">
             <div class="modal-header">
             <span class="modal-title">Deposit your token to Crisp</span>
@@ -129,7 +152,7 @@ export default {
     border: $brightBorder;
     border-radius: $borderRadius;
     padding: 26px;
-    margin-bottom: 32px;
+    margin-top: 32px;
 }
 
 .modal-header {
@@ -209,5 +232,52 @@ export default {
     color: $buttonBgColor;
     transition: 0.3s;
     border: 1px solid $buttonBgColor;
+}
+
+.heading {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.list {
+    margin-bottom: 64px;
+    display: flex;
+    flex-direction: column;
+    background-color: $cardBgColor;
+    border: $border;
+    border-radius: $borderRadius;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.pool {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.title {
+    color: $textColor;
+    font-size: $greaterTextSize;
+}
+
+.list-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.list-header_unit, .list-pool_unit {
+    width: 30%;
+    font-size: $tinyTextSize;
+}
+
+.list-header_unit:first-child, .list-pool_unit:first-child {
+    width: 30%;
 }
 </style>

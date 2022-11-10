@@ -125,6 +125,26 @@
             <div class="heading">
                 <span class="title">Positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
             </div>
+            <div class="list-header">
+                <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
+                    #
+                </span>
+                <span class="list-header_unit">
+                    #
+                </span>
+            </div>
             <!-- list of positions goes here -->
         </template>
         <div class="loading" v-else>
