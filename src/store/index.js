@@ -9,7 +9,8 @@ export default createStore({
     walletConnection: null,
     crispContract: null,
     account: null,
-    tokenBalances: []
+    tokenBalances: [],
+    tokensBeingLoaded: false
   },
   getters: {
   },
@@ -54,6 +55,7 @@ export default createStore({
       }
     },
     async fetchBalances ({state}) {
+      state.tokensBeingLoaded = true
       if (state.crispContract && state.walletConnection.isSignedIn()) {
         console.log('fetching balances for account ' + state.walletConnection.getAccountId())
         await state.crispContract.get_balance_all_tokens(
@@ -99,6 +101,7 @@ export default createStore({
           state.tokenBalances = balanceObjects
         })
       }
+      state.tokensBeingLoaded = false
     }
   },
   modules: {

@@ -259,10 +259,10 @@ export default {
             if (contract) {
                 await contract.open_position(
                     {
-                        pool_id: parseInt(this.poolId),
-                        token0_liquidity: parseInt(this.t0_liq),
-                        lower_bound_price: parseInt(this.lowerPrice),
-                        upper_bound_price: parseInt(this.upperPrice)
+                        pool_id: Number(this.poolId),
+                        token0_liquidity: Number(this.t0_liq),
+                        lower_bound_price: Number(this.lowerPrice),
+                        upper_bound_price: Number(this.upperPrice)
                     }
                 ).then((response) => {
                     console.log(response)
@@ -299,7 +299,6 @@ export default {
     background-color: $cardBgColor;
     border: $border;
     border-radius: $borderRadius;
-    padding: 16px;
     box-sizing: border-box;
 }
 
@@ -307,6 +306,14 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: $borderRadius;
+}
+
+.pool:hover {
+    background-color: $cardHoverBgColor;
+    border-radius: $borderRadius;
 }
 
 .title {

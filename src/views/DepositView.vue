@@ -34,6 +34,11 @@
                 </div>
             </div>
         </template>
+        <template v-else-if="$store.state.tokensBeingLoaded">
+            <div class="heading">
+                <span class="title">Loading your balances . . .</span>
+            </div>
+        </template>
         <div class="modal">
             <div class="modal-header">
             <span class="modal-title">Deposit your token to Crisp</span>
@@ -60,7 +65,12 @@
             <div class="modal-body">
                 <div class="input-wrapper">
                     <span class="input-title">Token</span>
-                    <input v-model="tokenW" class="modal-body_row-input"/>
+                    <input v-if="!$store.state.tokenBalances[0]" v-model="tokenW" class="modal-body_row-input"/>
+                    <select v-else v-model="tokenW" class="modal-body_row-input">
+                        <option :value="token.token" v-for="(token, index) in $store.state.tokenBalances" :key="index">
+                            {{token.token}} ({{token.symbol}})
+                        </option>
+                    </select>
                 </div>
                 <div class="input-wrapper">
                     <span class="input-title">Amount</span>
