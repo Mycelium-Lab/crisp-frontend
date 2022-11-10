@@ -1,5 +1,10 @@
 <template>
     <div class="wrapper">
+        <template v-if="$store.state.account">
+            <div class="heading">
+                <span class="title">Signed in as {{$store.state.account.accountId}}</span>
+            </div>
+        </template>
         <template v-if="$store.state.tokenBalances[0]">
             <div class="heading">
                 <span class="title">Your balances</span>

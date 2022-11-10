@@ -13,6 +13,10 @@
   <div class="page">
     <router-view/>
   </div>
+  <div class="fatal-error-msg">
+    <span class="str">Sorry, this dApp doesn't support mobile displays yet.</span>
+    <span class="str">Please consider using a device with at least 1200 pixel display width for your convenience</span>
+  </div>
 </template>
 
 <script>
@@ -141,5 +145,34 @@ header {
 .message:hover {
   opacity: 1;
   cursor: pointer;
+}
+
+.fatal-error-msg {
+  display: none;
+}
+
+@media screen and (max-width: 1200px) {
+  .fatal-error-msg {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .fatal-error-msg .str {
+    font-size: $tinyTextSize;
+    text-align: center;
+    max-width: 90vw;
+  }
+
+  header {
+    display: none;
+  }
+
+  .page {
+    display: none;
+  }
 }
 </style>
