@@ -46,7 +46,18 @@
             <div class="modal-body">
             <div class="input-wrapper">
                 <span class="input-title">Token</span>
-                <input v-model="token" class="modal-body_row-input"/>
+                <!--<input v-model="token" class="modal-body_row-input"/>-->
+                <select v-model="token" class="modal-body_row-input">
+                    <option value="usdt-ft.testnet">
+                        usdt-ft.testnet (EXAMPLE)
+                    </option>
+                    <option value="usdt-ft.testnet">
+                        usn-ft.testnet (EXAMPLE)
+                    </option>
+                    <option value="usdt-ft.testnet">
+                        near-ft.testnet (EXAMPLE)
+                    </option>
+                </select>
             </div>
             <div class="input-wrapper">
                 <span class="input-title">Amount</span>
