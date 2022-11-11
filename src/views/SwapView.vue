@@ -16,14 +16,14 @@
                     <select v-model="token_in" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token.token" class="select-option">{{token.symbol}}</option>
                     </select>
-                    <input type="number" placeholder="0" v-model="token_in_amnt" class="token-input"/>
+                    <input type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
                     <select v-model="token_out" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token.token" class="select-option">{{token.symbol}}</option>
                     </select>
-                    <input type="number" placeholder="0" v-model="token_out_amnt" class="token-input"/>
+                    <input type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
             </div>
             <div class="modal-footer">
@@ -61,6 +61,20 @@ export default {
         await this.initTokens()
     },
     methods: {
+        getReturn: async function () {
+            if (this.$store.state.crispContract) {
+                await this.$store.state.crispContract.get_return(
+                    {
+                        // must get this pool id somehow
+                        // pool_id: 0,
+                        token_in: this.token_in,
+                        amount_in: this.token_in_amnt
+                    }
+                ).then((res) => {
+                    console.log(res)
+                })
+            }
+        },
         initTokens: async function () {
             this.tokens = [
                 {

@@ -47,7 +47,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance'],
-            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw']
+            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return']
           }
         )
       } else {
@@ -59,7 +59,7 @@ export default createStore({
       if (state.crispContract && state.walletConnection.isSignedIn()) {
         console.log('fetching balances for account ' + state.walletConnection.getAccountId())
         await state.crispContract.get_balance_all_tokens(
-          { account: state.walletConnection.getAccountId() }
+          { account_id: state.walletConnection.getAccountId() }
         )
         .then(async (resolve) => {
           console.log(resolve)
