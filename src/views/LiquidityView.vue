@@ -78,7 +78,7 @@
             <div class="heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
-            <div class="list-header">
+            <div v-if="$store.state.pools[0]" class="list-header">
                 <span class="list-header_unit">
                     #
                 </span>
@@ -98,8 +98,8 @@
                     Price
                 </span>
             </div>
-            <div class="list">
-                <div class="pool" v-for="(pool, index) in pools" :key="index">
+            <div v-if="$store.state.pools[0]" class="list">
+                <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
                     <span class="list-pool_unit">
                         {{index}}
                     </span>
@@ -188,20 +188,11 @@ export default {
             t1_balance: null,
 
             loading: false,
-            pools: []
         }
     },
     async created () {
         this.loading = true
-
-        const contract = this.$store.state.crispContract
-        if (contract) {
-            const response = await contract.get_pools()
-            console.log(response)
-            this.pools = response
-        } else {
-            // ..
-        }
+        // .. 
         this.loading = false
     },
     watch: {

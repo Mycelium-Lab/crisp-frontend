@@ -10,7 +10,8 @@ export default createStore({
     crispContract: null,
     account: null,
     tokenBalances: [],
-    tokensBeingLoaded: false
+    tokensBeingLoaded: false,
+    pools: []
   },
   getters: {
   },
@@ -28,6 +29,14 @@ export default createStore({
     async signOut ({state}) {
       state.walletConnection.signOut()
       location.reload()
+    },
+    async fetchPools({state}) {
+      const contract = state.crispContract
+      if (contract) {
+          const response = await contract.get_pools()
+          console.log(response)
+          state.pools = response
+      }
     },
     async fetchCrispContract ({state}) {
       const { connect, WalletConnection, Contract } = nearAPI
@@ -47,7 +56,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance'],
-            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return']
+            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense']
           }
         )
       } else {

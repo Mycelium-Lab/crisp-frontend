@@ -13,15 +13,15 @@
                 <button class="swap-tokens"></button> <!--position: absolute-->
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select v-model="token_in" class="token-select"> <!--position: absolute-->
-                        <option v-for="(token, index) in tokens" :key="index" :value="token.token" class="select-option">{{token.symbol}}</option>
+                    <select v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
+                        <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
                     <input type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select v-model="token_out" class="token-select"> <!--position: absolute-->
-                        <option v-for="(token, index) in tokens" :key="index" :value="token.token" class="select-option">{{token.symbol}}</option>
+                    <select v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
+                        <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
                     <input type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
@@ -54,6 +54,7 @@ export default {
             token_in_amnt: null,
             token_out_amnt: null,
 
+            pool_id: -1,
             tokens: []
         }
     },
@@ -61,33 +62,89 @@ export default {
         await this.initTokens()
     },
     methods: {
-        getReturn: async function () {
-            if (this.$store.state.crispContract) {
-                await this.$store.state.crispContract.get_return(
-                    {
-                        // must get this pool id somehow
-                        // pool_id: 0,
-                        token_in: this.token_in,
-                        amount_in: this.token_in_amnt
-                    }
-                ).then((res) => {
-                    console.log(res)
-                })
+        findPool: async function () {
+            if (this.token_in && this.token_out) {
+                const res = this.$store.state.pools.findIndex(
+                    item => item.token0 === this.token_in.token && item.token1 === this.token_out.token
+                )
+                if (res === -1) {
+                    const res2 = this.$store.state.pools.findIndex(
+                        item => item.token1 === this.token_in.token && item.token0 === this.token_out.token
+                    )
+                    this.pool_id = res2
+                } else {
+                    this.pool_id = res
+                }
+                console.log(this.pool_id)
             }
         },
+        getReturn: async function () {
+            console.log('getReturn()')
+            // let decimals
+            if (this.$store.state.crispContract && this.pool_id !== -1) {
+                // await this.$store.state.walletConnection.account().viewFunction({
+                //     contractId: this.token_in.token,
+                //     methodName: 'ft_metadata',
+                //     args: {
+                //         account_id: this.$store.state.account.accountId
+                //     },
+                //     },
+                //     this.$store.state.account.accountId
+                // ).then(async (res) => {
+                //         decimals = res.decimals
+                        await this.$store.state.crispContract.get_return(
+                            {
+                                pool_id: this.pool_id,
+                                token_in: this.token_in.token,
+                                amount_in: Number(this.token_in_amnt)
+                            }
+                        ).then((res) => {
+                            console.log(res)
+                            this.token_out_amnt = res
+                        })
+                // })
+            }
+        },
+        getExpense: async function () {
+            console.log('getExpense()')
+            // let decimals
+            if (this.$store.state.crispContract && this.pool_id !== -1) {
+                // await this.$store.state.walletConnection.account().viewFunction({
+                //     contractId: this.token_in.token,
+                //     methodName: 'ft_metadata',
+                //     args: {
+                //         account_id: this.$store.state.account.accountId
+                //     },
+                //     },
+                //     this.$store.state.account.accountId
+                // ).then(async (res) => {
+                //         decimals = res.decimals
+                        await this.$store.state.crispContract.get_expense(
+                            {
+                                // must get this pool id somehow
+                                pool_id: this.pool_id,
+                                token_out: this.token_out.token,
+                                amount_out: Number(this.token_out_amnt)
+                            }
+                        ).then((res) => {
+                            console.log(res)
+                            this.token_in_amnt = res
+                        })
+            }
+        },  
         initTokens: async function () {
             this.tokens = [
                 {
-                    symbol: 'EXAMPLE',
-                    token: 'usdt-ft.testnet'
+                    symbol: 'USDT',
+                    token: 'usdt.fakes.testnet'
                 },
                 {
-                    symbol: 'EXAMPLE',
-                    token: 'usn-ft.testnet'
+                    symbol: 'USDC',
+                    token: 'usdc.fakes.testnet'
                 },
                 {
-                    symbol: 'EXAMPLE',
-                    token: 'near-ft.testnet'
+                    symbol: 'USN',
+                    token: 'usdn.testnet'
                 }
             ]
         },

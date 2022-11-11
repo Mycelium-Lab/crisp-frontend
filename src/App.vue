@@ -33,6 +33,7 @@ export default {
   },
   async created () {
     await this.$store.dispatch('fetchCrispContract', store.state)
+    await this.$store.dispatch('fetchPools', store.state)
     await this.$store.dispatch('fetchBalances', store.state)
   },
   methods: {
