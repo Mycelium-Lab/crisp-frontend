@@ -48,14 +48,14 @@
                 <span class="input-title">Token</span>
                 <!--<input v-model="token" class="modal-body_row-input"/>-->
                 <select v-model="token" class="modal-body_row-input">
-                    <option value="usdt-ft.testnet">
-                        usdt-ft.testnet (EXAMPLE)
+                    <option value="usdc.fakes.testnet">
+                        usdc.fakes.testnet (USDC)
                     </option>
-                    <option value="usdt-ft.testnet">
-                        usn-ft.testnet (EXAMPLE)
+                    <option value="usdt.fakes.testnet">
+                        usdt.fakes.testnet (USDT)
                     </option>
-                    <option value="usdt-ft.testnet">
-                        near-ft.testnet (EXAMPLE)
+                    <option value="usdn.testnet">
+                        usdn.testnet (USDN)
                     </option>
                 </select>
             </div>
@@ -125,13 +125,16 @@ export default {
   methods: {
     allow: async function () {
         if (this.$store.state.account) {
+            console.log('umm')
+            console.log('umm')
             await this.$store.state.walletConnection.account().functionCall({
                 contractId: this.token,
                 methodName: 'storage_deposit',
                 args: {
                     account_id: CONTRACT_ID
                 },
-                attachedDeposit: '0.000000000000000000000001'
+                attachedDeposit: 1,
+                gas: 300000000000000
             }).then(async (res) => {
                 console.log(res)
             })
