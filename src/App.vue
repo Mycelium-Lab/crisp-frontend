@@ -3,11 +3,12 @@
     <div class="header-nav">
       <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
       <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+      <router-link class="header-link" to="/swap">Swap</router-link>
     </div>
     <div class="header-nav">
       <router-link class="header-link" to="/deposit">Account</router-link>
       <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>
-      <button v-else @click="signIn()" class="header-link">Sign in</button>
+      <button v-else @click="signIn()" class="header-link">Connect wallet</button>
     </div>
   </header>
   <div class="page">
@@ -63,6 +64,17 @@ export default {
   min-height: 100vh;
   min-width: 99vw;
   background: linear-gradient($gradientPrimary, $gradientSecondary)
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
 header {

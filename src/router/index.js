@@ -18,6 +18,11 @@ const routes = [
     component: () => import('../views/DepositView.vue')
   },
   {
+    path: '/swap',
+    name: 'swap',
+    component: () => import('../views/SwapView.vue')
+  },
+  {
     path: '/about',
     name: 'about',
     // route level code-splitting
