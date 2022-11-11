@@ -133,8 +133,8 @@ export default {
                 args: {
                     account_id: CONTRACT_ID
                 },
-                attachedDeposit: 1,
-                gas: 300000000000000
+                gas: 300000000000000,
+                attachedDeposit: Number(1000000000000000)
             }).then(async (res) => {
                 console.log(res)
             })
@@ -150,8 +150,8 @@ export default {
                     amount: this.amount,
                     msg: ''
                 },
-                attachedDeposit: 1,
                 gas: 300000000000000,
+                attachedDeposit: 1
                 // gas: DEFAULT_FUNCTION_CALL_GAS,
                 // attachedDeposit: 0.000000000000000000000001
             }).then((res) => {
