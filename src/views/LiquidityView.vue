@@ -48,13 +48,13 @@
                         <div class="input-wrapper">
                             <span class="input-title">Pool id</span>
                             <select v-model="poolId" id="poolId" class="modal-body_row-input">
-                                <option v-for="(pool, index) in pools" :key="index">
+                                <option v-for="(pool, index) in $store.state.pools" :key="index">
                                     {{index}}
                                 </option>
                             </select>
                         </div>
                         <div v-if="poolId" class="input-wrapper">
-                            <span class="input-title">{{pools[poolId].token0}} liquidity</span>
+                            <span class="input-title">{{$store.state.pools[poolId].token0}} liquidity</span>
                             <input v-model="t0_liq" id="t0_liq" class="modal-body_row-input"/>
                         </div>
                     </div>
@@ -125,25 +125,84 @@
             <div class="heading">
                 <span class="title">Positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
             </div>
-            <div class="list-header">
-                <span class="list-header_unit">
-                    #
+            <div v-if="$store.state.positions[0]" class="list-header">
+                <span class="pos-list-header_unit">
+                    # Pool
                 </span>
-                <span class="list-header_unit">
-                    #
+                <span class="pos-list-header_unit">
+                    # Pos
                 </span>
-                <span class="list-header_unit">
-                    #
+                <span class="pos-list-header_unit">
+                    Pool tokens
                 </span>
-                <span class="list-header_unit">
-                    #
+                <span class="pos-list-header_unit">
+                    Owner
                 </span>
-                <span class="list-header_unit">
-                    #
+                <span class="pos-list-header_unit">
+                    L. bound price
                 </span>
-                <span class="list-header_unit">
-                    #
+                <span class="pos-list-header_unit">
+                    U. bound price
                 </span>
+                <span class="pos-list-header_unit">
+                    T0 Real Liquidity
+                </span>
+                <span class="pos-list-header_unit">
+                    T1 Real Liquidity
+                </span>
+                <span class="pos-list-header_unit">
+                    Status
+                </span>
+            </div>
+            <div v-if="$store.state.positions[0]" class="list">
+                <div class="pool" v-for="pos in $store.state.positions" :key="pos.id">
+                    <span class="pos-list-pool_unit">
+                        {{pos.poolId}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{pos.id}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{pos.token0}}<br>
+                        {{pos.token1}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        <template v-if="pos.ownerId === $store.state.account.accountId">
+                            <span class="bold">{{pos.ownerId}}<br>(You)</span>
+                        </template>
+                        <template v-else>
+                            {{pos.ownerId}}
+                        </template>
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{(pos.token0_real_liquidity).toFixed(6)}}
+                    </span>
+                    <span class="pos-list-pool_unit">
+                        {{(pos.token1_real_liquidity).toFixed(6)}}
+                    </span>
+                    <span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
+                        <button v-if="pos.isActive === true" @click="closePosition(pos)" class="close-btn">
+                            X
+                        </button>
+                        <template v-else>
+                            Closed
+                        </template>
+                    </span>
+                    <span v-else class="pos-list-pool_unit">
+                        <template v-if="pos.isActive === true">
+                            Active
+                        </template>
+                        <template v-else>
+                            Closed
+                        </template>
+                    </span>
+                </div>
             </div>
             <!-- list of positions goes here -->
         </template>
@@ -259,6 +318,20 @@ export default {
                     console.log(response)
                 })
             }
+        },
+        closePosition: async function (pos) {
+            const contract = this.$store.state.crispContract
+
+            if (contract) {
+                await contract.close_position(
+                    {
+                        pool_id: Number(pos.poolId),
+                        id: Number(pos.id)
+                    }
+                ).then((response) => {
+                    console.log(response)
+                })
+            }
         }
     }
 }
@@ -348,6 +421,27 @@ export default {
     width: 5%;
 }
 
+.pos-list-header_unit, .pos-list-pool_unit {
+    width: 12%;
+    font-size: $tinyTextSize;
+}
+
+.pos-list-header_unit:first-child, .pos-list-pool_unit:first-child, .pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
+    width: 5%;
+}
+
+.pos-list-header_unit:nth-child(3), .pos-list-pool_unit:nth-child(3), .pos-list-header_unit:nth-child(4), .pos-list-pool_unit:nth-child(4) {
+    width: 15%;
+}
+
+.pos-list-header_unit:last-child, .pos-list-pool_unit:last-child{
+    width: 5%;
+}
+
+.bold {
+    font-weight: 500;
+    color: $textHoverColor;
+}
 .modal-wrapper {
     position: fixed;
     left: 0;
@@ -476,6 +570,32 @@ export default {
 }
 
 .confirm-btn:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.close-pos {
+    font-weight: 500;
+    color: $textHoverColor;
+    text-align: center;
+}
+
+.close-btn {
+    border: 1px solid transparent;
+    width: $textSize;
+    height: $textSize;
+    padding: 2px;
+    border-radius: ($borderRadius/2);
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.close-btn:hover {
     background-color: $buttonTextColor;
     color: $buttonBgColor;
     transition: 0.3s;

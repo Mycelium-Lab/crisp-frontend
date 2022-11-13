@@ -3,31 +3,46 @@
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">
-                    Swap
+                    Swap {{manual_input}} 
+                    <template v-if="tokenAmntLoading">
+                        (loading your 
+                        <template v-if="manual_input === 'in'">
+                            return,
+                        </template>
+                        <template v-else>
+                            expense,
+                        </template>please wait)
+                    </template>
                 </span>
                 <div>
                     <!-- ... -->
                 </div>
             </div>
             <div class="modal-body">
-                <button class="swap-tokens"></button> <!--position: absolute-->
+                <button @click="swapPositions()" class="swap-tokens"></button> <!--position: absolute-->
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
                     <select v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
-                    <input type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
+                    <div class="token-input" v-if="manual_input === 'out' && tokenAmntLoading === true">
+                        loading . . .
+                    </div>
+                    <input v-else type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
                     <select v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
-                    <input type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
+                    <div class="token-input" v-if="manual_input === 'in' && tokenAmntLoading === true">
+                        loading . . .
+                    </div>
+                    <input v-else type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
             </div>
             <div class="modal-footer">
-                <button v-if="$store.state.account" class="footer-btn">Confirm</button>
+                <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
                 <button @click="signIn()" v-else class="footer-btn">Connect wallet</button>
             </div>
         </div>
@@ -54,6 +69,8 @@ export default {
             token_in_amnt: null,
             token_out_amnt: null,
 
+            tokenAmntLoading: false,
+            manual_input: null,
             pool_id: -1,
             tokens: []
         }
@@ -62,6 +79,17 @@ export default {
         await this.initTokens()
     },
     methods: {
+        swapPositions: async function () {
+            const tin = this.token_out
+            const tout = this.token_in
+            this.token_in = tin
+            this.token_out = tout
+            if (this.manual_input === 'in' && this.token_in_amnt) {
+                this.getReturn()
+            } else if (this.manual_input === 'out' && this.token_out_amnt) {
+                this.getExpense()
+            }
+        },
         findPool: async function () {
             if (this.token_in && this.token_out) {
                 const res = this.$store.state.pools.findIndex(
@@ -79,6 +107,8 @@ export default {
             }
         },
         getReturn: async function () {
+            this.tokenAmntLoading = true
+            this.manual_input = 'in'
             console.log('getReturn()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
@@ -101,11 +131,14 @@ export default {
                         ).then((res) => {
                             console.log(res)
                             this.token_out_amnt = res
+                            this.tokenAmntLoading = false
                         })
                 // })
             }
         },
         getExpense: async function () {
+            this.tokenAmntLoading = true
+            this.manual_input = 'out'
             console.log('getExpense()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
@@ -129,6 +162,7 @@ export default {
                         ).then((res) => {
                             console.log(res)
                             this.token_in_amnt = res
+                            this.tokenAmntLoading = false
                         })
             }
         },  
@@ -150,6 +184,39 @@ export default {
         },
         signIn: async function () {
             await this.$store.dispatch('signIn', store.state)
+        },
+        confirmSwap: async function () {
+            const contract = this.$store.state.crispContract
+
+            if (contract) {
+                if (this.manual_input === 'in') {
+                    // swap_in
+                    await contract.swap_in(
+                        {
+                            pool_id: this.pool_id,
+                            token_in: this.token_in.token,
+                            amount_in: this.token_in_amnt,
+                            token_out: this.token_out.token
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                    })
+                } else if (this.manual_input === 'out') {
+                    // swap_out
+                    await contract.swap_out(
+                        {
+                            pool_id: this.pool_id,
+                            token_in: this.token_in.token,
+                            amount_out: this.token_out_amnt,
+                            token_out: this.token_out.token
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                    })
+                }
+                
+            }
+            
         }
     }
 }

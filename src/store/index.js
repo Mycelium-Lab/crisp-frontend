@@ -11,7 +11,8 @@ export default createStore({
     account: null,
     tokenBalances: [],
     tokensBeingLoaded: false,
-    pools: []
+    pools: [],
+    positions: []
   },
   getters: {
   },
@@ -38,6 +39,30 @@ export default createStore({
           state.pools = response
       }
     },
+    async processPositions({state}) {
+      state.positions = []
+      for (let i = 0; i < state.pools.length; i++) {
+        const pool = state.pools[i]
+        console.log(pool)
+        for (let p = 0; p < pool.positions.length; p++) {
+          const position = pool.positions[p]
+          state.positions.push({
+            id: position.id,
+            poolId: i,
+            isActive: position.is_active,
+            ownerId: position.owner_id,
+            sqrt_lower_bound_price: position.sqrt_lower_bound_price,
+            sqrt_upper_bound_price: position.sqrt_upper_bound_price,
+            tick_lower_bound_price: position.tick_lower_bound_price,
+            tick_upper_bound_price: position.tick_upper_bound_price,
+            token0: pool.token0,
+            token1: pool.token1,
+            token0_real_liquidity: position.token0_real_liquidity,
+            token1_real_liquidity: position.token1_real_liquidity
+          })
+        }
+      }
+    },
     async fetchCrispContract ({state}) {
       const { connect, WalletConnection, Contract } = nearAPI
       console.log(CONFIG.keyStore)
@@ -56,7 +81,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance'],
-            changeMethods: ['open_position', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense']
+            changeMethods: ['open_position', 'close_position', 'swap_in', 'swap_out', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense']
           }
         )
       } else {
