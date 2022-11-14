@@ -74,154 +74,162 @@
                 </div>
             </div>
         </div>
-        <template v-if="!loading && $store.state.tokens && $store.state.pools">
+        <div v-if="noLogin">
+            Please, connect your wallet
+        </div>
+        <template v-else-if="!loading">
             <div class="heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
-            <div v-if="$store.state.pools[0]" class="list-header">
-                <span class="list-header_unit">
-                    #
-                </span>
-                <span class="list-header_unit">
-                    Icon
-                </span>
-                <span class="list-header_unit">
-                    Token pair
-                </span>
-                <span class="list-header_unit">
-                    Liquidity
-                </span>
-                <span class="list-header_unit">
-                    Protocol fee
-                </span>
-                <span class="list-header_unit">
-                    Rewards
-                </span>
-                <span class="list-header_unit">
-                    Price
-                </span>
-            </div>
-            <div v-if="$store.state.pools[0]" class="list">
-                <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
-                    <span class="list-pool_unit">
-                        {{index}}
+
+            <template v-if="$store.state.pools">
+                <div v-if="$store.state.pools[0]" class="list-header">
+                    <span class="list-header_unit">
+                        #
                     </span>
-                    <span v-if="$store.state.tokens" class="list-pool_unit">
-                        <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
+                    <span class="list-header_unit">
+                        Icon
                     </span>
-                    <span v-if="$store.state.tokens" class="list-pool_unit">
-                        {{$store.state.tokens[pool.token0].symbol}}<br>
-                        {{$store.state.tokens[pool.token1].symbol}}
+                    <span class="list-header_unit">
+                        Token pair
                     </span>
-                    <span v-else>
-                        {{pool.token0}}<br>
-                        {{pool.token1}}
+                    <span class="list-header_unit">
+                        Liquidity
                     </span>
-                    <span class="list-pool_unit">
-                        {{pool.liquidity}}
+                    <span class="list-header_unit">
+                        Protocol fee
                     </span>
-                    <span class="list-pool_unit">
-                        {{pool.protocol_fee/100}}%
+                    <span class="list-header_unit">
+                        Rewards
                     </span>
-                    <span class="list-pool_unit">
-                        {{pool.rewards/100}}%
-                    </span>
-                    <span class="list-pool_unit">
-                        {{pool.sqrt_price * pool.sqrt_price}}
+                    <span class="list-header_unit">
+                        Price
                     </span>
                 </div>
-            </div>
-            <!-- list of pools goes here -->
-            <div class="heading">
-                <span class="title">Positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
-            </div>
-            <div v-if="$store.state.positions[0]" class="list-header">
-                <span class="pos-list-header_unit">
-                    # Pool
-                </span>
-                <span class="pos-list-header_unit">
-                    # Pos
-                </span>
-                <span class="pos-list-header_unit">
-                    Pool tokens
-                </span>
-                <span class="pos-list-header_unit">
-                    Owner
-                </span>
-                <span class="pos-list-header_unit">
-                    L. bound price
-                </span>
-                <span class="pos-list-header_unit">
-                    U. bound price
-                </span>
-                <span class="pos-list-header_unit">
-                    T0 Real Liquidity
-                </span>
-                <span class="pos-list-header_unit">
-                    T1 Real Liquidity
-                </span>
-                <!--<span class="pos-list-header_unit">
-                    Status
-                </span>-->
-            </div>
-            <div v-if="$store.state.positions[0]" class="list">
-                <div class="pool" v-for="pos in $store.state.positions" :key="pos.id">
-                    <span class="pos-list-pool_unit">
-                        {{pos.poolId}}
+                <div v-if="$store.state.pools[0]" class="list">
+                    <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
+                        <span class="list-pool_unit">
+                            {{index}}
+                        </span>
+                        <span v-if="$store.state.tokens" class="list-pool_unit">
+                            <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
+                        </span>
+                        <span v-if="$store.state.tokens" class="list-pool_unit">
+                            {{$store.state.tokens[pool.token0].symbol}}<br>
+                            {{$store.state.tokens[pool.token1].symbol}}
+                        </span>
+                        <span v-else>
+                            {{pool.token0}}<br>
+                            {{pool.token1}}
+                        </span>
+                        <span class="list-pool_unit">
+                            {{pool.liquidity}}
+                        </span>
+                        <span class="list-pool_unit">
+                            {{pool.protocol_fee/100}}%
+                        </span>
+                        <span class="list-pool_unit">
+                            {{pool.rewards/100}}%
+                        </span>
+                        <span class="list-pool_unit">
+                            {{pool.sqrt_price * pool.sqrt_price}}
+                        </span>
+                    </div>
+                </div>
+            </template>
+            
+            <template v-if="$store.state.positions">
+                <div class="heading">
+                    <span class="title">Positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
+                </div>
+                <div v-if="$store.state.positions[0]" class="list-header">
+                    <span class="pos-list-header_unit">
+                        # Pool
                     </span>
-                    <span class="pos-list-pool_unit">
-                        {{pos.id}}
+                    <span class="pos-list-header_unit">
+                        # Pos
                     </span>
-                    <span v-if="$store.state.tokens" class="pos-list-pool_unit row">
-                        <img class="icon" :src="$store.state.tokens[pos.token0].icon">
-                        <img class="icon" :src="$store.state.tokens[pos.token1].icon">
-                        <div>
-                            {{$store.state.tokens[pos.token0].symbol}}<br>
-                            {{$store.state.tokens[pos.token1].symbol}}
-                        </div>
+                    <span class="pos-list-header_unit">
+                        Pool tokens
                     </span>
-                    <span v-else>
-                        {{pos.token0}}<br>
-                        {{pos.token1}}
+                    <!--<span class="pos-list-header_unit">
+                        Owner
+                    </span>-->
+                    <span class="pos-list-header_unit">
+                        L. bound price
                     </span>
-                    <span class="pos-list-pool_unit">
-                        <template v-if="pos.ownerId === $store.state.account.accountId">
-                            <span class="bold">{{pos.ownerId}}<br>(You)</span>
-                        </template>
-                        <template v-else>
-                            {{pos.ownerId}}
-                        </template>
+                    <span class="pos-list-header_unit">
+                        U. bound price
                     </span>
-                    <span class="pos-list-pool_unit">
-                        {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                    <span class="pos-list-header_unit">
+                        T0 Real Liquidity
                     </span>
-                    <span class="pos-list-pool_unit">
-                        {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                    <span class="pos-list-header_unit">
+                        T1 Real Liquidity
                     </span>
-                    <span class="pos-list-pool_unit">
-                        {{(pos.token0_real_liquidity).toFixed(6)}}
-                    </span>
-                    <span class="pos-list-pool_unit">
-                        {{(pos.token1_real_liquidity).toFixed(6)}}
-                    </span>
-                    <!--<span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
-                        <button v-if="pos.isActive === true" @click="closePosition(pos)" class="close-btn">
-                            X
-                        </button>
-                        <template v-else>
-                            Closed
-                        </template>
-                    </span>
-                    <span v-else class="pos-list-pool_unit">
-                        <template v-if="pos.isActive === true">
-                            Active
-                        </template>
-                        <template v-else>
-                            Closed
-                        </template>
+                    <!--<span class="pos-list-header_unit">
+                        Status
                     </span>-->
                 </div>
-            </div>
+                <div v-if="$store.state.positions[0]" class="list">
+                    <div class="pool" v-for="pos in $store.state.positions" :key="pos.id">
+                        <span class="pos-list-pool_unit">
+                            {{pos.poolId}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{pos.id}}
+                        </span>
+                        <span v-if="$store.state.tokens" class="pos-list-pool_unit row">
+                            <img class="icon" :src="$store.state.tokens[pos.token0].icon">
+                            <img class="icon" :src="$store.state.tokens[pos.token1].icon">
+                            <div>
+                                {{$store.state.tokens[pos.token0].symbol}}<br>
+                                {{$store.state.tokens[pos.token1].symbol}}
+                            </div>
+                        </span>
+                        <span v-else>
+                            {{pos.token0}}<br>
+                            {{pos.token1}}
+                        </span>
+                        <!--<span class="pos-list-pool_unit">
+                            <template v-if="pos.ownerId === $store.state.account.accountId">
+                                <span class="bold">{{pos.ownerId}}<br>(You)</span>
+                            </template>
+                            <template v-else>
+                                {{pos.ownerId}}
+                            </template>
+                        </span>-->
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token0_real_liquidity).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token1_real_liquidity).toFixed(6)}}
+                        </span>
+                        <!--<span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
+                            <button v-if="pos.isActive === true" @click="closePosition(pos)" class="close-btn">
+                                X
+                            </button>
+                            <template v-else>
+                                Closed
+                            </template>
+                        </span>
+                        <span v-else class="pos-list-pool_unit">
+                            <template v-if="pos.isActive === true">
+                                Active
+                            </template>
+                            <template v-else>
+                                Closed
+                            </template>
+                        </span>-->
+                    </div>
+                </div>
+            </template>
             <!-- list of positions goes here -->
         </template>
         <div class="loading" v-else>
@@ -271,6 +279,11 @@ export default {
         this.loading = true
         // .. 
         this.loading = false
+    },
+    computed: {
+        noLogin() {
+            return this.$store.state.account === null ? true : false
+        }
     },
     watch: {
         poolId: function () {
@@ -447,7 +460,7 @@ export default {
 }
 
 .pos-list-header_unit, .pos-list-pool_unit {
-    width: 12%;
+    width: 14%;
     font-size: $tinyTextSize;
 }
 
@@ -456,7 +469,7 @@ export default {
 }
 
 .pos-list-header_unit:nth-child(3), .pos-list-pool_unit:nth-child(3), .pos-list-header_unit:nth-child(4), .pos-list-pool_unit:nth-child(4) {
-    width: 15%;
+    width: 13%;
 }
 
 .row {

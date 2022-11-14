@@ -6,7 +6,7 @@
       <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <router-link class="header-link" to="/deposit">Account</router-link>
+      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
       <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>
       <button v-else @click="signIn()" class="header-link">Connect wallet</button>
     </div>

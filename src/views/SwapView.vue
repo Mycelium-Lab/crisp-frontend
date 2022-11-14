@@ -43,7 +43,7 @@
             </div>
             <div class="modal-footer">
                 <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
-                <button @click="signIn()" v-else class="footer-btn">Connect wallet</button>
+                <button @click="signIn()" v-else class="footer-btn" :class="{footerbtnactive: this.footerBtnActive}">Connect wallet</button>
             </div>
         </div>
     </div>
@@ -72,7 +72,10 @@ export default {
             tokenAmntLoading: false,
             manual_input: null,
             pool_id: -1,
-            tokens: []
+            tokens: [],
+
+            // animation for footerBtn
+            footerBtnActive: false
         }
     },
     async created () {
@@ -134,6 +137,9 @@ export default {
                             this.tokenAmntLoading = false
                         })
                 // })
+            } else {
+                this.flashConnectBtn()
+                this.tokenAmntLoading = false
             }
         },
         getExpense: async function () {
@@ -164,6 +170,9 @@ export default {
                             this.token_in_amnt = res
                             this.tokenAmntLoading = false
                         })
+            } else {
+                this.flashConnectBtn()
+                this.tokenAmntLoading = false
             }
         },  
         initTokens: async function () {
@@ -184,6 +193,12 @@ export default {
         },
         signIn: async function () {
             await this.$store.dispatch('signIn', store.state)
+        },
+        flashConnectBtn: async function () {
+            this.footerBtnActive = true
+            setTimeout(() => {
+                this.footerBtnActive = false
+            }, 1000)
         },
         confirmSwap: async function () {
             const contract = this.$store.state.crispContract
@@ -340,5 +355,32 @@ export default {
 .footer-btn:hover {
     background-color: $buttonBgColor;
     color: $buttonAltBgColor;
+}
+
+.footerbtnactive {
+    animation: flash 1s linear;
+}
+
+@keyframes flash {
+    0% {
+        background-color: $buttonAltBgColor;
+        color: $buttonBgColor;
+    }
+    25% {
+        background-color: $buttonBgColor;
+        color: $buttonAltBgColor;
+    }
+    50% {
+        background-color: $buttonAltBgColor;
+        color: $buttonBgColor;
+    }
+    75% {
+        background-color: $buttonBgColor;
+        color: $buttonAltBgColor;
+    }
+    100% {
+        background-color: $buttonAltBgColor;
+        color: $buttonBgColor;
+    }
 }
 </style>
