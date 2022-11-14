@@ -74,10 +74,10 @@
                             <span class="input-title">Upper bound price</span>
                             <input v-model="upperPrice" @change="calculate()" id="upperPrice" class="modal-body_row-input"/>
                         </div>
-                        <div class="input-wrapper">
+                        <!--<div class="input-wrapper">
                             <span class="input-title">Total</span>
                             <input v-model="total" @change="calculate()" id="total" class="modal-body_row-input"/>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -283,7 +283,7 @@ export default {
             upperPrice: null,      // e.g. 110
             t0_balance: null,
             t1_balance: null,
-            total: null,
+            // total: null,
 
             loading: false,
         }
@@ -352,7 +352,7 @@ export default {
         },
         calculateDefault: function () {
             this.manual_input = 'first'
-            if (this.$store.state.pools[0]) {
+            if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice) {
                 const poolId = this.poolId
                 const x = this.t0_liq
                 const sa = Math.sqrt(this.lowerPrice)
@@ -360,16 +360,16 @@ export default {
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
                 const y = x / (sb - sa) // amount of 2nd token
-                sp = Math.max(Math.min(sp, sb), sa)
-                const res = y * (sb - sp) / (sp * sb)
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = y * (sb - sp) / (sp * sb) // ?
 
-                this.t1_liq = y
-                this.total = res
+                this.t1_liq = res
+                // this.total = res
             }
         },
         calculateAlternative: function () {
             this.manual_input = 'second'
-            if (this.$store.state.pools[0]) {
+            if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice) {
                 const poolId = this.poolId
                 const x = this.t1_liq
                 const sa = Math.sqrt(this.lowerPrice)
@@ -377,11 +377,11 @@ export default {
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
                 const y = x * sa * sb / (sb - sa) // amount of 1st token
-                sp = Math.max(Math.min(sp, sb), sa)
-                const res = y * (sp - sa)
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = y * (sp - sa) // ?
 
-                this.t0_liq = y
-                this.total = res
+                this.t0_liq = res
+                // this.total = res
             }
         },
         calculate: async function () {
