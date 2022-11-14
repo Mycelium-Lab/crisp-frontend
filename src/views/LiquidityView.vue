@@ -57,12 +57,12 @@
                                 </select>
                             </div>
                             <div class="input-wrapper">
-                                <span v-if="poolId !== null && tokensLoaded" class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span>
+                                <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
                             </div>
                             <div class="input-wrapper">
-                                <span v-if="poolId !== null && tokensLoaded" class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span>
+                                <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
                             </div>
@@ -550,6 +550,12 @@ export default {
     align-items: center;
 }
 
+.small-icon {
+    width: $lesserTextSize;
+    height: $lesserTextSize;
+    margin-right: 4px;
+}
+
 .icon {
     margin: 6px;
     margin-left: 0;
@@ -665,6 +671,10 @@ export default {
 .input-title {
     font-size: $tinyTextSize;
     margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-footer {
