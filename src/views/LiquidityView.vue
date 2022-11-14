@@ -99,9 +99,9 @@
 
             <template v-if="$store.state.pools">
                 <div v-if="$store.state.pools[0]" class="list-header">
-                    <span class="list-header_unit">
+                    <!--<span class="list-header_unit">
                         #
-                    </span>
+                    </span>-->
                     <span class="list-header_unit">
                         Icon
                     </span>
@@ -123,11 +123,12 @@
                 </div>
                 <div v-if="$store.state.pools[0]" class="list">
                     <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
-                        <span class="list-pool_unit">
+                        <!--<span class="list-pool_unit">
                             {{index}}
-                        </span>
+                        </span>-->
                         <span v-if="$store.state.tokens" class="list-pool_unit">
                             <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
+                            <img class="icon" :src="$store.state.tokens[pool.token1].icon"/>
                         </span>
                         <span v-if="$store.state.tokens" class="list-pool_unit">
                             {{$store.state.tokens[pool.token0].symbol}}<br>
