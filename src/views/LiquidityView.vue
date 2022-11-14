@@ -46,26 +46,37 @@
                 <div class="modal-body">
                     <div class="modal-body_row">
                         <div class="input-wrapper">
-                            <span class="input-title">Pool id</span>
-                            <select v-model="poolId" id="poolId" class="modal-body_row-input">
+                            <span v-if="tokensLoaded" class="input-title">Pool id</span>
+                            <select v-if="tokensLoaded" @change="calculate()" v-model.lazy="poolId" id="poolId" class="modal-body_row-input">
                                 <option v-for="(pool, index) in $store.state.pools" :key="index">
                                     {{index}}
                                 </option>
                             </select>
+                            <span v-else>
+                                Please wait while we load pools. . .
+                            </span>
                         </div>
-                        <div v-if="poolId" class="input-wrapper">
-                            <span class="input-title">{{$store.state.pools[poolId].token0}} liquidity</span>
-                            <input v-model="t0_liq" id="t0_liq" class="modal-body_row-input"/>
+                        <div v-if="poolId && tokensLoaded" class="input-wrapper">
+                            <span class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token0].token}} liquidity</span>
+                            <input v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                        </div>
+                        <div v-if="poolId && tokensLoaded" class="input-wrapper">
+                            <span class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token1].token}} liquidity</span>
+                            <input v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
                         </div>
                     </div>
                     <div class="modal-body_row">
                         <div class="input-wrapper">
                             <span class="input-title">Lower bound price</span>
-                            <input v-model="lowerPrice" id="lowerPrice" class="modal-body_row-input"/>
+                            <input v-model="lowerPrice" @change="calculate()" id="lowerPrice" class="modal-body_row-input"/>
                         </div>
                         <div class="input-wrapper">
                             <span class="input-title">Upper bound price</span>
-                            <input v-model="upperPrice" id="upperPrice" class="modal-body_row-input"/>
+                            <input v-model="upperPrice" @change="calculate()" id="upperPrice" class="modal-body_row-input"/>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-title">Total</span>
+                            <input v-model="total" @change="calculate()" id="total" class="modal-body_row-input"/>
                         </div>
                     </div>
                 </div>
@@ -267,10 +278,12 @@ export default {
              */
             poolId: null,          // e.g. 0
             t0_liq: null,          // e.g. 100000
+            t1_liq: null,
             lowerPrice: null,      // e.g. 90
             upperPrice: null,      // e.g. 110
             t0_balance: null,
             t1_balance: null,
+            total: null,
 
             loading: false,
         }
@@ -283,6 +296,9 @@ export default {
     computed: {
         noLogin() {
             return this.$store.state.account === null ? true : false
+        },
+        tokensLoaded() {
+            return this.$store.state.tokens === null ? false : true
         }
     },
     watch: {
@@ -333,6 +349,49 @@ export default {
         closeNewPositionModal: function () {
             this.modalActive = false
             this.newPositionModalActive = false
+        },
+        calculateDefault: function () {
+            this.manual_input = 'first'
+            if (this.$store.state.pools[0]) {
+                const poolId = this.poolId
+                const x = this.t0_liq
+                const sa = Math.sqrt(this.lowerPrice)
+                const sb = Math.sqrt(this.upperPrice)
+                let sp = this.$store.state.pools[poolId].sqrt_price
+
+                const y = x / (sb - sa) // amount of 2nd token
+                sp = Math.max(Math.min(sp, sb), sa)
+                const res = y * (sb - sp) / (sp * sb)
+
+                this.t1_liq = y
+                this.total = res
+            }
+        },
+        calculateAlternative: function () {
+            this.manual_input = 'second'
+            if (this.$store.state.pools[0]) {
+                const poolId = this.poolId
+                const x = this.t1_liq
+                const sa = Math.sqrt(this.lowerPrice)
+                const sb = Math.sqrt(this.upperPrice)
+                let sp = this.$store.state.pools[poolId].sqrt_price
+
+                const y = x * sa * sb / (sb - sa) // amount of 1st token
+                sp = Math.max(Math.min(sp, sb), sa)
+                const res = y * (sp - sa)
+
+                this.t0_liq = y
+                this.total = res
+            }
+        },
+        calculate: async function () {
+            if (this.$store.state.pools[0]) {
+                if (this.manual_input === 'first') {
+                    this.calculateDefault()
+                } else if (this.manual_input === 'second') {
+                    this.calculateAlternative()
+                }
+            }
         },
         confirmNewPositionModal: async function () {
             const contract = this.$store.state.crispContract
