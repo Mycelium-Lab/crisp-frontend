@@ -13,7 +13,7 @@ export default createStore({
     tokensBeingLoaded: false,
     pools: [],
     positions: [],
-    tokens: []
+    tokens: null
   },
   getters: {
   },

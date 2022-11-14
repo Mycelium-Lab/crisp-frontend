@@ -74,7 +74,7 @@
                 </div>
             </div>
         </div>
-        <template v-if="!loading">
+        <template v-if="!loading && $store.state.tokens && $store.state.pools">
             <div class="heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
@@ -106,12 +106,16 @@
                     <span class="list-pool_unit">
                         {{index}}
                     </span>
-                    <span class="list-pool_unit">
+                    <span v-if="$store.state.tokens" class="list-pool_unit">
                         <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
                     </span>
-                    <span class="list-pool_unit">
+                    <span v-if="$store.state.tokens" class="list-pool_unit">
                         {{$store.state.tokens[pool.token0].symbol}}<br>
                         {{$store.state.tokens[pool.token1].symbol}}
+                    </span>
+                    <span v-else>
+                        {{pool.token0}}<br>
+                        {{pool.token1}}
                     </span>
                     <span class="list-pool_unit">
                         {{pool.liquidity}}
@@ -168,13 +172,17 @@
                     <span class="pos-list-pool_unit">
                         {{pos.id}}
                     </span>
-                    <span class="pos-list-pool_unit row">
+                    <span v-if="$store.state.tokens" class="pos-list-pool_unit row">
                         <img class="icon" :src="$store.state.tokens[pos.token0].icon">
                         <img class="icon" :src="$store.state.tokens[pos.token1].icon">
                         <div>
                             {{$store.state.tokens[pos.token0].symbol}}<br>
                             {{$store.state.tokens[pos.token1].symbol}}
                         </div>
+                    </span>
+                    <span v-else>
+                        {{pos.token0}}<br>
+                        {{pos.token1}}
                     </span>
                     <span class="pos-list-pool_unit">
                         <template v-if="pos.ownerId === $store.state.account.accountId">
