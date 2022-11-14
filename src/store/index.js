@@ -12,7 +12,8 @@ export default createStore({
     tokenBalances: [],
     tokensBeingLoaded: false,
     pools: [],
-    positions: []
+    positions: [],
+    tokens: []
   },
   getters: {
   },
@@ -38,6 +39,51 @@ export default createStore({
           console.log(response)
           state.pools = response
       }
+    },
+    async processTokenMetadata({state}) {
+      const tokens = []
+      for (let i = 0; i < state.pools.length; i++) {
+        const pool = state.pools[i]
+        if (tokens.findIndex((unit) => {
+          unit.token === pool.token0
+        }) === -1) {
+          tokens.push({
+            token: pool.token0,
+          })
+        }
+        if (tokens.findIndex((unit) => {
+          unit.token === pool.token1
+        }) === -1) {
+          tokens.push({
+            token: pool.token1,
+          })
+        }
+      }
+
+      const tokensWithMetadata = []
+
+      for (let i = 0; i < tokens.length; i++) {
+        await state.walletConnection.account().viewFunction(
+          {
+            contractId: tokens[i].token,
+            methodName: 'ft_metadata',
+            args: {
+              account_id: state.account.accountId
+            },
+          },
+          state.account.accountId
+        ).then((res) => {
+          tokensWithMetadata[tokens[i].token] = {
+            token: tokens[i].token,
+            icon: res.icon,
+            symbol: res.symbol,
+            decimals: res.decimals,
+            name: res.name
+          }
+        })
+      }
+      console.log(tokensWithMetadata)
+      state.tokens = tokensWithMetadata
     },
     async processPositions({state}) {
       state.positions = []

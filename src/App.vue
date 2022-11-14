@@ -1,9 +1,9 @@
 <template>
   <header>
     <div class="header-nav">
-      <router-link class="header-link" to="/"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Home</router-link>
+      <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Swap</router-link>
       <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
-      <router-link class="header-link" to="/swap">Swap</router-link>
+      <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
       <router-link class="header-link" to="/deposit">Account</router-link>
@@ -38,6 +38,9 @@ export default {
       await this.$store.dispatch('processPositions', store.state)
     }
     await this.$store.dispatch('fetchBalances', store.state)
+    if (this.$store.state.pools[0]) {
+      await this.$store.dispatch('processTokenMetadata', store.state)
+    }
   },
   methods: {
     signIn: async function () {

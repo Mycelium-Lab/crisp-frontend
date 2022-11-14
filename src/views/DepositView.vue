@@ -26,7 +26,7 @@
                         <img class="icon" :src="tokenObject.icon">
                     </span>
                     <span class="list-pool_unit">
-                        {{tokenObject.token}} ({{tokenObject.symbol}})
+                        <!--{{tokenObject.token}} -->{{tokenObject.symbol}}
                     </span>
                     <span class="list-pool_unit">
                         {{tokenObject.amount}}

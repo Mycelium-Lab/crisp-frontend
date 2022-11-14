@@ -83,6 +83,9 @@
                     #
                 </span>
                 <span class="list-header_unit">
+                    Icon
+                </span>
+                <span class="list-header_unit">
                     Token pair
                 </span>
                 <span class="list-header_unit">
@@ -104,8 +107,11 @@
                         {{index}}
                     </span>
                     <span class="list-pool_unit">
-                        {{pool.token0}}<br>
-                        {{pool.token1}}
+                        <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
+                    </span>
+                    <span class="list-pool_unit">
+                        {{$store.state.tokens[pool.token0].symbol}}<br>
+                        {{$store.state.tokens[pool.token1].symbol}}
                     </span>
                     <span class="list-pool_unit">
                         {{pool.liquidity}}
@@ -150,9 +156,9 @@
                 <span class="pos-list-header_unit">
                     T1 Real Liquidity
                 </span>
-                <span class="pos-list-header_unit">
+                <!--<span class="pos-list-header_unit">
                     Status
-                </span>
+                </span>-->
             </div>
             <div v-if="$store.state.positions[0]" class="list">
                 <div class="pool" v-for="pos in $store.state.positions" :key="pos.id">
@@ -162,9 +168,13 @@
                     <span class="pos-list-pool_unit">
                         {{pos.id}}
                     </span>
-                    <span class="pos-list-pool_unit">
-                        {{pos.token0}}<br>
-                        {{pos.token1}}
+                    <span class="pos-list-pool_unit row">
+                        <img class="icon" :src="$store.state.tokens[pos.token0].icon">
+                        <img class="icon" :src="$store.state.tokens[pos.token1].icon">
+                        <div>
+                            {{$store.state.tokens[pos.token0].symbol}}<br>
+                            {{$store.state.tokens[pos.token1].symbol}}
+                        </div>
                     </span>
                     <span class="pos-list-pool_unit">
                         <template v-if="pos.ownerId === $store.state.account.accountId">
@@ -186,7 +196,7 @@
                     <span class="pos-list-pool_unit">
                         {{(pos.token1_real_liquidity).toFixed(6)}}
                     </span>
-                    <span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
+                    <!--<span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
                         <button v-if="pos.isActive === true" @click="closePosition(pos)" class="close-btn">
                             X
                         </button>
@@ -201,7 +211,7 @@
                         <template v-else>
                             Closed
                         </template>
-                    </span>
+                    </span>-->
                 </div>
             </div>
             <!-- list of positions goes here -->
@@ -420,6 +430,13 @@ export default {
 .list-header_unit:first-child, .list-pool_unit:first-child {
     width: 5%;
 }
+.list-header_unit:nth-child(2), .list-pool_unit:nth-child(2) {
+    width: 6%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
 
 .pos-list-header_unit, .pos-list-pool_unit {
     width: 12%;
@@ -434,8 +451,17 @@ export default {
     width: 15%;
 }
 
-.pos-list-header_unit:last-child, .pos-list-pool_unit:last-child{
-    width: 5%;
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.icon {
+    margin: 6px;
+    margin-left: 0;
+    width: $lesserTextSize;
+    height: $lesserTextSize;
 }
 
 .bold {
