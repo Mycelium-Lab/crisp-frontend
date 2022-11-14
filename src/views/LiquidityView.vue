@@ -45,25 +45,29 @@
                 </div>
                 <div class="modal-body">
                     <div class="modal-body_row">
-                        <div class="input-wrapper">
-                            <span v-if="tokensLoaded" class="input-title">Pool id</span>
-                            <select v-if="tokensLoaded" @change="calculate()" v-model.lazy="poolId" id="poolId" class="modal-body_row-input">
-                                <option v-for="(pool, index) in $store.state.pools" :key="index">
-                                    {{index}}
-                                </option>
-                            </select>
-                            <span v-else>
-                                Please wait while we load pools. . .
-                            </span>
-                        </div>
-                        <div v-if="poolId && tokensLoaded" class="input-wrapper">
-                            <span class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token0].token}} liquidity</span>
-                            <input v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
-                        </div>
-                        <div v-if="poolId && tokensLoaded" class="input-wrapper">
-                            <span class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token1].token}} liquidity</span>
-                            <input v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
-                        </div>
+                        <template v-if="tokensLoaded">
+                            <div class="input-wrapper">
+                                <span class="input-title">Pool id</span>
+                                <select @change="calculateInit()" v-model.lazy="poolId" id="poolId" class="modal-body_row-input">
+                                    <option v-for="(pool, index) in $store.state.pools" :key="index" :value="index">
+                                        {{$store.state.tokens[pool.token0].symbol}}
+                                        -
+                                        {{$store.state.tokens[pool.token1].symbol}}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="input-wrapper">
+                                <span v-if="poolId !== null && tokensLoaded" class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span>
+                                <span v-else class="input-title">Token 0 liquidity</span>
+                                <input v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                            </div>
+                            <div class="input-wrapper">
+                                <span v-if="poolId !== null && tokensLoaded" class="input-title">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span>
+                                <span v-else class="input-title">Token 1 liquidity</span>
+                                <input v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
+                            </div>
+                        </template>
+                        <span v-else>Please wait while we load pools. . .</span>
                     </div>
                     <div class="modal-body_row">
                         <div class="input-wrapper">
@@ -303,8 +307,8 @@ export default {
     },
     watch: {
         poolId: function () {
-            console.log(this.t0_balance)
-            console.log(this.t1_balance)
+            // console.log(this.t0_balance)
+            // console.log(this.t1_balance)
         }
     },
     methods: {
@@ -349,6 +353,15 @@ export default {
         closeNewPositionModal: function () {
             this.modalActive = false
             this.newPositionModalActive = false
+        },
+        calculateInit: function () {
+            const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price
+
+            const lp = sp * 0.9
+            const up = sp * 1.1
+
+            this.lowerPrice = lp
+            this.upperPrice = up
         },
         calculateDefault: function () {
             this.manual_input = 'first'
