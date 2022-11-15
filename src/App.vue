@@ -1,4 +1,23 @@
 <template>
+  <div class="notifications-wrapper">
+    <div class="notification-list">
+      <div v-for="notification in $store.state.notifications" :key="notification.id" class="notification-box">
+        <div class="notification">
+          <div class="notification-header">
+            <span class="notification-title">
+              {{notification.title}}
+            </span>
+            <button @click="removeNotif(notification.id)" class="notification-close">
+              X
+            </button>
+          </div>
+          <span class="notification-text">
+            {{notification.text}}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
   <header>
     <div class="header-nav">
       <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Swap</router-link>
@@ -29,6 +48,7 @@ export default {
   store,
   data () {
     return {
+      closed: false
     }
   },
   async created () {
@@ -48,6 +68,9 @@ export default {
     },
     signOut: async function () {
       await this.$store.dispatch('signOut', store.state)
+    },
+    removeNotif: async function(id) {
+      await this.$store.commit('removeNotification', id)
     }
   }
 }
@@ -82,6 +105,104 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+.notifications-wrapper {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  pointer-events: none;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  z-index: 500;
+}
+
+.notification-list {
+  width: $interfaceBlocksWidth/2;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.notification-box {
+  width: 100%;
+  min-height: 182px;
+  max-height: 182px;
+  position: relative;
+}
+
+.notification {
+  background-color: $cardBgColor;
+  border: $border;
+  border-radius: $borderRadius;
+  opacity: 0.6;
+  padding: 16px;
+  position: absolute;
+  width: ($interfaceBlocksWidth/2)-36px;
+  animation: shiftIn 0.6s linear;
+  height: 150px;
+  box-sizing: border-box;
+  pointer-events: all;
+}
+
+.closed {
+  animation: shiftOut 0.6s linear;
+  right: -600px;
+}
+
+@keyframes shiftIn {
+  0% {
+    right: -($interfaceBlocksWidth/2)-36px;
+  }
+  100% {
+    right: 16px;
+  }
+}
+
+@keyframes shiftOut {
+  0% {
+    right: 16px;
+  }
+  100% {
+    right: -($interfaceBlocksWidth/2)-36px;
+  }
+}
+
+.notification:hover {
+  opacity: 1;
+  transition: 0.3s;
+}
+
+.notification-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.notification-title {
+  font-size: $textSize;
+}
+
+.notification-text {
+  font-size: $tinyTextSize;
+}
+
+.notification-close {
+  width: $textSize;
+  height: $textSize;
+  border: 1px solid $buttonBgColor;
+  color: $buttonBgColor;
+  background-color: $buttonTextColor;
+  opacity: 0.8;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.notification-close:hover {
+  background-color: $buttonAltBgColor;
+  opacity: 1;
+  transition: 0.3s;
 }
 
 header {
@@ -178,6 +299,9 @@ header {
     align-items: center;
     width: 100vw;
     height: 100vh;
+    z-index: 700;
+    position: relative;
+    background: linear-gradient($gradientPrimary, $gradientSecondary)
   }
 
   .fatal-error-msg .str {

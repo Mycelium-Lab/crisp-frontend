@@ -42,8 +42,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
-                <button @click="signIn()" v-else class="footer-btn" :class="{footerbtnactive: this.footerBtnActive}">Connect wallet</button>
+                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                <template v-else>
+                    <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
+                    <button @click="signIn()" v-else class="footer-btn" :class="{footerbtnactive: this.footerBtnActive}">Connect wallet</button>
+                </template>
             </div>
         </div>
     </div>
@@ -73,6 +76,8 @@ export default {
             manual_input: null,
             pool_id: -1,
             tokens: [],
+
+            txPending: false,
 
             // animation for footerBtn
             footerBtnActive: false
@@ -111,6 +116,7 @@ export default {
         },
         getReturn: async function () {
             this.tokenAmntLoading = true
+            this.txPending = true
             this.manual_input = 'in'
             console.log('getReturn()')
             // let decimals
@@ -125,25 +131,42 @@ export default {
                 //     this.$store.state.account.accountId
                 // ).then(async (res) => {
                 //         decimals = res.decimals
-                        await this.$store.state.crispContract.get_return(
-                            {
-                                pool_id: this.pool_id,
-                                token_in: this.token_in.token,
-                                amount_in: Number(this.token_in_amnt)
-                            }
-                        ).then((res) => {
-                            console.log(res)
-                            this.token_out_amnt = res
-                            this.tokenAmntLoading = false
-                        })
+                try {
+                    await this.$store.state.crispContract.get_return(
+                        {
+                            pool_id: this.pool_id,
+                            token_in: this.token_in.token,
+                            amount_in: Number(this.token_in_amnt)
+                        }
+                    ).then((res) => {
+                        console.log(res)
+                        this.token_out_amnt = res
+                        this.tokenAmntLoading = false
+                        this.txPending = false
+                    })
+                } catch (error) {
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    console.log(error)
+                    this.token_in_amnt = null
+                    this.token_out_amnt = null
+                    this.tokenAmntLoading = false
+                    this.txPending = false
+                }
+                        
                 // })
             } else {
                 this.flashConnectBtn()
                 this.tokenAmntLoading = false
+                this.txPending = false
             }
         },
         getExpense: async function () {
             this.tokenAmntLoading = true
+            this.txPending = true
             this.manual_input = 'out'
             console.log('getExpense()')
             // let decimals
@@ -158,21 +181,36 @@ export default {
                 //     this.$store.state.account.accountId
                 // ).then(async (res) => {
                 //         decimals = res.decimals
-                        await this.$store.state.crispContract.get_expense(
-                            {
-                                // must get this pool id somehow
-                                pool_id: this.pool_id,
-                                token_out: this.token_out.token,
-                                amount_out: Number(this.token_out_amnt)
-                            }
-                        ).then((res) => {
-                            console.log(res)
-                            this.token_in_amnt = res
-                            this.tokenAmntLoading = false
-                        })
+                try {
+                    await this.$store.state.crispContract.get_expense(
+                        {
+                            // must get this pool id somehow
+                            pool_id: this.pool_id,
+                            token_out: this.token_out.token,
+                            amount_out: Number(this.token_out_amnt)
+                        }
+                    ).then((res) => {
+                        console.log(res)
+                        this.token_in_amnt = res
+                        this.tokenAmntLoading = false
+                        this.txPending = false
+                    })
+                } catch (error) {
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    console.log(error)
+                    this.token_in_amnt = null
+                    this.token_out_amnt = null
+                    this.tokenAmntLoading = false
+                    this.txPending = false
+                }
             } else {
                 this.flashConnectBtn()
                 this.tokenAmntLoading = false
+                this.txPending = false
             }
         },  
         initTokens: async function () {
@@ -204,30 +242,65 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
+                this.txPending = true
                 if (this.manual_input === 'in') {
                     // swap_in
-                    await contract.swap_in(
-                        {
-                            pool_id: this.pool_id,
-                            token_in: this.token_in.token,
-                            amount_in: this.token_in_amnt,
-                            token_out: this.token_out.token
-                        }
-                    ).then((response) => {
-                        console.log(response)
-                    })
+                    try {
+                        await contract.swap_in(
+                            {
+                                pool_id: this.pool_id,
+                                token_in: this.token_in.token,
+                                amount_in: this.token_in_amnt,
+                                token_out: this.token_out.token
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Swap is successful'
+                            })
+                            this.txPending = false
+                        })
+                    } catch (error) {
+                        console.log(error)
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: error
+                        })
+                        this.txPending = false
+                    }
                 } else if (this.manual_input === 'out') {
                     // swap_out
-                    await contract.swap_out(
-                        {
-                            pool_id: this.pool_id,
-                            token_in: this.token_in.token,
-                            amount_out: this.token_out_amnt,
-                            token_out: this.token_out.token
-                        }
-                    ).then((response) => {
-                        console.log(response)
-                    })
+                    try {
+                        await contract.swap_out(
+                            {
+                                pool_id: this.pool_id,
+                                token_in: this.token_in.token,
+                                amount_out: this.token_out_amnt,
+                                token_out: this.token_out.token
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Swap is successful'
+                            })
+                            this.txPending = false
+                        })
+                    } catch (error) {
+                        console.log(error)
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: error
+                        })
+                        this.txPending = false
+                    }
                 }
                 
             }
@@ -336,11 +409,17 @@ export default {
     cursor: pointer;
 }
 
+.modal-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 12px;
+}
+
 .footer-btn {
     border: 1px solid transparent;
     width: 100%;
     padding: 8px;
-    margin-top: 12px;
     border: 1px solid transparent; 
     border-radius: $borderRadius;
     background-color: $buttonAltBgColor;

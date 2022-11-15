@@ -13,11 +13,32 @@ export default createStore({
     tokensBeingLoaded: false,
     pools: [],
     positions: [],
-    tokens: null
+    tokens: null,
+    notifications: []
   },
   getters: {
   },
   mutations: {
+    pushNotification(state, notification) {
+      let newId = 0
+      if (state.notifications[0]) {
+        for (let i = 0; i < state.notifications.length; i++) {
+          if (state.notifications[i].id >= newId) {
+            newId = state.notifications[i].id + 1
+          }
+        }
+      }
+      state.notifications.push({
+        id: newId,      // int
+        // txid: notification.txid,
+        title: notification.title,
+        type: notification.type,  // success/error
+        text: notification.text   // caption
+      })
+    },
+    removeNotification(state, id) {
+      state.notifications = state.notifications.filter(x => x.id !== id)
+    }
   },
   actions: {
     async signIn ({state}) {

@@ -85,7 +85,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
             </div>
         </div>
@@ -289,6 +290,7 @@ export default {
             t0_balance: null,
             t1_balance: null,
             // total: null,
+            txPending: false,
 
             loading: false,
         }
@@ -411,16 +413,34 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
-                await contract.open_position(
-                    {
-                        pool_id: Number(this.poolId),
-                        token0_liquidity: Number(this.t0_liq),
-                        lower_bound_price: Number(this.lowerPrice),
-                        upper_bound_price: Number(this.upperPrice)
-                    }
-                ).then((response) => {
-                    console.log(response)
-                })
+                this.txPending = true
+                try {
+                    await contract.open_position(
+                        {
+                            pool_id: Number(this.poolId),
+                            token0_liquidity: Number(this.t0_liq),
+                            lower_bound_price: Number(this.lowerPrice),
+                            upper_bound_price: Number(this.upperPrice)
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully opened'
+                        })
+                        this.txPending = false
+                    })
+                } catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
             }
         },
         closePosition: async function (pos) {
@@ -580,6 +600,8 @@ export default {
     align-items: center;
     animation: appear 0.3s linear;
     background-color: rgb(59, 60, 63, 0.8);
+    z-index: 600;
+
 }
 
 @keyframes appear {

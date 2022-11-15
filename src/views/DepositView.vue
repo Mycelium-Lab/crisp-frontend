@@ -49,13 +49,13 @@
                 <!--<input v-model="token" class="modal-body_row-input"/>-->
                 <select v-model="token" class="modal-body_row-input">
                     <option value="usdc.fakes.testnet">
-                        usdc.fakes.testnet (USDC)
+                        USDC
                     </option>
                     <option value="usdt.fakes.testnet">
-                        usdt.fakes.testnet (USDT)
+                        USDT
                     </option>
                     <option value="usdn.testnet">
-                        usdn.testnet (USDN)
+                        USN
                     </option>
                 </select>
             </div>
@@ -65,8 +65,9 @@
             </div>
             </div>
             <div class="modal-footer">
-                <button @click="allow()" class="confirm-btn">Allow tokens</button>
-                <button @click="deposit()" class="confirm-btn">Deposit</button>
+                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
+                <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
             </div>
         </div>
         <div class="modal">
@@ -79,7 +80,7 @@
                     <input v-if="!$store.state.tokenBalances[0]" v-model="tokenW" class="modal-body_row-input"/>
                     <select v-else v-model="tokenW" class="modal-body_row-input">
                         <option :value="token.token" v-for="(token, index) in $store.state.tokenBalances" :key="index">
-                            {{token.token}} ({{token.symbol}})
+                            {{token.symbol}}
                         </option>
                     </select>
                 </div>
@@ -89,7 +90,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button @click="withdraw()" class="confirm-btn">Withdraw</button>
+                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                <button v-else @click="withdraw()" class="confirm-btn">Withdraw</button>
             </div>
         </div>
     </div>
@@ -107,6 +109,8 @@ export default {
     return {
       loading: true,
 
+    
+      txPending: false,
       /**
        * storage_deposit(), ft_transfer_call()
        */
@@ -125,38 +129,72 @@ export default {
   methods: {
     allow: async function () {
         if (this.$store.state.account) {
-            console.log('umm')
-            console.log('umm')
-            await this.$store.state.walletConnection.account().functionCall({
-                contractId: this.token,
-                methodName: 'storage_deposit',
-                args: {
-                    account_id: CONTRACT_ID
-                },
-                gas: 300000000000000,
-                attachedDeposit: Number(1000000000000000)
-            }).then(async (res) => {
-                console.log(res)
-            })
+            this.txPending = true
+            try {
+                await this.$store.state.walletConnection.account().functionCall({
+                    contractId: this.token,
+                    methodName: 'storage_deposit',
+                    args: {
+                        account_id: CONTRACT_ID
+                    },
+                    gas: 300000000000000,
+                    attachedDeposit: Number(1000000000000000)
+                }).then(async (res) => {
+                    console.log(res)
+                    this.$store.commit('pushNotification', {
+                        title: 'Success',
+                        type: 'success',
+                        // text: response
+                        text: 'Allowance is successful'
+                    })
+                    this.txPending = false
+                })
+            } catch (error) {
+                console.log(error)
+                this.$store.commit('pushNotification', {
+                    title: 'Error',
+                    type: 'error',
+                    text: error
+                })
+                this.txPending = false
+            }
         }
     },
     deposit: async function () {
         if (this.$store.state.account) {
-            await this.$store.state.walletConnection.account().functionCall({
-                contractId: this.token,
-                methodName: 'ft_transfer_call',
-                args: {
-                    receiver_id: CONTRACT_ID,
-                    amount: this.amount,
-                    msg: ''
-                },
-                gas: 300000000000000,
-                attachedDeposit: 1
-                // gas: DEFAULT_FUNCTION_CALL_GAS,
-                // attachedDeposit: 0.000000000000000000000001
-            }).then((res) => {
-                console.log(res)
-            })
+            this.txPending = true
+            try {
+                await this.$store.state.walletConnection.account().functionCall({
+                    contractId: this.token,
+                    methodName: 'ft_transfer_call',
+                    args: {
+                        receiver_id: CONTRACT_ID,
+                        amount: this.amount,
+                        msg: ''
+                    },
+                    gas: 300000000000000,
+                    attachedDeposit: 1
+                    // gas: DEFAULT_FUNCTION_CALL_GAS,
+                    // attachedDeposit: 0.000000000000000000000001
+                }).then((res) => {
+                    console.log(res)
+                    this.$store.commit('pushNotification', {
+                        title: 'Success',
+                        type: 'success',
+                        // text: response
+                        text: 'Deposit is successful'
+                    })
+                    this.txPending = false
+                })
+            } catch (error) {
+                console.log(error)
+                this.$store.commit('pushNotification', {
+                    title: 'Error',
+                    type: 'error',
+                    text: error
+                })
+                this.txPending = false
+            }
         }
     },
     withdraw: async function () {
@@ -164,14 +202,33 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
-                await contract.withdraw(
-                    { 
-                        token: this.tokenW,
-                        amount: Number(this.amountW)
-                    }
-                ).then(data => {
-                    console.log(data)
-                })
+                this.txPending = true
+                try {
+                    await contract.withdraw(
+                        { 
+                            token: this.tokenW,
+                            amount: Number(this.amountW)
+                        }
+                    ).then(data => {
+                        console.log(data)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Withdraw is successful'
+                        })
+                        this.txPending = false
+                    })
+                }
+                catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
             }
         }
     }
