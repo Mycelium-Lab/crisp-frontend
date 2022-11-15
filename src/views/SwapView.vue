@@ -13,6 +13,9 @@
                             expense,
                         </template>please wait)
                     </template>
+                    <template v-if="loaded === false">
+                        (please wait, we are loading your tokens)
+                    </template>
                 </span>
                 <div>
                     <!-- ... -->
@@ -22,7 +25,7 @@
                 <button @click="swapPositions()" class="swap-tokens"></button> <!--position: absolute-->
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
+                    <select :disabled="loaded === false" v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
                     <div class="token-input" v-if="manual_input === 'out' && tokenAmntLoading === true">
@@ -30,9 +33,10 @@
                     </div>
                     <input v-else type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
+                <span class="token-balance" v-if="token_in_balance">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}</span>
                 <div class="token-wrapper">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
+                    <select :disabled="loaded === false" v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
                     </select>
                     <div class="token-input" v-if="manual_input === 'in' && tokenAmntLoading === true">
@@ -40,6 +44,7 @@
                     </div>
                     <input v-else type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
+                <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}</span>
             </div>
             <div class="modal-footer">
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
@@ -78,20 +83,35 @@ export default {
             tokens: [],
 
             txPending: false,
-
+            token_in_balance: null,
+            token_out_balance: null,
             // animation for footerBtn
-            footerBtnActive: false
+            footerBtnActive: false,
         }
     },
     async created () {
         await this.initTokens()
     },
+    computed: {
+        loaded: function () {
+            if (this.$store.state.loaded.balances && this.$store.state.loaded.positions && this.$store.state.loaded.pools && this.$store.state.loaded.tokens) {
+                return true
+            } else {
+                return false
+            }
+        }
+    },
     methods: {
         swapPositions: async function () {
             const tin = this.token_out
             const tout = this.token_in
+            const inbalance = this.token_out_balance
+            const outbalance = this.token_in_balance
             this.token_in = tin
             this.token_out = tout
+            this.token_in_balance = inbalance
+            this.token_out_balance = outbalance
+            
             if (this.manual_input === 'in' && this.token_in_amnt) {
                 this.getReturn()
             } else if (this.manual_input === 'out' && this.token_out_amnt) {
@@ -112,6 +132,42 @@ export default {
                     this.pool_id = res
                 }
                 console.log(this.pool_id)
+            }
+            if (this.token_in) {
+                console.log(this.token_in)
+                console.log(this.$store.state.tokenBalances)
+                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_in.token)
+                if (balanceObj) {
+                    this.token_in_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount
+                    }
+                } else {
+                    this.token_in_balance = {
+                        symbol: 'Token',
+                        amount: '0'
+                    }
+                }
+            }
+            if (this.token_out) {
+                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_out.token)
+                if (balanceObj) {
+                    this.token_out_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount
+                    }
+                } else {
+                    this.token_in_balance = {
+                        symbol: 'Token',
+                        amount: '0'
+                    }
+                }
+            }
+            if (this.manual_input === 'in' && this.token_in_amnt !== null) {
+                this.getReturn()
+            }
+            if (this.manual_input === 'out' && this.token_out_amnt !== null) {
+                this.getExpense()
             }
         },
         getReturn: async function () {
@@ -390,6 +446,11 @@ export default {
     height: $largeInputSize*0.6;
     font-size: $greaterTextSize;
     outline: none;
+}
+
+.token-balance {
+    padding: 8px;
+    padding-left: 0;
 }
 
 .token-select {

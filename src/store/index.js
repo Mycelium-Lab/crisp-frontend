@@ -14,7 +14,13 @@ export default createStore({
     pools: [],
     positions: [],
     tokens: null,
-    notifications: []
+    notifications: [],
+    loaded: {
+      balances: false,
+      pools: false,
+      positions: false,
+      tokens: false
+    }
   },
   getters: {
   },
@@ -38,6 +44,10 @@ export default createStore({
     },
     removeNotification(state, id) {
       state.notifications = state.notifications.filter(x => x.id !== id)
+    },
+    emitLoading(state, parameter) {
+      if (parameter === 'positions') { state.loaded.positions = true }
+      if (parameter === 'tokens') { state.loaded.tokens = true }
     }
   },
   actions: {
@@ -59,6 +69,7 @@ export default createStore({
           const response = await contract.get_pools()
           console.log(response)
           state.pools = response
+          state.loaded.pools = true
       }
     },
     async processTokenMetadata({state}) {
@@ -105,6 +116,7 @@ export default createStore({
       }
       console.log(tokensWithMetadata)
       state.tokens = tokensWithMetadata
+      state.loaded.tokens = true
     },
     async processPositions({state}) {
       state.positions = []
@@ -129,6 +141,7 @@ export default createStore({
           })
         }
       }
+      state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
       const { connect, WalletConnection, Contract } = nearAPI
@@ -200,6 +213,7 @@ export default createStore({
           }
           console.log(balanceObjects)
           state.tokenBalances = balanceObjects
+          state.loaded.balances = true
         })
       }
       state.tokensBeingLoaded = false
