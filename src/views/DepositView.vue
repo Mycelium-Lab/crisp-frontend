@@ -39,6 +39,11 @@
                 <span class="title">Loading your balances . . .</span>
             </div>
         </template>
+        <template v-else>
+            <div class="heading">
+                <span class="title">You have no tokens on your balance yet. You can deposit them below.</span>
+            </div>
+        </template>
         <div class="modal">
             <div class="modal-header">
             <span class="modal-title">Deposit your token to Crisp</span>
@@ -66,7 +71,7 @@
             </div>
             <div class="modal-footer">
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
+                <!--<button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>-->
                 <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
             </div>
         </div>
