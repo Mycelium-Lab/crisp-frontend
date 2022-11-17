@@ -60,11 +60,13 @@
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                                <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
+                                <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                             </div>
                         </template>
                         <span v-else>Please wait while we load pools. . .</span>
@@ -78,10 +80,10 @@
                             <span class="input-title">Upper bound price</span>
                             <input v-model="upperPrice" @change="calculate()" id="upperPrice" class="modal-body_row-input"/>
                         </div>
-                        <!--<div class="input-wrapper">
-                            <span class="input-title">Total</span>
-                            <input v-model="total" @change="calculate()" id="total" class="modal-body_row-input"/>
-                        </div>-->
+                        <div class="input-wrapper">
+                            <span class="input-title">Current price</span>
+                            <span id="currentPrice" class="modal-body_row-input">{{currentPrice}}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -289,6 +291,7 @@ export default {
             t1_balance: null,
             // total: null,
             txPending: false,
+            currentPrice: null,
 
             loading: false,
         }
@@ -363,6 +366,11 @@ export default {
 
             this.lowerPrice = lp
             this.upperPrice = up
+            this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price
+            const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
+            const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
+            this.t0_balance = balance0.amount
+            this.t1_balance = balance1.amount
         },
         calculateDefault: function () {
             this.manual_input = 'first'
@@ -428,7 +436,7 @@ export default {
                     await contract.open_position(
                         {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: (this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toFixed(0).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice),
                             upper_bound_price: Number(this.upperPrice)
                         }
@@ -693,6 +701,8 @@ export default {
     margin-right: 8px;
     transition: 0.3s;
     min-width: 238px;
+    min-height: 29px;
+    box-sizing: border-box;
 }
 
 .modal-body_row-input:focus {
