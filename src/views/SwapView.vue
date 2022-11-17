@@ -103,6 +103,7 @@ export default {
     },
     methods: {
         swapPositions: async function () {
+            this.$store.dispatch('reload', store.state)
             const tin = this.token_out
             const tout = this.token_in
             const inbalance = this.token_out_balance
@@ -342,6 +343,7 @@ export default {
                                 text: 'Swap is successful'
                             })
                             this.txPending = false
+                            this.$store.dispatch('reload', store.state)
                         })
                     } catch (error) {
                         console.log(error)
@@ -375,6 +377,7 @@ export default {
                                 text: 'Swap is successful'
                             })
                             this.txPending = false
+                            this.$store.dispatch('reload', store.state)
                         })
                     } catch (error) {
                         console.log(error)

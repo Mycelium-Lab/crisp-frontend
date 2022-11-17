@@ -238,6 +238,7 @@ export default {
                             text: 'Withdraw is successful'
                         })
                         this.txPending = false
+                        this.$store.dispatch('reload', store.state)
                     })
                 }
                 catch (error) {

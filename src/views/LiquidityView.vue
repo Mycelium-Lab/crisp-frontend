@@ -98,61 +98,67 @@
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
 
-            <template v-if="$store.state.pools">
+            <template v-if="$store.state.pools && $store.state.tokens">
                 <div v-if="$store.state.pools[0]" class="list-header">
-                    <!--<span class="list-header_unit">
-                        #
-                    </span>-->
-                    <span class="list-header_unit">
-                        Icon
-                    </span>
-                    <span class="list-header_unit">
-                        Token pair
-                    </span>
-                    <span class="list-header_unit">
-                        Liquidity
-                    </span>
-                    <span class="list-header_unit">
-                        Protocol fee
-                    </span>
-                    <span class="list-header_unit">
-                        Rewards
-                    </span>
-                    <span class="list-header_unit">
-                        Price
-                    </span>
+                        <!--<span class="list-header_unit">
+                            #
+                        </span>-->
+                        <span class="list-header_unit">
+                            Icon
+                        </span>
+                        <span class="list-header_unit">
+                            Token pair
+                        </span>
+                        <span class="list-header_unit">
+                            Liquidity
+                        </span>
+                        <span class="list-header_unit">
+                            Protocol fee
+                        </span>
+                        <span class="list-header_unit">
+                            Rewards
+                        </span>
+                        <span class="list-header_unit">
+                            Price
+                        </span>
                 </div>
                 <div v-if="$store.state.pools[0]" class="list">
-                    <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
-                        <!--<span class="list-pool_unit">
-                            {{index}}
-                        </span>-->
-                        <span v-if="$store.state.tokens" class="list-pool_unit">
-                            <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
-                            <img class="icon" :src="$store.state.tokens[pool.token1].icon"/>
-                        </span>
-                        <span v-if="$store.state.tokens" class="list-pool_unit">
-                            {{$store.state.tokens[pool.token0].symbol}}<br>
-                            {{$store.state.tokens[pool.token1].symbol}}
-                        </span>
-                        <span v-else>
-                            {{pool.token0}}<br>
-                            {{pool.token1}}
-                        </span>
-                        <span class="list-pool_unit">
-                            {{pool.liquidity}}
-                        </span>
-                        <span class="list-pool_unit">
-                            {{pool.protocol_fee/100}}%
-                        </span>
-                        <span class="list-pool_unit">
-                            {{pool.rewards/100}}%
-                        </span>
-                        <span class="list-pool_unit">
-                            {{pool.sqrt_price * pool.sqrt_price}}
-                        </span>
-                    </div>
+                        <div class="pool" v-for="(pool, index) in $store.state.pools" :key="index">
+                            <!--<span class="list-pool_unit">
+                                {{index}}
+                            </span>-->
+                            <span v-if="$store.state.tokens" class="list-pool_unit">
+                                <img class="icon" :src="$store.state.tokens[pool.token0].icon"/>
+                                <img class="icon" :src="$store.state.tokens[pool.token1].icon"/>
+                            </span>
+                            <span v-if="$store.state.tokens" class="list-pool_unit">
+                                {{$store.state.tokens[pool.token0].symbol}}<br>
+                                {{$store.state.tokens[pool.token1].symbol}}
+                            </span>
+                            <span v-else>
+                                {{pool.token0}}<br>
+                                {{pool.token1}}
+                            </span>
+                            <span class="list-pool_unit">
+                                {{pool.liquidity}}
+                            </span>
+                            <span class="list-pool_unit">
+                                {{pool.protocol_fee/100}}%
+                            </span>
+                            <span class="list-pool_unit">
+                                {{pool.rewards/100}}%
+                            </span>
+                            <span class="list-pool_unit">
+                                {{pool.sqrt_price * pool.sqrt_price}}
+                            </span>
+                        </div>
                 </div>
+            </template>
+            <template v-else-if="$store.state.pools">
+                Loading necessary metadata of tokens. . .
+            </template>
+            <template v-else>
+                Loading pools. . .
             </template>
             
             <template v-if="$store.state.positions">
@@ -443,6 +449,8 @@ export default {
                             text: 'Position successfully opened'
                         })
                         this.txPending = false
+                        this.closeNewPositionModal()
+                        this.$store.dispatch('reload', store.state)
                     })
                 } catch (error) {
                     console.log(error)

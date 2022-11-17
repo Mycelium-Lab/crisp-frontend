@@ -12,7 +12,7 @@ export default createStore({
     tokenBalances: [],
     tokensBeingLoaded: false,
     pools: [],
-    positions: [],
+    positions: null,
     tokens: null,
     notifications: [],
     loaded: {
@@ -25,7 +25,7 @@ export default createStore({
   getters: {
   },
   mutations: {
-    pushNotification(state, notification) {
+    async pushNotification(state, notification) {
       let newId = 0
       if (state.notifications[0]) {
         for (let i = 0; i < state.notifications.length; i++) {
@@ -51,6 +51,25 @@ export default createStore({
     }
   },
   actions: {
+    async reload ({state, commit, dispatch}) {
+      state.tokenBalances = []
+      state.tokens = null
+      state.pools = []
+      state.positions = null
+      await dispatch('fetchCrispContract', state)
+      await dispatch('fetchPools', state)
+      await dispatch('fetchBalances', state)
+      if (state.pools[0]) {
+        await dispatch('processTokenMetadata', state)
+      } else {
+        await commit('emitLoading', 'tokens')
+      }
+      if (state.pools[0]) {
+        await dispatch('processPositions', state)
+      } else {
+        await commit('emitLoading', 'positions')
+      }
+    },
     async signIn ({state}) {
       await state.walletConnection.requestSignIn({
         contractId: CONTRACT_ID,
