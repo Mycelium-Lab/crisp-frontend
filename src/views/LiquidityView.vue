@@ -436,7 +436,7 @@ export default {
                     await contract.open_position(
                         {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: this.t0_liq * Math.pow(10, tokenObj.decimals),
+                            token0_liquidity: (this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice),
                             upper_bound_price: Number(this.upperPrice)
                         }

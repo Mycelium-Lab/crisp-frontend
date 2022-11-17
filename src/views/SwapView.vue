@@ -197,7 +197,7 @@ export default {
                         {
                             pool_id: this.pool_id,
                             token_in: this.token_in.token,
-                            amount_in: +((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                         }
                     ).then((res) => {
                         console.log(res)
@@ -256,7 +256,7 @@ export default {
                             // must get this pool id somehow
                             pool_id: this.pool_id,
                             token_out: this.token_out.token,
-                            amount_out: +((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                         }
                     ).then((res) => {
                         console.log(res)

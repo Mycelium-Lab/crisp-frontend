@@ -74,7 +74,7 @@
             </div>
             <div class="modal-footer">
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                <!--<button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>-->
+                <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
                 <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
             </div>
         </div>
@@ -109,6 +109,7 @@
 // @ is an alias to /src
 import { CONTRACT_ID } from '../constants/index.js'
 import store from '../store'
+import * as nearAPI from "near-api-js"
 
 export default {
   name: 'HomeView',
@@ -137,6 +138,7 @@ export default {
   methods: {
     allow: async function () {
         if (this.$store.state.account) {
+            const { utils } = nearAPI
             this.txPending = true
             try {
                 await this.$store.state.walletConnection.account().functionCall({
@@ -146,7 +148,7 @@ export default {
                         account_id: CONTRACT_ID
                     },
                     gas: 300000000000000,
-                    attachedDeposit: Number(1000000000000000)
+                    attachedDeposit: utils.format.parseNearAmount("1")
                 }).then(async (res) => {
                     console.log(res)
                     this.$store.commit('pushNotification', {
