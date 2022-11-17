@@ -188,15 +188,23 @@ export default {
                 // ).then(async (res) => {
                 //         decimals = res.decimals
                 try {
+                    let tokenObj
+                    if (this.$store.state.tokens[this.token_in.token]) {
+                        tokenObj = this.$store.state.tokens[this.token_in.token]
+                    }
                     await this.$store.state.crispContract.get_return(
                         {
                             pool_id: this.pool_id,
                             token_in: this.token_in.token,
-                            amount_in: Number(this.token_in_amnt)
+                            amount_in: +((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                         }
                     ).then((res) => {
                         console.log(res)
-                        this.token_out_amnt = res
+                        let tokenOutObj
+                        if (this.$store.state.tokens[this.token_out.token]) {
+                            tokenOutObj = this.$store.state.tokens[this.token_out.token]
+                        }
+                        this.token_out_amnt = (res / Math.pow(10, tokenOutObj.decimals))
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
@@ -238,16 +246,24 @@ export default {
                 // ).then(async (res) => {
                 //         decimals = res.decimals
                 try {
+                    let tokenObj
+                    if (this.$store.state.tokens[this.token_out.token]) {
+                        tokenObj = this.$store.state.tokens[this.token_out.token]
+                    }
                     await this.$store.state.crispContract.get_expense(
                         {
                             // must get this pool id somehow
                             pool_id: this.pool_id,
                             token_out: this.token_out.token,
-                            amount_out: Number(this.token_out_amnt)
+                            amount_out: +((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                         }
                     ).then((res) => {
                         console.log(res)
-                        this.token_in_amnt = res
+                        let tokenInObj
+                        if (this.$store.state.tokens[this.token_in.token]) {
+                            tokenInObj = this.$store.state.tokens[this.token_in.token]
+                        }
+                        this.token_in_amnt = (res / Math.pow(10, tokenInObj.decimals))
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
@@ -282,6 +298,10 @@ export default {
                 {
                     symbol: 'USN',
                     token: 'usdn.testnet'
+                },
+                {
+                    symbol: 'wNEAR',
+                    token: 'wrap.testnet'
                 }
             ]
         },
@@ -302,11 +322,15 @@ export default {
                 if (this.manual_input === 'in') {
                     // swap_in
                     try {
+                        let tokenObj
+                        if (this.$store.state.tokens[this.token_in.token]) {
+                            tokenObj = this.$store.state.tokens[this.token_in.token]
+                        }
                         await contract.swap_in(
                             {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_in: this.token_in_amnt,
+                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
                                 token_out: this.token_out.token
                             }
                         ).then((response) => {
@@ -331,11 +355,15 @@ export default {
                 } else if (this.manual_input === 'out') {
                     // swap_out
                     try {
+                        let tokenObj
+                        if (this.$store.state.tokens[this.token_out.token]) {
+                            tokenObj = this.$store.state.tokens[this.token_out.token]
+                        }
                         await contract.swap_out(
                             {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_out: this.token_out_amnt,
+                                amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
                                 token_out: this.token_out.token
                             }
                         ).then((response) => {

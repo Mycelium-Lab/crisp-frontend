@@ -125,6 +125,13 @@ export default createStore({
         console.log(pool)
         for (let p = 0; p < pool.positions.length; p++) {
           const position = pool.positions[p]
+          let token0obj, token1obj
+          if (state.tokens[pool.token0]) {
+            token0obj = state.tokens[pool.token0]
+          }
+          if (state.tokens[pool.token1]) {
+            token1obj = state.tokens[pool.token1]
+          }
           state.positions.push({
             id: position.id,
             poolId: i,
@@ -136,8 +143,8 @@ export default createStore({
             tick_upper_bound_price: position.tick_upper_bound_price,
             token0: pool.token0,
             token1: pool.token1,
-            token0_real_liquidity: position.token0_real_liquidity,
-            token1_real_liquidity: position.token1_real_liquidity
+            token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
+            token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
           })
         }
       }
@@ -201,7 +208,8 @@ export default createStore({
             ).then((res) => {
               balanceObjects.push({
                 token: formatedArr[i],
-                amount: formatedArr[i+1],
+                // amount: formatedArr[i+1],
+                amount: formatedArr[i+1] / Math.pow(10, res.decimals),
                 icon: res.icon,
                 symbol: res.symbol,
                 decimals: res.decimals,

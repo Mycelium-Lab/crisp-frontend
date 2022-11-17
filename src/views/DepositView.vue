@@ -62,6 +62,9 @@
                     <option value="usdn.testnet">
                         USN
                     </option>
+                    <option value="wrap.testnet">
+                        wNEAR
+                    </option>
                 </select>
             </div>
             <div class="input-wrapper">
@@ -166,15 +169,22 @@ export default {
         }
     },
     deposit: async function () {
-        if (this.$store.state.account) {
+        if (this.$store.state.account && this.$store.state.tokens && this.token) {
             this.txPending = true
             try {
+                console.log(this.$store.state.tokens)
+                console.log(this.token)
+                let tokenObj
+                if (this.$store.state.tokens[this.token]) {
+                    tokenObj = this.$store.state.tokens[this.token]
+                }
+
                 await this.$store.state.walletConnection.account().functionCall({
                     contractId: this.token,
                     methodName: 'ft_transfer_call',
                     args: {
                         receiver_id: CONTRACT_ID,
-                        amount: this.amount,
+                        amount: (this.amount * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                         msg: ''
                     },
                     gas: 300000000000000,
@@ -203,16 +213,21 @@ export default {
         }
     },
     withdraw: async function () {
-        if (this.$store.state.account) {
+        if (this.$store.state.account && this.$store.state.tokens && this.tokenW) {
             const contract = this.$store.state.crispContract
 
             if (contract) {
                 this.txPending = true
+                let tokenObj
+                if (this.$store.state.tokens[this.tokenW]) {
+                    tokenObj = this.$store.state.tokens[this.tokenW]
+                }
+
                 try {
                     await contract.withdraw(
                         { 
                             token: this.tokenW,
-                            amount: Number(this.amountW)
+                            amount: (this.amountW * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                         }
                     ).then(data => {
                         console.log(data)

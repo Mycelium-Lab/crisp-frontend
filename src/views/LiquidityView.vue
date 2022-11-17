@@ -371,6 +371,8 @@ export default {
             if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice) {
                 const poolId = this.poolId
                 const x = this.t0_liq
+                // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
                 const sa = Math.sqrt(this.lowerPrice)
                 const sb = Math.sqrt(this.upperPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
@@ -388,6 +390,8 @@ export default {
             if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice) {
                 const poolId = this.poolId
                 const x = this.t1_liq
+                // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
                 const sa = Math.sqrt(this.lowerPrice)
                 const sb = Math.sqrt(this.upperPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
@@ -415,10 +419,18 @@ export default {
             if (contract) {
                 this.txPending = true
                 try {
+                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                        console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
+
+                    console.log(this.$store.state.tokens)
+                    console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
+                    console.log(this.$store.state.pools[this.poolId].token0)
+                    console.log(this.poolId)
+                    console.log(tokenObj)
                     await contract.open_position(
                         {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: Number(this.t0_liq),
+                            token0_liquidity: this.t0_liq * Math.pow(10, tokenObj.decimals),
                             lower_bound_price: Number(this.lowerPrice),
                             upper_bound_price: Number(this.upperPrice)
                         }
