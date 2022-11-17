@@ -544,7 +544,7 @@ export default {
     border: 1px solid transparent;
     width: 100%;
     padding: 8px;
-    border: 1px solid transparent; 
+    border: 1px solid $buttonBgColor; 
     border-radius: $borderRadius;
     background-color: $buttonAltBgColor;
     color: $buttonBgColor;

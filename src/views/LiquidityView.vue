@@ -190,9 +190,9 @@
                     <span class="pos-list-header_unit">
                         T1 Real Liquidity
                     </span>
-                    <!--<span class="pos-list-header_unit">
-                        Status
-                    </span>-->
+                    <span class="pos-list-header_unit">
+                        Close (if owner)
+                    </span>
                 </div>
                 <div v-if="$store.state.positions[0]" class="list">
                     <div class="pool" v-for="pos in $store.state.positions" :key="pos.id">
@@ -234,22 +234,14 @@
                         <span class="pos-list-pool_unit">
                             {{(pos.token1_real_liquidity).toFixed(6)}}
                         </span>
-                        <!--<span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
-                            <button v-if="pos.isActive === true" @click="closePosition(pos)" class="close-btn">
+                        <span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
+                            <button @click="closePosition(pos)" class="close-btn">
                                 X
                             </button>
-                            <template v-else>
-                                Closed
-                            </template>
                         </span>
-                        <span v-else class="pos-list-pool_unit">
-                            <template v-if="pos.isActive === true">
-                                Active
-                            </template>
-                            <template v-else>
-                                Closed
-                            </template>
-                        </span>-->
+                        <span class="pos-list-pool_unit" v-else>
+
+                        </span>
                     </div>
                 </div>
             </template>
@@ -467,14 +459,18 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
-                await contract.close_position(
-                    {
-                        pool_id: Number(pos.poolId),
-                        id: Number(pos.id)
-                    }
-                ).then((response) => {
-                    console.log(response)
-                })
+                try {
+                    await contract.close_position(
+                        {
+                            pool_id: Number(pos.poolId),
+                            id: Number(pos.id)
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                    })
+                } catch (error) {
+                    console.log(error)
+                }
             }
         }
     }
@@ -765,6 +761,7 @@ export default {
     font-size: $lesserTextSize;
     cursor: pointer;
     transition: 0.3s;
+    margin-right: 32px;
 }
 
 .close-btn:hover {
