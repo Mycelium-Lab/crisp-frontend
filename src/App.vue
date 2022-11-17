@@ -86,6 +86,10 @@ export default {
 <style lang="scss">
 @import "~@/assets/scss/main.scss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
   padding: 0; margin: 0;
   font-family: 'Montserrat', sans-serif;

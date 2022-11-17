@@ -47,7 +47,7 @@
                     <div class="modal-body_row">
                         <template v-if="tokensLoaded">
                             <div class="input-wrapper">
-                                <span class="input-title">Pool id</span>
+                                <span class="input-title">Pool</span>
                                 <select @change="calculateInit()" v-model.lazy="poolId" id="poolId" class="modal-body_row-input">
                                     <option v-for="(pool, index) in $store.state.pools" :key="index" :value="index">
                                         {{$store.state.tokens[pool.token0].symbol}}

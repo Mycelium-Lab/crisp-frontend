@@ -19,6 +19,9 @@
                 <span class="list-header_unit">
                     Amount
                 </span>
+                <span class="list-header_unit">
+                    
+                </span>
             </div>
             <div class="list">
                 <div class="pool" v-for="tokenObject in $store.state.tokenBalances" :key="tokenObject">
@@ -30,6 +33,11 @@
                     </span>
                     <span class="list-pool_unit">
                         {{tokenObject.amount}}
+                    </span>
+                    <span class="list-pool_unit">
+                        <button @click="setWithdraw(tokenObject)" class="withdraw-btn">
+                            Withdraw
+                        </button>
                     </span>
                 </div>
             </div>
@@ -44,62 +52,64 @@
                 <span class="title">You have no tokens on your balance yet. You can deposit them below.</span>
             </div>
         </template>
-        <div class="modal">
-            <div class="modal-header">
-            <span class="modal-title">Deposit your token to Crisp</span>
-            </div>
-            <div class="modal-body">
-            <div class="input-wrapper">
-                <span class="input-title">Token</span>
-                <!--<input v-model="token" class="modal-body_row-input"/>-->
-                <select v-model="token" class="modal-body_row-input">
-                    <option value="usdc.fakes.testnet">
-                        USDC
-                    </option>
-                    <option value="usdt.fakes.testnet">
-                        USDT
-                    </option>
-                    <option value="usdn.testnet">
-                        USN
-                    </option>
-                    <option value="wrap.testnet">
-                        wNEAR
-                    </option>
-                </select>
-            </div>
-            <div class="input-wrapper">
-                <span class="input-title">Amount</span>
-                <input v-model="amount" class="modal-body_row-input"/>
-            </div>
-            </div>
-            <div class="modal-footer">
-                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
-                <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
-            </div>
-        </div>
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">Withdraw your token from Crisp</span>
-            </div>
-            <div class="modal-body">
+        <div class="modal-wrapper">
+            <div class="modal">
+                <div class="modal-header">
+                <span class="modal-title">Deposit your token to Crisp</span>
+                </div>
+                <div class="modal-body">
                 <div class="input-wrapper">
                     <span class="input-title">Token</span>
-                    <input v-if="!$store.state.tokenBalances[0]" v-model="tokenW" class="modal-body_row-input"/>
-                    <select v-else v-model="tokenW" class="modal-body_row-input">
-                        <option :value="token.token" v-for="(token, index) in $store.state.tokenBalances" :key="index">
-                            {{token.symbol}}
+                    <!--<input v-model="token" class="modal-body_row-input"/>-->
+                    <select v-model="token" class="modal-body_row-input">
+                        <option value="usdc.fakes.testnet">
+                            USDC
+                        </option>
+                        <option value="usdt.fakes.testnet">
+                            USDT
+                        </option>
+                        <option value="usdn.testnet">
+                            USN
+                        </option>
+                        <option value="wrap.testnet">
+                            wNEAR
                         </option>
                     </select>
                 </div>
                 <div class="input-wrapper">
                     <span class="input-title">Amount</span>
-                    <input v-model="amountW" class="modal-body_row-input"/>
+                    <input v-model="amount" class="modal-body_row-input"/>
+                </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
+                    <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                <button v-else @click="withdraw()" class="confirm-btn">Withdraw</button>
+            <div class="modal">
+                <div id="withdraw" class="modal-header">
+                    <span class="modal-title">Withdraw your token from Crisp</span>
+                </div>
+                <div class="modal-body">
+                    <div class="input-wrapper">
+                        <span class="input-title">Token</span>
+                        <input v-if="!$store.state.tokenBalances[0]" v-model="tokenW" class="modal-body_row-input"/>
+                        <select v-else v-model="tokenW" class="modal-body_row-input">
+                            <option :value="token.token" v-for="(token, index) in $store.state.tokenBalances" :key="index">
+                                {{token.symbol}}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="input-wrapper">
+                        <span class="input-title">Amount</span>
+                        <input v-model="amountW" class="modal-body_row-input"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-else @click="withdraw()" class="confirm-btn">Withdraw</button>
+                </div>
             </div>
         </div>
     </div>
@@ -214,6 +224,10 @@ export default {
             }
         }
     },
+    setWithdraw: async function (token) {
+        document.getElementById('withdraw').scrollIntoView()
+        this.tokenW = token.token
+    },
     withdraw: async function () {
         if (this.$store.state.account && this.$store.state.tokens && this.tokenW) {
             const contract = this.$store.state.crispContract
@@ -261,14 +275,33 @@ export default {
 
 <style lang="scss" scoped>
 @import "~@/assets/scss/main.scss";
-.modal {
+
+.modal-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     width: $interfaceBlocksWidth;
+    margin-top: 32px;
+    box-sizing: border-box;
+    margin-bottom: 32px;
+}
+
+.modal {
+    width: ($interfaceBlocksWidth/2) - 32px;
     background-color: $cardBgColor;
     min-height: $defaultCardHeight;
     border: $brightBorder;
     border-radius: $borderRadius;
+    box-sizing: border-box;
     padding: 26px;
-    margin-top: 32px;
+}
+
+.modal:first-child {
+    margin-right: 16px;
+}
+
+.modal:last-child {
+    margin-left: 16px;
 }
 
 .modal-header {
@@ -301,7 +334,7 @@ export default {
     margin-left: 16px;
     margin-right: 16px;
     transition: 0.3s;
-    min-width: 238px;
+    width: 140px;
 }
 
 .modal-body_row-input:focus {
@@ -341,6 +374,10 @@ export default {
     cursor: pointer;
     transition: 0.3s;
     margin-left: 12px;
+}
+
+.confirm-btn:first-child {
+    margin: 0;
 }
 
 .confirm-btn:hover {
@@ -410,5 +447,16 @@ export default {
 .list-header_unit:first-child {
     padding-left: 6px;
     box-sizing: border-box;
+}
+
+.withdraw-btn {
+    border: 1px solid transparent;
+    padding: 8px;
+    border-radius: $borderRadius;
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $tinyTextSize;
+    cursor: pointer;
+    transition: 0.3s;
 }
 </style>
