@@ -90,10 +90,10 @@
                 </div>
             </div>
         </div>
-        <div v-if="noLogin">
+        <!--<div v-if="noLogin">
             Please, connect your wallet
-        </div>
-        <template v-else-if="!loading">
+        </div>-->
+        <template v-if="!loading">
             <div class="heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>

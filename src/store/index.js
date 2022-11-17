@@ -83,13 +83,24 @@ export default createStore({
       location.reload()
     },
     async fetchPools({state}) {
-      const contract = state.crispContract
-      if (contract) {
-          const response = await contract.get_pools()
-          console.log(response)
-          state.pools = response
-          state.loaded.pools = true
-      }
+      // const contract = state.crispContract
+      // if (contract) {
+      //     const response = await contract.get_pools()
+      //     console.log(response)
+      //     state.pools = response
+      //     state.loaded.pools = true
+      // }
+      await state.walletConnection.account().viewFunction(
+        {
+          contractId: CONTRACT_ID,
+          methodName: 'get_pools',
+          args: {
+          },
+        }
+      ).then((res) => {
+        state.pools = res
+        state.loaded.pools = true
+      })
     },
     async processTokenMetadata({state}) {
       const tokens = []
@@ -119,10 +130,8 @@ export default createStore({
             contractId: tokens[i].token,
             methodName: 'ft_metadata',
             args: {
-              account_id: state.account.accountId
-            },
-          },
-          state.account.accountId
+            }
+          }
         ).then((res) => {
           tokensWithMetadata[tokens[i].token] = {
             token: tokens[i].token,
