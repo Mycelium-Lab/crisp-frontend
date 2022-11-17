@@ -62,6 +62,7 @@
 // import HelloWorld from '@/components/HelloWorld.vue'
 
 // import { CONTRACT_ID } from '../constants/index.js'
+import { CONTRACT_ID } from '@/constants'
 import store from '../store'
 
 export default {
@@ -193,11 +194,15 @@ export default {
                     if (this.$store.state.tokens[this.token_in.token]) {
                         tokenObj = this.$store.state.tokens[this.token_in.token]
                     }
-                    await this.$store.state.crispContract.get_return(
+                    await this.$store.state.walletConnection.account().viewFunction(
                         {
-                            pool_id: this.pool_id,
-                            token_in: this.token_in.token,
-                            amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            contractId: CONTRACT_ID,
+                            methodName: 'get_return',
+                            args: {
+                                pool_id: this.pool_id,
+                                token_in: this.token_in.token,
+                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            }
                         }
                     ).then((res) => {
                         console.log(res)
@@ -209,6 +214,22 @@ export default {
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
+                    // await this.$store.state.crispContract.get_return(
+                    //     {
+                    //         pool_id: this.pool_id,
+                    //         token_in: this.token_in.token,
+                    //         amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                    //     }
+                    // ).then((res) => {
+                    //     console.log(res)
+                    //     let tokenOutObj
+                    //     if (this.$store.state.tokens[this.token_out.token]) {
+                    //         tokenOutObj = this.$store.state.tokens[this.token_out.token]
+                    //     }
+                    //     this.token_out_amnt = (res / Math.pow(10, tokenOutObj.decimals))
+                    //     this.tokenAmntLoading = false
+                    //     this.txPending = false
+                    // })
                 } catch (error) {
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -251,12 +272,23 @@ export default {
                     if (this.$store.state.tokens[this.token_out.token]) {
                         tokenObj = this.$store.state.tokens[this.token_out.token]
                     }
-                    await this.$store.state.crispContract.get_expense(
+                    // await this.$store.state.crispContract.get_expense(
+                    //     {
+                    //         // must get this pool id somehow
+                    //         pool_id: this.pool_id,
+                    //         token_out: this.token_out.token,
+                    //         amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                    //     }
+                    // ).then((res) => {
+                    await this.$store.state.walletConnection.account().viewFunction(
                         {
-                            // must get this pool id somehow
-                            pool_id: this.pool_id,
-                            token_out: this.token_out.token,
-                            amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            contractId: CONTRACT_ID,
+                            methodName: 'get_return',
+                            args: {
+                                pool_id: this.pool_id,
+                                token_in: this.token_in.token,
+                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                            }
                         }
                     ).then((res) => {
                         console.log(res)

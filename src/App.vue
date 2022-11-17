@@ -133,12 +133,15 @@ input[type=number] {
   width: $interfaceBlocksWidth/2;
   padding: 16px;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .notification-box {
   width: 100%;
-  min-height: 182px;
-  max-height: 182px;
+  min-height: 280px;
+  max-height: 280px;
   position: relative;
 }
 
@@ -151,9 +154,10 @@ input[type=number] {
   position: absolute;
   width: ($interfaceBlocksWidth/2)-36px;
   animation: shiftIn 0.6s linear;
-  height: 150px;
+  height: 250px;
   box-sizing: border-box;
   pointer-events: all;
+  overflow: hidden;
 }
 
 .closed {
