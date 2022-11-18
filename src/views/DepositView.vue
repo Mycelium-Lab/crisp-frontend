@@ -84,7 +84,7 @@
                 </div>
                 <div class="modal-footer">
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                    <button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>
+                    <!--<button v-if="!txPending" @click="allow()" class="confirm-btn">Allow tokens</button>-->
                     <button v-if="!txPending" @click="deposit()" class="confirm-btn">Deposit</button>
                 </div>
             </div>
@@ -164,7 +164,7 @@ export default {
                 }
             ).then(async (res) => {
                 if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
-                    await this.$store.state.walletConnection.account.viewFunction(
+                    await this.$store.state.walletConnection.account().viewFunction(
                         {
                             contractId: this.token,
                             methodName: 'ft_metadata',
@@ -189,73 +189,80 @@ export default {
             this.txPending = false
         }
     },
-    allow: async function () {
-        if (this.$store.state.account) {
-            const { utils } = nearAPI
-            this.txPending = true
-            try {
-                await this.$store.state.walletConnection.account().functionCall({
-                    contractId: this.token,
-                    methodName: 'storage_deposit',
-                    args: {
-                        account_id: CONTRACT_ID
-                    },
-                    gas: 300000000000000,
-                    attachedDeposit: utils.format.parseNearAmount("1")
-                }).then(async (res) => {
-                    console.log(res)
-                    this.$store.commit('pushNotification', {
-                        title: 'Success',
-                        type: 'success',
-                        // text: response
-                        text: 'Allowance is successful'
-                    })
-                    this.txPending = false
-                })
-            } catch (error) {
-                console.log(error)
-                this.$store.commit('pushNotification', {
-                    title: 'Error',
-                    type: 'error',
-                    text: error
-                })
-                this.txPending = false
-            }
-        }
-    },
+    // allow: async function () {
     deposit: async function () {
-        if (this.$store.state.account && this.$store.state.tokens && this.token) {
+        if (this.$store.state.account) {
+            const { transactions } = nearAPI
             this.txPending = true
             try {
-                console.log(this.$store.state.tokens)
-                console.log(this.token)
                 let tokenObj
                 if (this.$store.state.tokens[this.token]) {
                     tokenObj = this.$store.state.tokens[this.token]
                 }
+                const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                const argsTransfer = { receiver_id: CONTRACT_ID, amount: (this.amount * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }), msg: "" }
 
-                await this.$store.state.walletConnection.account().functionCall({
-                    contractId: this.token,
-                    methodName: 'ft_transfer_call',
-                    args: {
-                        receiver_id: CONTRACT_ID,
-                        amount: (this.amount * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
-                        msg: ''
-                    },
-                    gas: 300000000000000,
-                    attachedDeposit: 1
-                    // gas: DEFAULT_FUNCTION_CALL_GAS,
-                    // attachedDeposit: 0.000000000000000000000001
-                }).then((res) => {
-                    console.log(res)
-                    this.$store.commit('pushNotification', {
-                        title: 'Success',
-                        type: 'success',
-                        // text: response
-                        text: 'Deposit is successful'
+                const allowedStorage = await this.$store.state.walletConnection.account().viewFunction(
+                        {
+                            contractId: this.token,
+                            methodName: 'storage_balance_of',
+                            args: {
+                                account_id: this.$store.state.account.accountId
+                            }
+                        }
+                )
+
+                if (allowedStorage !== null) {
+                    await this.$store.state.walletConnection.account().signAndSendTransaction({
+                        receiverId: this.token,
+                        actions: [
+                            transactions.functionCall(
+                                'ft_transfer_call',
+                                argsTransfer,
+                                300000000000000,
+                                1
+                            )
+                        ]
                     })
-                    this.txPending = false
-                })
+                } else {
+                    await this.$store.state.walletConnection.account().signAndSendTransaction({
+                        receiverId: this.token,
+                        actions: [
+                            transactions.functionCall(
+                                "storage_deposit",
+                                Buffer.from(JSON.stringify(argsDeposit)),
+                                150000000000000,
+                                1
+                            ),
+                            transactions.functionCall(
+                                'ft_transfer_call',
+                                Buffer.from(JSON.stringify(argsTransfer)),
+                                150000000000000,
+                                1
+                            )
+                        ]
+                    })
+                }
+                
+                // USEFUL!!!
+                // await this.$store.state.walletConnection.account().functionCall({
+                //     contractId: this.token,
+                //     methodName: 'storage_deposit',
+                //     args: {
+                //         account_id: CONTRACT_ID
+                //     },
+                //     gas: 300000000000000,
+                //     attachedDeposit: utils.format.parseNearAmount("1")
+                // }).then(async (res) => {
+                //     console.log(res)
+                //     this.$store.commit('pushNotification', {
+                //         title: 'Success',
+                //         type: 'success',
+                //         // text: response
+                //         text: 'Allowance is successful'
+                //     })
+                //     this.txPending = false
+                // })
             } catch (error) {
                 console.log(error)
                 this.$store.commit('pushNotification', {
@@ -267,6 +274,50 @@ export default {
             }
         }
     },
+    // deposit: async function () {
+    //     if (this.$store.state.account && this.$store.state.tokens && this.token) {
+    //         this.txPending = true
+    //         try {
+    //             console.log(this.$store.state.tokens)
+    //             console.log(this.token)
+    //             let tokenObj
+    //             if (this.$store.state.tokens[this.token]) {
+    //                 tokenObj = this.$store.state.tokens[this.token]
+    //             }
+    // 
+    //             await this.$store.state.walletConnection.account().functionCall({
+    //                 contractId: this.token,
+    //                 methodName: 'ft_transfer_call',
+    //                 args: {
+    //                     receiver_id: CONTRACT_ID,
+    //                     amount: (this.amount * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+    //                     msg: ''
+    //                 },
+    //                 gas: 300000000000000,
+    //                 attachedDeposit: 1
+    //                 // gas: DEFAULT_FUNCTION_CALL_GAS,
+    //                 // attachedDeposit: 0.000000000000000000000001
+    //             }).then((res) => {
+    //                 console.log(res)
+    //                 this.$store.commit('pushNotification', {
+    //                     title: 'Success',
+    //                     type: 'success',
+    //                     // text: response
+    //                     text: 'Deposit is successful'
+    //                 })
+    //                 this.txPending = false
+    //             })
+    //         } catch (error) {
+    //             console.log(error)
+    //             this.$store.commit('pushNotification', {
+    //                 title: 'Error',
+    //                 type: 'error',
+    //                 text: error
+    //             })
+    //             this.txPending = false
+    //         }
+    //     }
+    // },
     setWithdraw: async function (token) {
         document.getElementById('withdraw').scrollIntoView()
         this.tokenW = token.token
