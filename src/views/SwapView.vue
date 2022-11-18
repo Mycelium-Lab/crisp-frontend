@@ -104,7 +104,6 @@ export default {
     },
     methods: {
         swapPositions: async function () {
-            this.$store.dispatch('reload', store.state)
             const tin = this.token_out
             const tout = this.token_in
             const inbalance = this.token_out_balance
@@ -286,8 +285,8 @@ export default {
                             methodName: 'get_return',
                             args: {
                                 pool_id: this.pool_id,
-                                token_in: this.token_in.token,
-                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                token_in: this.token_out.token,
+                                amount_in: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                             }
                         }
                     ).then((res) => {
