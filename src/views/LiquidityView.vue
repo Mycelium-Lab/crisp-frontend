@@ -374,7 +374,7 @@ export default {
         },
         calculateDefault: function () {
             this.manual_input = 'first'
-            if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice) {
+            if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
                 const x = this.t0_liq
                 // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
@@ -393,7 +393,7 @@ export default {
         },
         calculateAlternative: function () {
             this.manual_input = 'second'
-            if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice) {
+            if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
                 const x = this.t1_liq
                 // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
@@ -411,7 +411,7 @@ export default {
             }
         },
         calculate: async function () {
-            if (this.$store.state.pools[0]) {
+            if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
                 if (this.manual_input === 'first') {
                     this.calculateDefault()
                 } else if (this.manual_input === 'second') {

@@ -159,7 +159,7 @@ export default {
                         amount: balanceObj.amount
                     }
                 } else {
-                    this.token_in_balance = {
+                    this.token_out_balance = {
                         symbol: 'Token',
                         amount: '0'
                     }

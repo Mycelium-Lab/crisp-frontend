@@ -61,7 +61,7 @@
                 <div class="input-wrapper">
                     <span class="input-title">Token</span>
                     <!--<input v-model="token" class="modal-body_row-input"/>-->
-                    <select v-model="token" class="modal-body_row-input">
+                    <select v-model="token" @change="getTokenWalletBalance()" class="modal-body_row-input">
                         <option value="usdc.fakes.testnet">
                             USDC
                         </option>
@@ -79,6 +79,7 @@
                 <div class="input-wrapper">
                     <span class="input-title">Amount</span>
                     <input v-model="amount" class="modal-body_row-input"/>
+                    <span class="input-caption">{{walletAmount}}</span>
                 </div>
                 </div>
                 <div class="modal-footer">
@@ -103,7 +104,7 @@
                     </div>
                     <div class="input-wrapper">
                         <span class="input-title">Amount</span>
-                        <input v-model="amountW" class="modal-body_row-input"/>
+                        <input ref="withdrawAmount" v-model="amountW" class="modal-body_row-input"/>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -129,6 +130,9 @@ export default {
       loading: true,
 
     
+      // ft_balance_of ()
+      walletAmount: null,
+
       txPending: false,
       /**
        * storage_deposit(), ft_transfer_call()
@@ -146,6 +150,45 @@ export default {
   components: {
   },
   methods: {
+    getTokenWalletBalance: async function () {
+        if (this.$store.state.walletConnection.account())
+        this.txPending = true
+        try {
+            await this.$store.state.walletConnection.account().viewFunction(
+                {
+                    contractId: this.token,
+                    methodName: 'ft_balance_of',
+                    args: {
+                        account_id: this.$store.state.account.accountId
+                    }
+                }
+            ).then(async (res) => {
+                if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
+                    await this.$store.state.walletConnection.account.viewFunction(
+                        {
+                            contractId: this.token,
+                            methodName: 'ft_metadata',
+                            args: {
+                                account_id: this.$store.state.account.accountId
+                            }
+                        }
+                    ).then((res2) => {
+                        console.log(res2)
+                        this.walletAmount = res2.symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, res2.decimals)).toFixed(4)
+                        this.txPending = false
+                    })
+                } else {
+                    console.log(res)
+                    this.walletAmount = this.$store.state.tokens[this.token].symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, this.$store.state.tokens[this.token].decimals)).toFixed(4)
+                    this.txPending = false
+                }
+            })
+        } catch (error) {
+            console.log(error)
+            this.walletAmount = null
+            this.txPending = false
+        }
+    },
     allow: async function () {
         if (this.$store.state.account) {
             const { utils } = nearAPI
@@ -227,6 +270,7 @@ export default {
     setWithdraw: async function (token) {
         document.getElementById('withdraw').scrollIntoView()
         this.tokenW = token.token
+        this.$refs.withdrawAmount.focus()
     },
     withdraw: async function () {
         if (this.$store.state.account && this.$store.state.tokens && this.tokenW) {
@@ -354,6 +398,11 @@ export default {
     margin-bottom: 8px;
 }
 
+.input-caption {
+    margin-top: 2px;
+    font-size: $tinyTextSize - 2px;
+    text-align: center;
+}
 .modal-footer {
     border-top: $brightBorder;
     padding-top: 26px;
