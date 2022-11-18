@@ -248,6 +248,84 @@
                     </div>
                 </div>
             </template>
+
+            <template v-if="$store.state.userPositions">
+                <div class="heading">
+                    <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
+                </div>
+                <div v-if="$store.state.userPositions[0]" class="list-header">
+                    <span class="pos-list-header_unit">
+                        # Pool
+                    </span>
+                    <span class="pos-list-header_unit">
+                        # Pos
+                    </span>
+                    <span class="pos-list-header_unit">
+                        Pool tokens
+                    </span>
+                    <span class="pos-list-header_unit">
+                        Current pool price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        L. bound price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        U. bound price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        T0 Real Liquidity
+                    </span>
+                    <span class="pos-list-header_unit">
+                        T1 Real Liquidity
+                    </span>
+                    <span class="pos-list-header_unit close-header-unit">
+                        Close
+                    </span>
+                </div>
+                <div v-if="$store.state.userPositions[0]" class="list">
+                    <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
+                        <span class="pos-list-pool_unit">
+                            {{pos.poolId}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{pos.id}}
+                        </span>
+                        <span v-if="$store.state.tokens" class="pos-list-pool_unit row">
+                            <img class="icon" :src="$store.state.tokens[pos.token0].icon">
+                            <img class="icon" :src="$store.state.tokens[pos.token1].icon">
+                            <div>
+                                {{$store.state.tokens[pos.token0].symbol}}<br>
+                                {{$store.state.tokens[pos.token1].symbol}}
+                            </div>
+                        </span>
+                        <span v-else>
+                            {{pos.token0}}<br>
+                            {{pos.token1}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token0_real_liquidity).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token1_real_liquidity).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit close-pos">
+                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
+                            <button v-else @click="closePosition(pos)" class="close-btn">
+                                X
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </template>
             <!-- list of positions goes here -->
         </template>
         <div class="loading" v-else>
@@ -777,6 +855,12 @@ export default {
     font-weight: 500;
     color: $textHoverColor;
     text-align: center;
+}
+
+.close-header-unit {
+    text-align: center;
+    padding-right: 32px;
+    box-sizing: border-box;
 }
 
 .close-btn {

@@ -13,6 +13,7 @@ export default createStore({
     tokensBeingLoaded: false,
     pools: [],
     positions: null,
+    userPositions: null,
     tokens: null,
     notifications: [],
     loaded: {
@@ -56,6 +57,7 @@ export default createStore({
       state.tokens = null
       state.pools = []
       state.positions = null
+      state.userPositions = null
       await dispatch('fetchCrispContract', state)
       await dispatch('fetchPools', state)
       await dispatch('fetchBalances', state)
@@ -158,6 +160,7 @@ export default createStore({
     },
     async processPositions({state}) {
       state.positions = []
+      state.userPositions = []
       for (let i = 0; i < state.pools.length; i++) {
         const pool = state.pools[i]
         console.log(pool)
@@ -184,6 +187,22 @@ export default createStore({
             token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
             token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
           })
+          if (position.owner_id === state.account.accountId) {
+            state.userPositions.push({
+              id: position.id,
+              poolId: i,
+              isActive: position.is_active,
+              ownerId: position.owner_id,
+              sqrt_lower_bound_price: position.sqrt_lower_bound_price,
+              sqrt_upper_bound_price: position.sqrt_upper_bound_price,
+              tick_lower_bound_price: position.tick_lower_bound_price,
+              tick_upper_bound_price: position.tick_upper_bound_price,
+              token0: pool.token0,
+              token1: pool.token1,
+              token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
+              token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
+            })
+          }
         }
       }
       state.loaded.positions = true
