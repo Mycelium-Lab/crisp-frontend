@@ -74,11 +74,11 @@
                     <div class="modal-body_row">
                         <div class="input-wrapper">
                             <span class="input-title">Lower bound price</span>
-                            <input v-model="lowerPrice" @change="calculate()" id="lowerPrice" class="modal-body_row-input"/>
+                            <input v-model="lowerPrice" @change="calculateLower()" id="lowerPrice" class="modal-body_row-input"/>
                         </div>
                         <div class="input-wrapper">
                             <span class="input-title">Upper bound price</span>
-                            <input v-model="upperPrice" @change="calculate()" id="upperPrice" class="modal-body_row-input"/>
+                            <input v-model="upperPrice" @change="calculateUpper()" id="upperPrice" class="modal-body_row-input"/>
                         </div>
                         <div class="input-wrapper">
                             <span class="input-title">Current price</span>
@@ -490,7 +490,26 @@ export default {
                 // this.total = res
             }
         },
-        calculate: async function () {
+        calculateLower: async function () {
+            this.lowerPrice = Number(this.lowerPrice)
+            this.upperPrice = Number(this.upperPrice)
+            if (this.lowerPrice > this.upperPrice - 1) {
+                this.lowerPrice = this.upperPrice - 1
+            }
+            if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
+                if (this.manual_input === 'first') {
+                    this.calculateDefault()
+                } else if (this.manual_input === 'second') {
+                    this.calculateAlternative()
+                }
+            }
+        },
+        calculateUpper: async function () {
+            this.lowerPrice = Number(this.lowerPrice)
+            this.upperPrice = Number(this.upperPrice)
+            if (this.upperPrice < this.lowerPrice + 1) {
+                this.upperPrice = this.lowerPrice + 1
+            }
             if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
                 if (this.manual_input === 'first') {
                     this.calculateDefault()
