@@ -423,7 +423,7 @@ export default {
         confirmNewPositionModal: async function () {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
+            if (contract && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
                     let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
