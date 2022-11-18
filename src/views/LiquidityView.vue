@@ -237,7 +237,8 @@
                             {{(pos.token1_real_liquidity).toFixed(6)}}
                         </span>
                         <span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
-                            <button @click="closePosition(pos)" class="close-btn">
+                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
+                            <button v-else @click="closePosition(pos)" class="close-btn">
                                 X
                             </button>
                         </span>
@@ -467,6 +468,7 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
+                this.txPending = true
                 try {
                     await contract.close_position(
                         {
@@ -475,9 +477,23 @@ export default {
                         }
                     ).then((response) => {
                         console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully closed'
+                        })
+                        this.txPending = false
+                        this.$store.dispatch('reload', store.state)
                     })
                 } catch (error) {
                     console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
                 }
             }
         }
@@ -779,5 +795,11 @@ export default {
     color: $buttonBgColor;
     transition: 0.3s;
     border: 1px solid $buttonBgColor;
+}
+
+.loader-icon-small {
+    width: $textSize;
+    height: $textSize;
+    margin-right: 32px;
 }
 </style>
