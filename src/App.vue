@@ -140,8 +140,8 @@ input[type=number] {
 
 .notification-box {
   width: 100%;
-  min-height: 280px;
-  max-height: 280px;
+  min-height: 180px;
+  max-height: 180px;
   position: relative;
 }
 
@@ -149,15 +149,16 @@ input[type=number] {
   background-color: $cardBgColor;
   border: $border;
   border-radius: $borderRadius;
-  opacity: 0.6;
+  opacity: 1;
   padding: 16px;
   position: absolute;
   width: ($interfaceBlocksWidth/2)-36px;
   animation: shiftIn 0.6s linear;
-  height: 250px;
+  height: 160px;
   box-sizing: border-box;
   pointer-events: all;
   overflow: hidden;
+  overflow-y: scroll;
 }
 
 .closed {
@@ -181,11 +182,6 @@ input[type=number] {
   100% {
     right: -($interfaceBlocksWidth/2)-36px;
   }
-}
-
-.notification:hover {
-  opacity: 1;
-  transition: 0.3s;
 }
 
 .notification-header {
