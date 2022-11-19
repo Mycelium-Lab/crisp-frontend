@@ -65,9 +65,6 @@
                         <option value="usdc.fakes.testnet">
                             USDC
                         </option>
-                        <option value="usdt.fakes.testnet">
-                            USDT
-                        </option>
                         <option value="usdn.testnet">
                             USN
                         </option>
@@ -192,7 +189,7 @@ export default {
     // allow: async function () {
     deposit: async function () {
         if (this.$store.state.account) {
-            const { transactions } = nearAPI
+            const { utils, transactions } = nearAPI
             this.txPending = true
             try {
                 let tokenObj
@@ -212,19 +209,21 @@ export default {
                         }
                 )
 
-                if (allowedStorage !== null) {
-                    await this.$store.state.walletConnection.account().signAndSendTransaction({
-                        receiverId: this.token,
-                        actions: [
-                            transactions.functionCall(
-                                'ft_transfer_call',
-                                argsTransfer,
-                                300000000000000,
-                                1
-                            )
-                        ]
-                    })
-                } else {
+                console.log(allowedStorage)
+
+                // if (allowedStorage !== null) {
+                //     await this.$store.state.walletConnection.account().signAndSendTransaction({
+                //         receiverId: this.token,
+                //         actions: [
+                //             transactions.functionCall(
+                //                 'ft_transfer_call',
+                //                 argsTransfer,
+                //                 300000000000000,
+                //                 1
+                //             )
+                //         ]
+                //     })
+                // } else {
                     await this.$store.state.walletConnection.account().signAndSendTransaction({
                         receiverId: this.token,
                         actions: [
@@ -232,7 +231,7 @@ export default {
                                 "storage_deposit",
                                 Buffer.from(JSON.stringify(argsDeposit)),
                                 150000000000000,
-                                1
+                                utils.format.parseNearAmount("1")
                             ),
                             transactions.functionCall(
                                 'ft_transfer_call',
@@ -242,7 +241,7 @@ export default {
                             )
                         ]
                     })
-                }
+                //}
                 
                 // USEFUL!!!
                 // await this.$store.state.walletConnection.account().functionCall({
