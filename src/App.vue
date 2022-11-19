@@ -126,7 +126,7 @@ input[type=number] {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  z-index: 500;
+  z-index: 700;
 }
 
 .notification-list {
@@ -310,7 +310,7 @@ header {
     align-items: center;
     width: 100vw;
     height: 100vh;
-    z-index: 700;
+    z-index: 800;
     position: relative;
     background: linear-gradient($gradientPrimary, $gradientSecondary)
   }
