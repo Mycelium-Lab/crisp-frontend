@@ -216,8 +216,8 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
-      console.log(state.walletConnection.isSignedIn())
-      if (state.walletConnection.isSignedIn()) {
+      console.log(await state.walletConnection.isSignedInAsync())
+      if (await state.walletConnection.isSignedInAsync()) {
         state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
   
         state.crispContract = await new Contract(
