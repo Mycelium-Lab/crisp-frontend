@@ -178,16 +178,6 @@ export default {
             console.log('getReturn()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
-                // await this.$store.state.walletConnection.account().viewFunction({
-                //     contractId: this.token_in.token,
-                //     methodName: 'ft_metadata',
-                //     args: {
-                //         account_id: this.$store.state.account.accountId
-                //     },
-                //     },
-                //     this.$store.state.account.accountId
-                // ).then(async (res) => {
-                //         decimals = res.decimals
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_in.token]) {
@@ -213,22 +203,6 @@ export default {
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
-                    // await this.$store.state.crispContract.get_return(
-                    //     {
-                    //         pool_id: this.pool_id,
-                    //         token_in: this.token_in.token,
-                    //         amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
-                    //     }
-                    // ).then((res) => {
-                    //     console.log(res)
-                    //     let tokenOutObj
-                    //     if (this.$store.state.tokens[this.token_out.token]) {
-                    //         tokenOutObj = this.$store.state.tokens[this.token_out.token]
-                    //     }
-                    //     this.token_out_amnt = (res / Math.pow(10, tokenOutObj.decimals))
-                    //     this.tokenAmntLoading = false
-                    //     this.txPending = false
-                    // })
                 } catch (error) {
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -256,37 +230,19 @@ export default {
             console.log('getExpense()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
-                // await this.$store.state.walletConnection.account().viewFunction({
-                //     contractId: this.token_in.token,
-                //     methodName: 'ft_metadata',
-                //     args: {
-                //         account_id: this.$store.state.account.accountId
-                //     },
-                //     },
-                //     this.$store.state.account.accountId
-                // ).then(async (res) => {
-                //         decimals = res.decimals
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_out.token]) {
                         tokenObj = this.$store.state.tokens[this.token_out.token]
                     }
-                    // await this.$store.state.crispContract.get_expense(
-                    //     {
-                    //         // must get this pool id somehow
-                    //         pool_id: this.pool_id,
-                    //         token_out: this.token_out.token,
-                    //         amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
-                    //     }
-                    // ).then((res) => {
                     await this.$store.state.walletConnection.account().viewFunction(
                         {
                             contractId: CONTRACT_ID,
-                            methodName: 'get_return',
+                            methodName: 'get_expense',
                             args: {
                                 pool_id: this.pool_id,
-                                token_in: this.token_out.token,
-                                amount_in: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                token_out: this.token_out.token,
+                                amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                             }
                         }
                     ).then((res) => {

@@ -445,19 +445,20 @@ export default {
             this.manual_input = 'first'
             if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-                const x = this.t0_liq
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                const x = this.t0_liq * Math.pow(10, tokenObj.decimals)
+                
                 const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
                 const sa = Math.sqrt(this.upperPrice)
                 const sb = Math.sqrt(this.lowerPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = x * sp * sa / (sa - sp) * Math.pow(10, tokenObj.decimals)//  // amount of 2nd token
+                const liquidity = x * sp * sa / (sa - sp)//  // amount of 2nd token
                 sp = Math.max(Math.min(sp, sa), sb) // ?
-                const res = liquidity * (sp - sb) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                const res = liquidity * (sp - sb)// //  // ?
                 console.log(liquidity, res)
 
-                this.t1_liq = res
+                this.t1_liq = res / Math.pow(10, tokenObj2.decimals)
                 // this.total = res
             }
         },
@@ -465,18 +466,19 @@ export default {
             this.manual_input = 'second'
             if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-                const x = this.t1_liq
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                 const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+                const x = this.t1_liq * Math.pow(10, tokenObj2.decimals)
+                
                 const sa = Math.sqrt(this.upperPrice)
                 const sb = Math.sqrt(this.lowerPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = x / (sp - sb) * Math.pow(10, tokenObj2.decimals)// amount of 1st token
+                const liquidity = x / (sp - sb)// amount of 1st token
                 sp = Math.max(Math.min(sp, sa), sb) // ?
-                const res = liquidity * (sa - sp) / (sp * sa) / Math.pow(10, tokenObj.decimals)//  // ?
+                const res = liquidity * (sa - sp) / (sp * sa)//  // ?
 
-                this.t0_liq = res
+                this.t0_liq = res / Math.pow(10, tokenObj.decimals)
                 // this.total = res
             }
         },
@@ -519,15 +521,16 @@ export default {
                     let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                         console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
 
-                    console.log(this.$store.state.tokens)
-                    console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
-                    console.log(this.$store.state.pools[this.poolId].token0)
-                    console.log(this.poolId)
+                    console.log(Number(this.poolId))
+                    console.log(Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                    console.log(Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                    console.log(Number(this.lowerPrice))
+                    console.log(Number(this.upperPrice))
                     console.log(tokenObj)
                     await contract.open_position(
                         {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toFixed(0).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice),
                             upper_bound_price: Number(this.upperPrice)
                         }
