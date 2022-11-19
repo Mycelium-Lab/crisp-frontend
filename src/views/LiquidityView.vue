@@ -59,13 +59,13 @@
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
-                                <input type="number" v-model="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                                <input type="number" v-model.lazy="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
                                 <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
-                                <input type="number" v-model="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
+                                <input type="number" v-model.lazy="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
                                 <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                             </div>
                         </template>
@@ -449,14 +449,14 @@ export default {
                 const x = this.t0_liq
                 
                 // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
-                const sa = Math.sqrt(this.upperPrice)
-                const sb = Math.sqrt(this.lowerPrice)
+                const sa = Math.sqrt(this.lowerPrice)
+                const sb = Math.sqrt(this.upperPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = (x * sp * sa) / (sa - sp)//  // amount of 2nd token
-                sp = Math.max(Math.min(sp, sa), sb) // ?
-                const res = liquidity * (sp - sb)// //  // ?
-                console.log(x, sp, sa, sb)
+                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = liquidity * (sp - sa)// //  // ?
+                console.log(x, sp, sb, sa)
                 console.log(liquidity, res)
 
                 this.t1_liq = res
@@ -471,13 +471,13 @@ export default {
                 // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
                 const x = this.t1_liq
                 
-                const sa = Math.sqrt(this.upperPrice)
-                const sb = Math.sqrt(this.lowerPrice)
+                const sa = Math.sqrt(this.lowerPrice)
+                const sb = Math.sqrt(this.upperPrice)
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = x / (sp - sb)// amount of 1st token
-                sp = Math.max(Math.min(sp, sa), sb) // ?
-                const res = liquidity * (sa - sp) / (sp * sa)//  // ?
+                const liquidity = x / (sp - sa)// amount of 1st token
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = liquidity * (sb - sp) / (sp * sb)//  // ?
 
                 this.t0_liq = res
                 // this.total = res
@@ -523,7 +523,7 @@ export default {
                         console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
 
                     console.log(Number(this.poolId))
-                    console.log(Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                    console.log(Number(this.t0_liq).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                     console.log(Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                     console.log(Number(this.lowerPrice))
                     console.log(Number(this.upperPrice))
