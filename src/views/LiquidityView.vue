@@ -96,7 +96,85 @@
             Please, connect your wallet
         </div>-->
         <template v-if="!loading">
-            <div class="heading">
+            <template v-if="$store.state.userPositions">
+                <div class="heading">
+                    <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
+                </div>
+                <div v-if="$store.state.userPositions[0]" class="list-header">
+                    <span class="pos-list-header_unit" style="width: 7%">
+                        # Pool
+                    </span>
+                    <span class="pos-list-header_unit" style="width: 7%">
+                        # Pos
+                    </span>
+                    <span class="pos-list-header_unit" style="width: 14%">
+                        Pool tokens
+                    </span>
+                    <span class="pos-list-header_unit">
+                        Current pool price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        L. bound price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        U. bound price
+                    </span>
+                    <span class="pos-list-header_unit">
+                        T0 Real Liquidity
+                    </span>
+                    <span class="pos-list-header_unit">
+                        T1 Real Liquidity
+                    </span>
+                    <span class="pos-list-header_unit close-header-unit">
+                        Close
+                    </span>
+                </div>
+                <div v-if="$store.state.userPositions[0]" class="list">
+                    <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
+                        <span class="pos-list-pool_unit" style="width: 7%">
+                            {{pos.poolId}}
+                        </span>
+                        <span class="pos-list-pool_unit" style="width: 7%">
+                            {{pos.id}}
+                        </span>
+                        <span v-if="$store.state.tokens" class="pos-list-pool_unit row" style="width: 14%">
+                            <img class="icon" :src="$store.state.tokens[pos.token0].icon">
+                            <img class="icon" :src="$store.state.tokens[pos.token1].icon">
+                            <div>
+                                {{$store.state.tokens[pos.token0].symbol}}<br>
+                                {{$store.state.tokens[pos.token1].symbol}}
+                            </div>
+                        </span>
+                        <span v-else class="pos-list-pool_unit row">
+                            {{pos.token0}}<br>
+                            {{pos.token1}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token0_real_liquidity).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit">
+                            {{(pos.token1_real_liquidity).toFixed(6)}}
+                        </span>
+                        <span class="pos-list-pool_unit close-pos">
+                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
+                            <button v-else @click="closePosition(pos)" class="close-btn">
+                                X
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <div v-if="$store.state.pools && $store.state.tokens" class="heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
 
@@ -165,7 +243,7 @@
             
             <template v-if="$store.state.positions">
                 <div class="heading">
-                    <span class="title">Positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
+                    <span class="title">All Positions</span>
                 </div>
                 <div v-if="$store.state.positions[0]" class="list-header">
                     <span class="pos-list-header_unit">
@@ -191,9 +269,6 @@
                     </span>
                     <span class="pos-list-header_unit">
                         T1 Real Liquidity
-                    </span>
-                    <span class="pos-list-header_unit">
-                        Close (if owner)
                     </span>
                 </div>
                 <div v-if="$store.state.positions[0]" class="list">
@@ -236,96 +311,11 @@
                         <span class="pos-list-pool_unit">
                             {{(pos.token1_real_liquidity).toFixed(6)}}
                         </span>
-                        <span v-if="pos.ownerId === $store.state.account.accountId" class="pos-list-pool_unit close-pos">
-                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
-                            <button v-else @click="closePosition(pos)" class="close-btn">
-                                X
-                            </button>
-                        </span>
-                        <span class="pos-list-pool_unit" v-else>
-
-                        </span>
                     </div>
                 </div>
             </template>
 
-            <template v-if="$store.state.userPositions">
-                <div class="heading">
-                    <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
-                </div>
-                <div v-if="$store.state.userPositions[0]" class="list-header">
-                    <span class="pos-list-header_unit">
-                        # Pool
-                    </span>
-                    <span class="pos-list-header_unit">
-                        # Pos
-                    </span>
-                    <span class="pos-list-header_unit">
-                        Pool tokens
-                    </span>
-                    <span class="pos-list-header_unit">
-                        Current pool price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        L. bound price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        U. bound price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        T0 Real Liquidity
-                    </span>
-                    <span class="pos-list-header_unit">
-                        T1 Real Liquidity
-                    </span>
-                    <span class="pos-list-header_unit close-header-unit">
-                        Close
-                    </span>
-                </div>
-                <div v-if="$store.state.userPositions[0]" class="list">
-                    <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
-                        <span class="pos-list-pool_unit">
-                            {{pos.poolId}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{pos.id}}
-                        </span>
-                        <span v-if="$store.state.tokens" class="pos-list-pool_unit row">
-                            <img class="icon" :src="$store.state.tokens[pos.token0].icon">
-                            <img class="icon" :src="$store.state.tokens[pos.token1].icon">
-                            <div>
-                                {{$store.state.tokens[pos.token0].symbol}}<br>
-                                {{$store.state.tokens[pos.token1].symbol}}
-                            </div>
-                        </span>
-                        <span v-else>
-                            {{pos.token0}}<br>
-                            {{pos.token1}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.token0_real_liquidity).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.token1_real_liquidity).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit close-pos">
-                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
-                            <button v-else @click="closePosition(pos)" class="close-btn">
-                                X
-                            </button>
-                        </span>
-                    </div>
-                </div>
-            </template>
+            
             <!-- list of positions goes here -->
         </template>
         <div class="loading" v-else>
@@ -701,8 +691,16 @@ export default {
     width: 5%;
 }
 
+.pos-list-header_unit:first-child, .pos-list-pool_unit:first-child, .pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
+    width: 7%;
+}
+
 .pos-list-header_unit:nth-child(3), .pos-list-pool_unit:nth-child(3), .pos-list-header_unit:nth-child(4), .pos-list-pool_unit:nth-child(4) {
     width: 13%;
+}
+
+.pos-list-header_unit:nth-child(7), .pos-list-pool_unit:nth-child(7), .pos-list-header_unit:nth-child(8), .pos-list-pool_unit:nth-child(8) {
+    width: 16%;
 }
 
 .row {
