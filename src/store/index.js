@@ -42,6 +42,9 @@ export default createStore({
         type: notification.type,  // success/error
         text: notification.text   // caption
       })
+      setTimeout(() => {
+        this.commit('removeNotification', newId)
+      },5000)
     },
     removeNotification(state, id) {
       state.notifications = state.notifications.filter(x => x.id !== id)
