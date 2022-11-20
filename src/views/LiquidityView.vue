@@ -59,13 +59,13 @@
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
-                                <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                                <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
                                 <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
-                                <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
+                                <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
                                 <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                             </div>
                         </template>
@@ -362,7 +362,12 @@ export default {
             // total: null,
             txPending: false,
             currentPrice: null,
-
+            upperSmallerThanCurrent: false,
+            lowerGreaterThanCurrent: false,
+            disabled: {
+                t0: false,
+                t1: false
+            },
             loading: false,
         }
     },
@@ -448,6 +453,27 @@ export default {
             this.t0_balance = balance0?.amount || null
             this.t1_balance = balance1?.amount || null
         },
+        calculatePricesRatio: function () {
+            if(Number(this.upperPrice) < Number(this.currentPrice)) {
+                this.upperSmallerThanCurrent = true
+                this.t0_liq = 0
+                this.disabled.t0 = true
+            } else {
+                this.upperSmallerThanCurrent = false
+                this.t0_liq = null
+                this.disabled.t0 = false
+            }
+            
+            if (Number(this.lowerPrice) > Number(this.currentPrice)) {
+                this.lowerGreaterThanCurrent = true
+                this.t1_liq = 0
+                this.disabled.t1 = true
+            } else {
+                this.lowerGreaterThanCurrent = false
+                this.t1_liq = null
+                this.disabled.t1 = false
+            }
+        },
         calculateDefault: function () {
             this.manual_input = 'first'
             if (this.$store.state.pools[0] && Number(this.t0_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
@@ -506,6 +532,7 @@ export default {
                     this.calculateAlternative()
                 }
             }
+            this.calculatePricesRatio()
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -520,6 +547,7 @@ export default {
                     this.calculateAlternative()
                 }
             }
+            this.calculatePricesRatio()
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
