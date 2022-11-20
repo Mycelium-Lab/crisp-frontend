@@ -61,12 +61,14 @@
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
                                 <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
+                                <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
                                 <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
+                                <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
                         </template>
                         <span v-else>Please wait while we load pools. . .</span>
@@ -392,6 +394,10 @@ export default {
     },
     methods: {
         isNumber,
+        depositToken (token) {
+            console.log(token)
+            this.$store.dispatch('depositToken', token)
+        },
         openNewPoolModal: function () {
             this.modalActive = true
             this.newPoolModalActive = true
@@ -450,8 +456,8 @@ export default {
             this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
-            this.t0_balance = balance0?.amount || null
-            this.t1_balance = balance1?.amount || null
+            this.t0_balance = balance0?.amount || 0
+            this.t1_balance = balance1?.amount || 0
         },
         calculatePricesRatio: function () {
             if(Number(this.upperPrice) < Number(this.currentPrice)) {
@@ -636,6 +642,23 @@ export default {
 
 <style lang="scss" scoped>
 @import "~@/assets/scss/main.scss";
+
+.deposit_nav_btn{
+    border: 1px solid transparent;
+    border: 1px solid $buttonBgColor;
+    background-color: $buttonAltBgColor;
+    color: $buttonBgColor;
+    box-sizing: border-box;
+    transition: 0.3s;
+    border-radius: 8px;
+    padding: 4px 8px;
+    margin-top: 6px;
+}
+.deposit_nav_btn:hover {
+    background-color: $buttonBgColor;
+    color: $buttonAltBgColor;
+    cursor: pointer;
+}
 
 .wrapper {
     width: $interfaceBlocksWidth;

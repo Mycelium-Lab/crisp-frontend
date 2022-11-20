@@ -26,7 +26,7 @@
             </div>
             <div class="modal-body">
                 <button @click="swapPositions()" class="swap-tokens"></button> <!--position: absolute-->
-                <div class="token-wrapper">
+                <div class="token-wrapper token-in">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
                     <select :disabled="loaded === false" v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
@@ -36,8 +36,10 @@
                     </div>
                     <input v-else type="text" @change="getReturn()" @keypress="isNumber" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_in_balance">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}</span>
-                <div class="token-wrapper">
+                <span class="token-balance" v-if="token_in_balance">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
+                <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
+                </span>
+                <div class="token-wrapper token-out">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
                     <select :disabled="loaded === false" v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
@@ -47,7 +49,9 @@
                     </div>
                     <input v-else type="text" @keypress="isNumber" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}</span>
+                <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
+                <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
+                </span>
             </div>
             <div v-if="swapError" class="swap-error">
                 {{ swapError }}
@@ -115,6 +119,10 @@ export default {
     },
     methods: {
         isNumber,
+        depositToken (token) {
+            console.log(token)
+            this.$store.dispatch('depositToken', token)
+        },
         swapPositions: async function () {
             const tin = this.token_out
             const tout = this.token_in
@@ -469,6 +477,10 @@ export default {
     box-sizing: border-box;
 }
 
+.token-out {
+    margin-top: 24px !important;
+}
+
 .token-input {
     width: 80%;
     background-color: transparent;
@@ -523,6 +535,22 @@ export default {
     cursor: pointer;
     transition: 0.3s;
     box-sizing: border-box;
+}
+
+.deposit_nav_btn{
+    border: 1px solid transparent;
+    border: 1px solid $buttonBgColor;
+    background-color: $buttonAltBgColor;
+    color: $buttonBgColor;
+    box-sizing: border-box;
+    transition: 0.3s;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+.deposit_nav_btn:hover {
+    background-color: $buttonBgColor;
+    color: $buttonAltBgColor;
+    cursor: pointer;
 }
 
 .footer-btn:hover {

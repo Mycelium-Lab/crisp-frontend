@@ -2,7 +2,7 @@ import { createStore } from 'vuex'
 import * as nearAPI from "near-api-js"
 import { CONTRACT_ID, METHOD_NAMES } from '../constants/index.js'
 import { CONFIG } from '../utils/index.js'
-
+import router from '../router'
 export default createStore({
   state: {
     nearConnection: null,
@@ -16,6 +16,7 @@ export default createStore({
     userPositions: null,
     tokens: null,
     notifications: [],
+    tokenForDeposit: null,
     loaded: {
       balances: false,
       pools: false,
@@ -24,6 +25,7 @@ export default createStore({
     }
   },
   getters: {
+    tokenForDeposit: (s) => s.tokenForDeposit
   },
   mutations: {
     async pushNotification(state, notification) {
@@ -52,9 +54,16 @@ export default createStore({
     emitLoading(state, parameter) {
       if (parameter === 'positions') { state.loaded.positions = true }
       if (parameter === 'tokens') { state.loaded.tokens = true }
+    },
+    setDepositToken(state, tokenForDeposit) {
+      state.tokenForDeposit = tokenForDeposit
     }
   },
   actions: {
+    depositToken({ commit }, token) {
+      commit('setDepositToken', token)
+      router.push("/deposit")
+    },
     async reload ({state, commit, dispatch}) {
       state.tokenBalances = []
       state.tokens = null
