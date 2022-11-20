@@ -303,6 +303,7 @@ export default {
             const storageSwapPair = getStorageItem('swap_pair')
             this.token_in = storageSwapPair?.token_in || DEFAULT_SWAP_PAIR.token_in
             this.token_out = storageSwapPair?.token_out || DEFAULT_SWAP_PAIR.token_out
+            this.findPool()
         },
         signIn: async function () {
             await this.$store.dispatch('signIn', store.state)
