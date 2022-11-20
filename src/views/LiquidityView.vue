@@ -150,7 +150,7 @@
                             {{pos.token1}}
                         </span>
                         <span class="pos-list-pool_unit">
-                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals).toFixed(2))}}
+                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals)).toFixed(2)}}
                         </span>
                         <span class="pos-list-pool_unit">
                             {{(pos.lower_bound_price_decimals).toFixed(2)}}
@@ -229,7 +229,7 @@
                                 {{pool.rewards/100}}%
                             </span>
                             <span class="list-pool_unit">
-                                {{(pool.sqrt_price * pool.sqrt_price * Math.pow(10, $store.state.tokens[pool.token0].decimals - $store.state.tokens[pool.token1].decimals).toFixed(2))}}
+                                {{(pool.sqrt_price * pool.sqrt_price * Math.pow(10, $store.state.tokens[pool.token0].decimals - $store.state.tokens[pool.token1].decimals)).toFixed(2)}}
                             </span>
                         </div>
                 </div>
