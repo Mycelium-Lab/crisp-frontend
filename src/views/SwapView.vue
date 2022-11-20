@@ -49,6 +49,9 @@
                 </div>
                 <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}</span>
             </div>
+            <div v-if="swapError" class="swap-error">
+                {{ swapError }}
+            </div>
             <div class="modal-footer">
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                 <template v-else>
@@ -69,7 +72,7 @@ import { CONTRACT_ID } from '@/constants'
 import store from '../store'
 import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
-import { DEFAULT_SWAP_PAIR, SWAP_TOKENS } from '../constants/index'
+import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
 export default {
     name: 'SwapView',
     store,
@@ -90,6 +93,7 @@ export default {
             token_out_balance: null,
             // animation for footerBtn
             footerBtnActive: false,
+            swapError: ''
         }
     },
     async created () {
@@ -182,6 +186,7 @@ export default {
             this.tokenAmntLoading = true
             this.txPending = true
             this.manual_input = 'in'
+            this.swapError = ''
             console.log('getReturn()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
@@ -211,11 +216,15 @@ export default {
                         this.txPending = false
                     })
                 } catch (error) {
-                    this.$store.commit('pushNotification', {
-                        title: 'Error',
-                        type: 'error',
-                        text: error
-                    })
+                    if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
+                        this.swapError = NOT_ENOUGH_LIQUIDITY_ERROR
+                    } else {
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: error
+                        })
+                    }
                     console.log(error)
                     this.token_in_amnt = null
                     this.token_out_amnt = null
@@ -234,6 +243,7 @@ export default {
             this.tokenAmntLoading = true
             this.txPending = true
             this.manual_input = 'out'
+            this.swapError = ''
             console.log('getExpense()')
             // let decimals
             if (this.$store.state.crispContract && this.pool_id !== -1) {
@@ -263,12 +273,15 @@ export default {
                         this.txPending = false
                     })
                 } catch (error) {
-                    this.$store.commit('pushNotification', {
-                        title: 'Error',
-                        type: 'error',
-                        text: error
-                    })
-                    console.log(error)
+                    if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
+                        this.swapError = NOT_ENOUGH_LIQUIDITY_ERROR
+                    } else {
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: error
+                        })
+                    }
                     this.token_in_amnt = null
                     this.token_out_amnt = null
                     this.tokenAmntLoading = false
@@ -464,7 +477,10 @@ export default {
     padding: 8px;
     padding-left: 0;
 }
-
+.swap-error{
+    font-size: $lesserTextSize;
+    color: #C46060;
+}
 .token-select {
     position: absolute;
     right: 12px;

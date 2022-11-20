@@ -30,3 +30,5 @@ export const SWAP_TOKENS = [
         token: 'wrap.testnet'
     }
 ]
+
+export const NOT_ENOUGH_LIQUIDITY_ERROR = 'not enough liquidity in pool to cover this swap'
