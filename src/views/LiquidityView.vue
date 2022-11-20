@@ -229,7 +229,7 @@
                                 {{pool.rewards/100}}%
                             </span>
                             <span class="list-pool_unit">
-                                {{pool.sqrt_price * pool.sqrt_price}}
+                                {{(pool.sqrt_price * pool.sqrt_price * Math.pow(10, $store.state.tokens[pool.token0].decimals - $store.state.tokens[pool.token1].decimals).toFixed(2))}}
                             </span>
                         </div>
                 </div>
