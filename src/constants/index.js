@@ -13,10 +13,10 @@ export const DEFAULT_SWAP_PAIR = {
 }
 
 export const SWAP_TOKENS = [
-    {
-        symbol: 'USDT',
-        token: 'usdt.fakes.testnet'
-    },
+    // {
+    //     symbol: 'USDT',
+    //     token: 'usdt.fakes.testnet'
+    // },
     {
         symbol: 'USDC',
         token: 'usdc.fakes.testnet'

@@ -144,7 +144,8 @@ export default {
       amountW: null
     }
   },
-  components: {
+  created() {
+    if(this.$store.getters.tokenForDeposit) this.token = this.$store.getters.tokenForDeposit.token
   },
   methods: {
     getTokenWalletBalance: async function () {
