@@ -56,6 +56,12 @@ export default createStore({
   },
   actions: {
     async reload ({state, commit, dispatch}) {
+      state.loaded = {
+        balances: false,
+        pools: false,
+        positions: false,
+        tokens: false
+      }
       state.tokenBalances = []
       state.tokens = null
       state.pools = []

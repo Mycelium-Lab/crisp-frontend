@@ -522,9 +522,20 @@ export default {
         calculateLower: async function () {
             this.lowerPrice = Number(this.lowerPrice)
             this.upperPrice = Number(this.upperPrice)
-            if (this.lowerPrice > this.upperPrice - 1) {
-                this.lowerPrice = this.upperPrice - 1
+            let i_lower = Math.log(this.lowerPrice) / Math.log(1.0001)
+            const i_upper = Math.log(this.upperPrice) / Math.log(1.0001)
+            if (i_upper - i_lower < 1) {
+                i_lower = i_upper - 1
             }
+            const new_lower_price = Math.pow(1.0001, i_lower)
+            this.lowerPrice = new_lower_price
+
+            if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
+                this.calculateInit()
+            }
+            // if (this.lowerPrice > this.upperPrice - 1) {
+            //     this.lowerPrice = this.upperPrice - 1
+            // }
             if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
                 if (this.manual_input === 'first') {
                     this.calculateDefault()
@@ -532,13 +543,20 @@ export default {
                     this.calculateAlternative()
                 }
             }
-            this.calculatePricesRatio()
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
             this.upperPrice = Number(this.upperPrice)
-            if (this.upperPrice < this.lowerPrice + 1) {
-                this.upperPrice = this.lowerPrice + 1
+            const i_lower = Math.log(this.lowerPrice) / Math.log(1.0001)
+            let i_upper = Math.log(this.upperPrice) / Math.log(1.0001)
+            if (i_upper - i_lower < 1) {
+                i_upper = i_lower + 1
+            }
+            const new_upper_price = Math.pow(1.0001, i_upper)
+            this.upperPrice = new_upper_price
+
+            if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
+                this.calculateInit()
             }
             if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
                 if (this.manual_input === 'first') {
@@ -547,7 +565,6 @@ export default {
                     this.calculateAlternative()
                 }
             }
-            this.calculatePricesRatio()
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
