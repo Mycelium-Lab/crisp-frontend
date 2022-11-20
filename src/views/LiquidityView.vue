@@ -428,14 +428,19 @@ export default {
             this.newPositionModalActive = false
         },
         calculateInit: function () {
-            const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+
+            const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+            console.log(this.$store.state.pools[this.poolId].sqrt_price)
+            console.log(sp)
 
             const lp = sp * 0.9
             const up = sp * 1.1
 
             this.lowerPrice = lp
             this.upperPrice = up
-            this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price
+            this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
             this.t0_balance = balance0.amount
@@ -445,17 +450,18 @@ export default {
             this.manual_input = 'first'
             if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-                // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
-                const x = this.t0_liq
+                const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                const x = this.t0_liq * Math.pow(10, tokenObj.decimals)
                 
-                // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
-                const sa = Math.sqrt(this.lowerPrice)
-                const sb = Math.sqrt(this.upperPrice)
+                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+                const sa = Math.sqrt(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
                 const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
                 sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sp - sa)// //  // ?
+                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                console.log(liquidity + '* (' + sp + ' - ' + sa + ') / ' + Math.pow(10, tokenObj2.decimals) )
                 console.log(x, sp, sb, sa)
                 console.log(liquidity, res)
 
@@ -467,17 +473,17 @@ export default {
             this.manual_input = 'second'
             if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-                // const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
-                // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
-                const x = this.t1_liq
+                const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+                const x = this.t1_liq * Math.pow(10, tokenObj2.decimals)
                 
-                const sa = Math.sqrt(this.lowerPrice)
-                const sb = Math.sqrt(this.upperPrice)
+                const sa = Math.sqrt(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
                 const liquidity = x / (sp - sa)// amount of 1st token
                 sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sb - sp) / (sp * sb)//  // ?
+                const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
 
                 this.t0_liq = res
                 // this.total = res
