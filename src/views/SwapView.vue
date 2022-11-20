@@ -4,6 +4,9 @@
             <div class="modal-header">
                 <span class="modal-title">
                     Swap {{manual_input}} 
+                    <template v-if="!$store.state.account">
+                        (please, connect wallet)
+                    </template>
                     <template v-if="tokenAmntLoading">
                         (loading your 
                         <template v-if="manual_input === 'in'">
@@ -13,7 +16,7 @@
                             expense,
                         </template>please wait)
                     </template>
-                    <template v-if="loaded === false">
+                    <template v-if="loaded === false && $store.state.account">
                         (please wait, we are loading your tokens)
                     </template>
                 </span>
@@ -65,13 +68,11 @@
 import { CONTRACT_ID } from '@/constants'
 import store from '../store'
 import { isNumber, toFixed } from '../utils/number'
-
+import { getStorageItem, setStorageItem } from '../utils/localStorage'
+import { DEFAULT_SWAP_PAIR, SWAP_TOKENS } from '../constants/index'
 export default {
     name: 'SwapView',
     store,
-    components: {
-
-    },
     data () {
         return {
             token_in: null,
@@ -122,6 +123,10 @@ export default {
             }
         },
         findPool: async function () {
+            setStorageItem('swap_pair', {
+                token_in: this.token_in,
+                token_out: this.token_out
+            })
             if (this.token_in && this.token_out) {
                 const res = this.$store.state.pools.findIndex(
                     item => item.token0 === this.token_in.token && item.token1 === this.token_out.token
@@ -276,24 +281,11 @@ export default {
             }
         },  
         initTokens: async function () {
-            this.tokens = [
-                {
-                    symbol: 'USDT',
-                    token: 'usdt.fakes.testnet'
-                },
-                {
-                    symbol: 'USDC',
-                    token: 'usdc.fakes.testnet'
-                },
-                {
-                    symbol: 'USN',
-                    token: 'usdn.testnet'
-                },
-                {
-                    symbol: 'wNEAR',
-                    token: 'wrap.testnet'
-                }
-            ]
+            this.tokens = SWAP_TOKENS
+            const storageSwapPair = getStorageItem('swap_pair')
+            this.token_in = storageSwapPair?.token_in || DEFAULT_SWAP_PAIR.token_in
+            this.token_out = storageSwapPair?.token_out || DEFAULT_SWAP_PAIR.token_out
+            this.findPool()
         },
         signIn: async function () {
             await this.$store.dispatch('signIn', store.state)
