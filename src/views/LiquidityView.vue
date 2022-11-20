@@ -59,13 +59,13 @@
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
-                                <input type="number" v-model.lazy="t0_liq" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
+                                <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input"/>
                                 <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
-                                <input type="number" v-model.lazy="t1_liq" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
+                                <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input"/>
                                 <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                             </div>
                         </template>
@@ -220,7 +220,7 @@
                                 {{pool.token1}}
                             </span>
                             <span class="list-pool_unit">
-                                {{pool.liquidity}}
+                                {{pool.liquidity }}
                             </span>
                             <span class="list-pool_unit">
                                 {{pool.protocol_fee/100}}%
@@ -325,6 +325,7 @@
 </template>
 
 <script>
+import { isNumber, toFixed } from '../utils/number'
 import store from '../store'
 
 export default {
@@ -385,6 +386,7 @@ export default {
         }
     },
     methods: {
+        isNumber,
         openNewPoolModal: function () {
             this.modalActive = true
             this.newPoolModalActive = true
@@ -443,15 +445,16 @@ export default {
             this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
-            this.t0_balance = balance0.amount
-            this.t1_balance = balance1.amount
+            this.t0_balance = balance0?.amount || null
+            this.t1_balance = balance1?.amount || null
         },
         calculateDefault: function () {
             this.manual_input = 'first'
-            if (this.$store.state.pools[0] && this.t0_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+            if (this.$store.state.pools[0] && Number(this.t0_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
+
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
-                const x = this.t0_liq * Math.pow(10, tokenObj.decimals)
+                const x = Number(this.t0_liq) * Math.pow(10, tokenObj.decimals)
                 
                 const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
                 const sa = Math.sqrt(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
@@ -465,17 +468,18 @@ export default {
                 console.log(x, sp, sb, sa)
                 console.log(liquidity, res)
 
-                this.t1_liq = res
+                this.t1_liq = toFixed(res)
                 // this.total = res
             }
         },
         calculateAlternative: function () {
             this.manual_input = 'second'
-            if (this.$store.state.pools[0] && this.t1_liq && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+            if (this.$store.state.pools[0] && Number(this.t1_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
+
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                 const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
-                const x = this.t1_liq * Math.pow(10, tokenObj2.decimals)
+                const x = Number(this.t1_liq) * Math.pow(10, tokenObj2.decimals)
                 
                 const sa = Math.sqrt(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
@@ -485,7 +489,7 @@ export default {
                 sp = Math.max(Math.min(sp, sb), sa) // ?
                 const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
 
-                this.t0_liq = res
+                this.t0_liq = toFixed(res)
                 // this.total = res
             }
         },

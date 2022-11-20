@@ -31,7 +31,7 @@
                     <div class="token-input" v-if="manual_input === 'out' && tokenAmntLoading === true">
                         loading . . .
                     </div>
-                    <input v-else type="number" @change="getReturn()" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
+                    <input v-else type="text" @change="getReturn()" @keypress="isNumber" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
                 <span class="token-balance" v-if="token_in_balance">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}</span>
                 <div class="token-wrapper">
@@ -42,7 +42,7 @@
                     <div class="token-input" v-if="manual_input === 'in' && tokenAmntLoading === true">
                         loading . . .
                     </div>
-                    <input v-else type="number" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
+                    <input v-else type="text" @keypress="isNumber" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
                 <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}</span>
             </div>
@@ -64,6 +64,7 @@
 // import { CONTRACT_ID } from '../constants/index.js'
 import { CONTRACT_ID } from '@/constants'
 import store from '../store'
+import { isNumber, toFixed } from '../utils/number'
 
 export default {
     name: 'SwapView',
@@ -103,6 +104,7 @@ export default {
         }
     },
     methods: {
+        isNumber,
         swapPositions: async function () {
             const tin = this.token_out
             const tout = this.token_in
@@ -190,7 +192,7 @@ export default {
                             args: {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                             }
                         }
                     ).then((res) => {
@@ -199,7 +201,7 @@ export default {
                         if (this.$store.state.tokens[this.token_out.token]) {
                             tokenOutObj = this.$store.state.tokens[this.token_out.token]
                         }
-                        this.token_out_amnt = (res / Math.pow(10, tokenOutObj.decimals))
+                        this.token_out_amnt = toFixed((res / Math.pow(10, tokenOutObj.decimals)))
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
@@ -251,7 +253,7 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenInObj = this.$store.state.tokens[this.token_in.token]
                         }
-                        this.token_in_amnt = (res / Math.pow(10, tokenInObj.decimals))
+                        this.token_in_amnt = toFixed(res / Math.pow(10, tokenInObj.decimals))
                         this.tokenAmntLoading = false
                         this.txPending = false
                     })
@@ -318,7 +320,7 @@ export default {
                             {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_in: ((this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
                                 token_out: this.token_out.token
                             }
                         ).then((response) => {
