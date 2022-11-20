@@ -150,13 +150,13 @@
                             {{pos.token1}}
                         </span>
                         <span class="pos-list-pool_unit">
-                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price).toFixed(6)}}
+                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals).toFixed(2))}}
                         </span>
                         <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                            {{(pos.lower_bound_price_decimals).toFixed(2)}}
                         </span>
                         <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                            {{(pos.upper_bound_price_decimals).toFixed(2)}}
                         </span>
                         <span class="pos-list-pool_unit">
                             {{(pos.token0_real_liquidity).toFixed(6)}}
@@ -300,10 +300,10 @@
                             </template>
                         </span>-->
                         <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price).toFixed(6)}}
+                            {{(pos.lower_bound_price_decimals).toFixed(2)}}
                         </span>
                         <span class="pos-list-pool_unit">
-                            {{(pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price).toFixed(6)}}
+                            {{(pos.upper_bound_price_decimals).toFixed(2)}}
                         </span>
                         <span class="pos-list-pool_unit">
                             {{(pos.token0_real_liquidity).toFixed(6)}}
@@ -527,6 +527,7 @@ export default {
                 try {
                     let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                         console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
+                        const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
                     console.log(Number(this.poolId))
                     console.log(Number(this.t0_liq).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
@@ -538,8 +539,8 @@ export default {
                         {
                             pool_id: Number(this.poolId),
                             token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
-                            lower_bound_price: Number(this.lowerPrice),
-                            upper_bound_price: Number(this.upperPrice)
+                            lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                            upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
                     ).then((response) => {
                         console.log(response)
