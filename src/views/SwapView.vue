@@ -4,6 +4,9 @@
             <div class="modal-header">
                 <span class="modal-title">
                     Swap {{manual_input}} 
+                    <template v-if="!$store.state.account">
+                        (please, connect wallet)
+                    </template>
                     <template v-if="tokenAmntLoading">
                         (loading your 
                         <template v-if="manual_input === 'in'">
@@ -13,7 +16,7 @@
                             expense,
                         </template>please wait)
                     </template>
-                    <template v-if="loaded === false">
+                    <template v-if="loaded === false && $store.state.account">
                         (please wait, we are loading your tokens)
                     </template>
                 </span>
@@ -70,9 +73,6 @@ import { DEFAULT_SWAP_PAIR, SWAP_TOKENS } from '../constants/index'
 export default {
     name: 'SwapView',
     store,
-    components: {
-
-    },
     data () {
         return {
             token_in: null,
