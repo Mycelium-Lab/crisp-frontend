@@ -4,16 +4,17 @@
       <div v-for="notification in $store.state.notifications" :key="notification.id" class="notification-box">
         <div class="notification">
           <div class="notification-header">
-            <span class="notification-title">
+            <span :class="['notification-title', notification.type]">
               {{notification.title}}
             </span>
             <button @click="removeNotif(notification.id)" class="notification-close">
               X
             </button>
           </div>
-          <span class="notification-text">
+          <span :class="['notification-text', notification.type]">
             {{notification.text}}
           </span>
+          <div :class="['loader', notification.type]"></div>
         </div>
       </div>
     </div>
@@ -328,5 +329,36 @@ header {
   .page {
     display: none;
   }
+}
+@keyframes draw-loader {
+      0% {
+        width: 0;
+      }
+      95% {
+        width: 100%;
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+}
+.loader{
+  position: absolute;
+  bottom: 0;
+  left: 0px;
+  height: 2px;
+  animation: draw-loader 5s ease-in-out;
+}
+.loader.success{
+  background:#70B8A1;
+}
+.loader.error{
+  background:#C46060;
+}
+.notification-title.success, .notification-text.success {
+  color:#70B8A1;
+}
+.notification-title.error, .notification-text.error {
+  color:#C46060;
 }
 </style>
