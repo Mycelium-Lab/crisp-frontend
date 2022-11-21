@@ -258,10 +258,10 @@ header {
 }
 
 .logo {
-  margin-left: 12px;
+  margin-left: 20px;
   margin-right: 32px;
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
 }
 
 .page {
