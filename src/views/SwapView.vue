@@ -170,7 +170,7 @@ export default {
                 } else {
                     this.token_in_balance = {
                         symbol: 'Token',
-                        amount: '0'
+                        amount: 0
                     }
                 }
             }
@@ -184,7 +184,7 @@ export default {
                 } else {
                     this.token_out_balance = {
                         symbol: 'Token',
-                        amount: '0'
+                        amount: 0
                     }
                 }
             }
