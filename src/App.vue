@@ -21,9 +21,9 @@
   </div>
   <header>
     <div class="header-nav">
-      <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
-      <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
-      <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
+        <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
+        <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+        <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
       <router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>

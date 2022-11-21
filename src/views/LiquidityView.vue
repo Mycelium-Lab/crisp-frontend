@@ -536,9 +536,9 @@ export default {
             const new_lower_price = Math.pow(1.0001, i_lower)
             this.lowerPrice = new_lower_price
 
-            if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
-                this.calculateInit()
-            }
+            // if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
+            //     this.calculateInit()
+            // }
             // if (this.lowerPrice > this.upperPrice - 1) {
             //     this.lowerPrice = this.upperPrice - 1
             // }
@@ -561,9 +561,9 @@ export default {
             const new_upper_price = Math.pow(1.0001, i_upper)
             this.upperPrice = new_upper_price
 
-            if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
-                this.calculateInit()
-            }
+            // if (this.lowerPrice > this.currentPrice || this.upperPrice < this.currentPrice) {
+            //     this.calculateInit()
+            // }
             if (this.$store.state.pools[0] && this.lowerPrice < this.upperPrice) {
                 if (this.manual_input === 'first') {
                     this.calculateDefault()
