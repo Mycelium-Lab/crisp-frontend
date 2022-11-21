@@ -21,7 +21,7 @@
   </div>
   <header>
     <div class="header-nav">
-      <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/near-protocol-near-logo.svg">Swap</router-link>
+      <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
       <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
       <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
