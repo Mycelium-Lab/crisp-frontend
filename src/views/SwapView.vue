@@ -169,7 +169,7 @@ export default {
                     }
                 } else {
                     this.token_in_balance = {
-                        symbol: 'Token',
+                        symbol: this.tokens.find((t) => t.token === this.token_in.token)?.symbol || 'Token',
                         amount: 0
                     }
                 }
@@ -183,7 +183,7 @@ export default {
                     }
                 } else {
                     this.token_out_balance = {
-                        symbol: 'Token',
+                        symbol: this.tokens.find((t) => t.token === this.token_out.token)?.symbol || 'Token',
                         amount: 0
                     }
                 }
