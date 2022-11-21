@@ -549,6 +549,7 @@ export default {
                     this.calculateAlternative()
                 }
             }
+            this.calculatePricesRatio()
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -571,6 +572,7 @@ export default {
                     this.calculateAlternative()
                 }
             }
+            this.calculatePricesRatio()
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
