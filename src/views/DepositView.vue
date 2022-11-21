@@ -75,7 +75,7 @@
                 </div>
                 <div class="input-wrapper">
                     <span class="input-title">Amount</span>
-                    <input v-model="amount" class="modal-body_row-input"/>
+                    <input v-model="amount" ref="depositInput" class="modal-body_row-input"/>
                     <span class="input-caption">{{walletAmount}}</span>
                 </div>
                 </div>
@@ -144,8 +144,11 @@ export default {
       amountW: null
     }
   },
-  created() {
-    if(this.$store.getters.tokenForDeposit) this.token = this.$store.getters.tokenForDeposit.token
+  mounted() {
+    if(this.$store.getters.tokenForDeposit) {
+        this.token = this.$store.getters.tokenForDeposit.token
+        this.$refs.depositInput.focus()
+    }
   },
   methods: {
     getTokenWalletBalance: async function () {
