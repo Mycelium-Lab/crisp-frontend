@@ -109,11 +109,14 @@
                     <span class="pos-list-header_unit" style="width: 7%">
                         # Pos
                     </span>
+                    <span class="pos-list-header_unit" style="width: 7%">
+                        Active
+                    </span>
                     <span class="pos-list-header_unit" style="width: 14%">
                         Pool tokens
                     </span>
                     <span class="pos-list-header_unit">
-                        Current pool price
+                        Pool price
                     </span>
                     <span class="pos-list-header_unit">
                         L. bound price
@@ -122,10 +125,10 @@
                         U. bound price
                     </span>
                     <span class="pos-list-header_unit">
-                        T0 Real Liquidity
+                        T0 Liquidity
                     </span>
                     <span class="pos-list-header_unit">
-                        T1 Real Liquidity
+                        T1 Liquidity
                     </span>
                     <span class="pos-list-header_unit close-header-unit">
                         Close
@@ -138,6 +141,10 @@
                         </span>
                         <span class="pos-list-pool_unit" style="width: 7%">
                             {{pos.id}}
+                        </span>
+                        <span class="pos-list-pool_unit" style="width: 7%">
+                            <template v-if="pos.isActive">Yes</template>
+                            <template v-else>No</template>
                         </span>
                         <span v-if="$store.state.tokens" class="pos-list-pool_unit row" style="width: 14%">
                             <img class="icon" :src="$store.state.tokens[pos.token0].icon">
@@ -267,10 +274,10 @@
                         U. bound price
                     </span>
                     <span class="pos-list-header_unit">
-                        T0 Real Liquidity
+                        T0 Liquidity
                     </span>
                     <span class="pos-list-header_unit">
-                        T1 Real Liquidity
+                        T1 Liquidity
                     </span>
                 </div>
                 <div v-if="$store.state.positions[0]" class="list">
@@ -770,6 +777,7 @@ export default {
 .pos-list-header_unit, .pos-list-pool_unit {
     width: 14%;
     font-size: $tinyTextSize;
+    box-sizing: border-box;
 }
 
 .pos-list-header_unit:first-child, .pos-list-pool_unit:first-child, .pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
