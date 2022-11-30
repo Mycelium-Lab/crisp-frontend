@@ -74,6 +74,9 @@
                         <span v-else>Please wait while we load pools. . .</span>
                     </div>
                     <div class="modal-body_row">
+                        <apexcharts type="area" width="400" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                    </div>
+                    <div class="modal-body_row">
                         <div class="input-wrapper">
                             <span class="input-title">Lower bound price</span>
                             <input v-model="lowerPrice" @change="calculateLower()" id="lowerPrice" class="modal-body_row-input"/>
@@ -336,10 +339,17 @@
 <script>
 import { isNumber, toFixed } from '../utils/number'
 import store from '../store'
+import apexcharts from "vue3-apexcharts"
+import {
+    defaultOptions
+} from '../constants/charts'
 
 export default {
     name: 'LiquidityView',
     store,
+    components: {
+        apexcharts
+    },
     data () {
         return {
             /**
@@ -377,6 +387,12 @@ export default {
                 t0: false,
                 t1: false
             },
+
+            defaultOptions: defaultOptions,
+            graphSeries: [{
+                name: 'graphSeries',
+                data: []
+            }],
             loading: false,
         }
     },
@@ -447,11 +463,33 @@ export default {
             this.modalActive = false
             this.newPositionModalActive = false
         },
+        drawAnnotations: function (lp, up) {
+            this.defaultOptions = {
+                ...this.defaultOptions,
+                annotations: {
+                    xaxis: [
+                        {
+                            x: lp,
+                            x2: up,
+                            borderColor: '#775DD0',
+                            fillColor: '#eca200',
+                            label: {
+                                style: {
+                                color: '#eca200',
+                                },
+                                text: 'Price range'
+                            }
+                        }
+                    ]
+                }
+            }
+        },
         calculateInit: function () {
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
             const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+            
             console.log(this.$store.state.pools[this.poolId].sqrt_price)
             console.log(sp)
 
@@ -465,6 +503,73 @@ export default {
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
             this.t0_balance = balance0?.amount || 0
             this.t1_balance = balance1?.amount || 0
+
+            console.log(this.$store.state.pools[this.poolId])
+            console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+            const positions = []
+            let lowest
+            let highest
+            /**
+             * {
+             *  lower: 900,
+             *  upper: 1100,
+             *  liquidity: 10000
+             * }
+             * {
+             *  lower: 850,
+             *  upper: 1150,
+             *  liquidity: 10000
+             * }
+             */
+            const decs = Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+            for (let i = 0; i < this.$store.state.pools[this.poolId].positions.length; i++) {
+                const pos = this.$store.state.pools[this.poolId].positions[i]
+                const lower = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price * decs
+                const upper = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price * decs
+                const liquidity = pos.liquidity
+
+                positions.push({
+                    lower: lower,
+                    upper: upper,
+                    liquidity: liquidity
+                })
+
+                if (!lowest || lower < lowest) {
+                    lowest = lower
+                }
+                if (!highest || upper > highest) {
+                    highest = upper
+                }
+            }
+            const graphTick = (highest - lowest) / 25
+            lowest = lowest - graphTick
+            highest = highest + graphTick
+
+            const xAxisValues = []
+            for (let i = 0; i < 30; i++) {
+                xAxisValues.push((lowest + graphTick * i))
+            }
+            console.log(xAxisValues)
+            
+            const graphSeries = []
+            for (let i = 0; i < xAxisValues.length; i++) {
+                let yValue = 0
+                for (let j = 0; j < positions.length; j++) {
+                    if (xAxisValues[i] > positions[j].lower && xAxisValues[i] < positions[j].upper) {
+                        yValue += positions[j].liquidity
+                    }
+                }
+                graphSeries.push({
+                    x: xAxisValues[i],
+                    y: yValue
+                })
+            }
+            this.graphSeries = [{
+                name: 'Available liquidity',
+                data: graphSeries
+            }]
+            console.log(this.graphSeries)
+            this.drawAnnotations(this.lowerPrice, this.upperPrice)
         },
         calculatePricesRatio: function () {
             if(Number(this.upperPrice) < Number(this.currentPrice)) {
@@ -557,6 +662,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
+            this.drawAnnotations(this.lowerPrice, this.upperPrice)
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -580,6 +686,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
+            this.drawAnnotations(this.lowerPrice, this.upperPrice)
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -894,7 +1001,7 @@ export default {
     padding-bottom: 48px;
 }
 
-.modal-body_row:first-child {
+.modal-body_row:first-child, .modal-body_row:nth-child(2) {
     border-bottom: $brightBorder;
 }
 
