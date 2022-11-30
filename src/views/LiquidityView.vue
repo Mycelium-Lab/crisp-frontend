@@ -473,11 +473,23 @@ export default {
                             x2: up,
                             borderColor: '#775DD0',
                             fillColor: '#eca200',
+                        },
+                        {
+                            x: lp,
                             label: {
                                 style: {
                                 color: '#eca200',
                                 },
-                                text: 'Price range'
+                                text: 'Lower bound price'
+                            }
+                        },
+                        {
+                            x: up,
+                            label: {
+                                style: {
+                                color: '#eca200',
+                                },
+                                text: 'Upper bound price',
                             }
                         }
                     ]
