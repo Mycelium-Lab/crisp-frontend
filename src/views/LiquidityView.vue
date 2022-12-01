@@ -463,7 +463,7 @@ export default {
             this.modalActive = false
             this.newPositionModalActive = false
         },
-        drawAnnotations: function (lp, up) {
+        drawAnnotations: function (lp, up, cp) {
             this.defaultOptions = {
                 ...this.defaultOptions,
                 annotations: {
@@ -491,7 +491,12 @@ export default {
                                 },
                                 text: 'Upper bound price',
                             }
-                        }
+                        },
+                        {
+                            x: cp,
+                            strokeDashArray: 3,
+                            borderColor: '#c2c2c2'
+                        },
                     ]
                 }
             }
@@ -581,7 +586,7 @@ export default {
                 data: graphSeries
             }]
             console.log(this.graphSeries)
-            this.drawAnnotations(this.lowerPrice, this.upperPrice)
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         calculatePricesRatio: function () {
             if(Number(this.upperPrice) < Number(this.currentPrice)) {
@@ -674,7 +679,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
-            this.drawAnnotations(this.lowerPrice, this.upperPrice)
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -698,7 +703,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
-            this.drawAnnotations(this.lowerPrice, this.upperPrice)
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
