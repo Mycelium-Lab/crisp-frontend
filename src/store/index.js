@@ -182,8 +182,18 @@ export default createStore({
       for (let i = 0; i < state.pools.length; i++) {
         const pool = state.pools[i]
         console.log(pool)
-        for (let p = 0; p < pool.positions.length; p++) {
-          const position = pool.positions[p]
+        const newPositions = []
+        for (let [key, value] of Object.entries(pool.positions)) {
+          value = {
+            ...value,
+            id: Number(key)
+          }
+          newPositions.push(value)
+        }
+        console.log(newPositions)
+        for (let p = 0; p < newPositions.length; p++) {
+          // const position = pool.positions[p]
+          const position = newPositions[p]
           let token0obj, token1obj
           if (state.tokens[pool.token0]) {
             token0obj = state.tokens[pool.token0]
@@ -204,8 +214,8 @@ export default createStore({
             tick_upper_bound_price: position.tick_upper_bound_price,
             token0: pool.token0,
             token1: pool.token1,
-            token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
-            token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
+            token0_real_liquidity: position.token0_locked / Math.pow(10, token0obj.decimals),
+            token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals)
           })
           if (state.account && position.owner_id === state.account.accountId) {
             state.userPositions.push({
@@ -221,12 +231,14 @@ export default createStore({
               tick_upper_bound_price: position.tick_upper_bound_price,
               token0: pool.token0,
               token1: pool.token1,
-              token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
-              token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
+              token0_real_liquidity: position.token0_locked / Math.pow(10, token0obj.decimals),
+              token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals)
             })
           }
         }
       }
+      console.log(state.positions)
+      console.log(state.userPositions)
       state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
