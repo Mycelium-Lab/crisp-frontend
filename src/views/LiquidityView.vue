@@ -975,6 +975,8 @@ export default {
     border: $brightBorder;
     border-radius: $borderRadius;
     padding: 26px;
+    overflow: auto;
+    max-height: 95vh;
 }
 
 .modal-header {
