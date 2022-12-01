@@ -190,7 +190,6 @@ export default createStore({
           }
           newPositions.push(value)
         }
-        console.log(newPositions)
         for (let p = 0; p < newPositions.length; p++) {
           // const position = pool.positions[p]
           const position = newPositions[p]
@@ -237,8 +236,6 @@ export default createStore({
           }
         }
       }
-      console.log(state.positions)
-      console.log(state.userPositions)
       state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
