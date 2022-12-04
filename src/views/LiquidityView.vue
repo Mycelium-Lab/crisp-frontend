@@ -105,7 +105,7 @@
                 <div class="heading">
                     <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
                 </div>
-                <div v-if="$store.state.userPositions[0]" class="list-header">
+                <!--<div v-if="$store.state.userPositions[0]" class="list-header">
                     <span class="pos-list-header_unit" style="width: 7%">
                         # Pool
                     </span>
@@ -137,7 +137,91 @@
                         Close
                     </span>
                 </div>
-                <div v-if="$store.state.userPositions[0]" class="list">
+                -->
+                <template v-if="$store.state.userPositions[0]">
+                    <div v-for="pos in $store.state.userPositions" :key="pos.id" class="pos-table">
+                        <div class="pos-table_header">
+                            <div class="pos-table_header-cell">
+                                <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
+                                <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                            </div>
+                            <div class="pos-table_header-cell">
+                                Liquidity
+                            </div>
+                            <div class="pos-table_header-cell">
+                                Rewards
+                            </div>
+                            <div class="pos-table_header-cell">
+                                <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
+                                <button v-else @click="closePosition(pos)" class="close-pos">
+                                    X
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pos-table_data">
+                            <div class="pos-table_data-cell">
+                                <div v-if="$store.state.tokens" class="pos-table-tokens">
+                                    <img class="cell-icon" :src="$store.state.tokens[pos.token0].icon">
+                                    <img class="cell-icon" :src="$store.state.tokens[pos.token1].icon">
+                                    <div>
+                                        {{$store.state.tokens[pos.token0].symbol}} - {{$store.state.tokens[pos.token1].symbol}}
+                                    </div>
+                                </div>
+                                <div v-else class="pos-table-tokens">
+                                    {{pos.token0}} - {{pos.token1}}
+                                </div>
+                                <div class="pos-table-poolprice">
+                                    <span>POOL PRICE</span>
+                                    <span>{{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals)).toFixed(2)}}</span>
+                                </div>
+                                <div class="pos-table-range">
+                                    <span>({{(pos.lower_bound_price_decimals).toFixed(2)}} - </span>
+                                    <span>{{(pos.upper_bound_price_decimals).toFixed(2)}})</span>
+                                </div>
+                            </div>
+                            <div class="pos-table_data-cell stacked">
+                                <div class="pos-table_data-cell_row">
+                                    <div class="token_index">
+                                        T0
+                                    </div>
+                                    <span class="token_value">
+                                        {{(pos.token0_real_liquidity).toFixed(6)}}
+                                    </span>
+                                </div>
+                                <div class="pos-table_data-cell_row">
+                                    <div class="token_index">
+                                        T1
+                                    </div>
+                                    <span class="token_value">
+                                        {{(pos.token1_real_liquidity).toFixed(6)}}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="pos-table_data-cell stacked">
+                                <div class="pos-table_data-cell_row">
+                                    <div class="token_index">
+                                        T0
+                                    </div>
+                                    <span class="token_value">
+                                        {{(pos.fees0).toFixed(6)}}
+                                    </span>
+                                </div>
+                                <div class="pos-table_data-cell_row">
+                                    <div class="token_index">
+                                        T1
+                                    </div>
+                                    <span class="token_value">
+                                        {{(pos.fees1).toFixed(6)}}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="pos-table_data-cell">
+                                <img src="../assets/icons/expand.svg">
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <!--<div v-if="$store.state.userPositions[0]" class="list">
                     <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
                         <span class="pos-list-pool_unit" style="width: 7%">
                             {{pos.poolId}}
@@ -183,10 +267,10 @@
                             </button>
                         </span>
                     </div>
-                </div>
+                </div>-->
             </template>
 
-            <div v-if="$store.state.pools && $store.state.tokens" class="heading">
+            <div v-if="$store.state.pools && $store.state.tokens" class="heading pools-heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
 
@@ -826,6 +910,10 @@ export default {
     margin-bottom: 32px;
 }
 
+.pools-heading {
+    margin-top: 64px;
+}
+
 .list {
     margin-bottom: 64px;
     display: flex;
@@ -1124,5 +1212,209 @@ export default {
     width: $textSize;
     height: $textSize;
     margin-right: 32px;
+}
+
+.pos-table {
+    display: flex;
+    flex-direction: column;
+    width: $interfaceBlocksWidth;
+    border: $border;
+    border-radius: $borderRadius;
+    margin-bottom: 16px;
+    -webkit-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    -moz-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    transition: 0.5s;
+    cursor: pointer;
+}
+
+.pos-table:hover {
+    -webkit-box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    -moz-box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    transition: 0.5s;
+}
+
+.pos-table:last-child {
+    margin-bottom: 64px;
+}
+
+.pos-table_header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: $border;
+    background-color: #d9d9d9;
+    border-radius: $borderRadius;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.pos-table_header-cell {
+    padding: 14px;
+    width: 30%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: $textSize;
+    border-right: $border;
+    height: 50px;
+}
+
+.pos-table_header-cell:first-child {
+    justify-content: flex-start;
+    font-size: $lesserTextSize;
+}
+
+.pos-table_header-cell:last-child {
+    justify-content: flex-end;
+    border: 0;
+    width: 10%;
+}
+
+.close-pos {
+    border: 1px solid transparent;
+    width: $textSize;
+    height: $textSize;
+    padding: 2px;
+    border-radius: ($borderRadius/2);
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.status-caption {
+    margin-left: 12px;
+}
+
+.close-pos:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.pos-table_data {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-bottom-left-radius: $borderRadius;
+    border-bottom-right-radius: $borderRadius;
+}
+
+.pos-table_data-cell {
+    width: 30%;
+    font-size: $lesserTextSize;
+    border-right: $border;
+}
+
+.pos-table_data-cell:last-child {
+    width: 10%;
+    border: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.pos-table_data-cell:first-child {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pos-table-tokens {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    font-size: $textSize;
+    margin-right: 16px;
+    margin-bottom: 12px;
+    margin-top: 12px;
+    margin-left: 32px;
+}
+
+.cell-icon {
+    margin-right: 6px;
+    margin-top: 1px;
+    width: $textSize;
+    height: $textSize;
+}
+
+.cell-icon:first-child {
+    margin-left: 6px;
+}
+
+.cell-icon:nth-child(2) {
+    margin-right: 12px;
+}
+
+.pos-table-poolprice {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.pos-table-poolprice span:first-child {
+    margin-right: 16px;
+}
+
+.pos-table-poolprice span:last-child {
+    font-size: 20px;
+}
+
+.pos-table-range {
+    margin-bottom: 12px;
+}
+
+.stacked {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 120px;
+}
+
+.token_index {
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    font-size: $tinyTextSize;
+}
+
+.token_value {
+    font-size: $textSize;
+}
+
+.pos-table_data-cell_row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 50%;
+    width: 100%;
+    position: relative;
+}
+
+.pos-table_data-cell_row:first-child {
+    border-bottom: $border;
+}
+
+.cell-loader-icon {
+    width: $textSize;
+    height: $textSize;
+    margin-right: 24px;
 }
 </style>
