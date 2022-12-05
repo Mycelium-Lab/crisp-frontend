@@ -605,8 +605,8 @@ export default {
             this.t0_balance = balance0?.amount || 0
             this.t1_balance = balance1?.amount || 0
 
-            console.log(this.$store.state.pools[this.poolId])
-            console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+            // console.log(this.$store.state.pools[this.poolId])
+            // console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
             const positions = []
             let lowest
             let highest
@@ -622,9 +622,12 @@ export default {
              *  liquidity: 10000
              * }
              */
+            const pool = this.$store.state.pools[this.poolId]
+            console.log(pool)
+
             const decs = Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
-            for (let i = 0; i < this.$store.state.pools[this.poolId].positions.length; i++) {
-                const pos = this.$store.state.pools[this.poolId].positions[i]
+            for (let [key, ] of Object.entries(pool.positions)) {
+                const pos = this.$store.state.pools[this.poolId].positions[key]
                 const lower = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price * decs
                 const upper = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price * decs
                 const liquidity = pos.liquidity
