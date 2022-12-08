@@ -36,7 +36,7 @@
                     </div>
                     <input v-else type="text" @change="getReturn()" @keypress="isNumber" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_in_balance">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
+                <span class="token-balance" v-if="(token_in_balance && $store.state.tokenBalances[0])">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
                 <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
                 </span>
                 <div class="token-wrapper token-out">
@@ -49,7 +49,7 @@
                     </div>
                     <input v-else type="text" @keypress="isNumber" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_out_balance">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
+                <span class="token-balance" v-if="(token_out_balance && $store.state.tokenBalances[0])">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
                 <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
                 </span>
             </div>
@@ -327,14 +327,14 @@ export default {
 
             if (contract) {
                 this.txPending = true
-                if (this.manual_input === 'in') {
-                    // swap_in
+                // if (this.manual_input === 'in') {
+                //     // swap_in
                     try {
                         let tokenObj
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenObj = this.$store.state.tokens[this.token_in.token]
                         }
-                        await contract.swap_in(
+                        await contract.swap(
                             {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
@@ -361,44 +361,42 @@ export default {
                         })
                         this.txPending = false
                     }
-                } else if (this.manual_input === 'out') {
-                    // swap_out
-                    try {
-                        let tokenObj
-                        if (this.$store.state.tokens[this.token_out.token]) {
-                            tokenObj = this.$store.state.tokens[this.token_out.token]
-                        }
-                        await contract.swap_out(
-                            {
-                                pool_id: this.pool_id,
-                                token_in: this.token_in.token,
-                                amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                                token_out: this.token_out.token
-                            }
-                        ).then((response) => {
-                            console.log(response)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Swap is successful'
-                            })
-                            this.txPending = false
-                            this.$store.dispatch('reload', store.state)
-                        })
-                    } catch (error) {
-                        console.log(error)
-                        this.$store.commit('pushNotification', {
-                            title: 'Error',
-                            type: 'error',
-                            text: error
-                        })
-                        this.txPending = false
-                    }
-                }
-                
+                // } else if (this.manual_input === 'out') {
+                //     // swap_out
+                //     try {
+                //         let tokenObj
+                //         if (this.$store.state.tokens[this.token_out.token]) {
+                //             tokenObj = this.$store.state.tokens[this.token_out.token]
+                //         }
+                //         await contract.swap_out(
+                //             {
+                //                 pool_id: this.pool_id,
+                //                 token_in: this.token_in.token,
+                //                 amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                //                 token_out: this.token_out.token
+                //             }
+                //         ).then((response) => {
+                //             console.log(response)
+                //             this.$store.commit('pushNotification', {
+                //                 title: 'Success',
+                //                 type: 'success',
+                //                 // text: response
+                //                 text: 'Swap is successful'
+                //             })
+                //             this.txPending = false
+                //             this.$store.dispatch('reload', store.state)
+                //         })
+                //     } catch (error) {
+                //         console.log(error)
+                //         this.$store.commit('pushNotification', {
+                //             title: 'Error',
+                //             type: 'error',
+                //             text: error
+                //         })
+                //         this.txPending = false
+                //     }
+                // }
             }
-            
         }
     }
 }

@@ -182,8 +182,17 @@ export default createStore({
       for (let i = 0; i < state.pools.length; i++) {
         const pool = state.pools[i]
         console.log(pool)
-        for (let p = 0; p < pool.positions.length; p++) {
-          const position = pool.positions[p]
+        const newPositions = []
+        for (let [key, value] of Object.entries(pool.positions)) {
+          value = {
+            ...value,
+            id: Number(key)
+          }
+          newPositions.push(value)
+        }
+        for (let p = 0; p < newPositions.length; p++) {
+          // const position = pool.positions[p]
+          const position = newPositions[p]
           let token0obj, token1obj
           if (state.tokens[pool.token0]) {
             token0obj = state.tokens[pool.token0]
@@ -202,10 +211,12 @@ export default createStore({
             upper_bound_price_decimals: position.sqrt_upper_bound_price * position.sqrt_upper_bound_price * Math.pow(10, token0obj.decimals - token1obj.decimals),
             tick_lower_bound_price: position.tick_lower_bound_price,
             tick_upper_bound_price: position.tick_upper_bound_price,
+            fees0: position.fees_earned_token0 / Math.pow(10, token0obj.decimals),
+            fees1: position.fees_earned_token1 / Math.pow(10, token1obj.decimals),
             token0: pool.token0,
             token1: pool.token1,
-            token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
-            token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
+            token0_real_liquidity: position.token0_locked / Math.pow(10, token0obj.decimals),
+            token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals)
           })
           if (state.account && position.owner_id === state.account.accountId) {
             state.userPositions.push({
@@ -219,10 +230,12 @@ export default createStore({
               upper_bound_price_decimals: position.sqrt_upper_bound_price * position.sqrt_upper_bound_price * Math.pow(10, token0obj.decimals - token1obj.decimals),
               tick_lower_bound_price: position.tick_lower_bound_price,
               tick_upper_bound_price: position.tick_upper_bound_price,
+              fees0: position.fees_earned_token0 / Math.pow(10, token0obj.decimals),
+              fees1: position.fees_earned_token1 / Math.pow(10, token1obj.decimals),
               token0: pool.token0,
               token1: pool.token1,
-              token0_real_liquidity: position.token0_real_liquidity / Math.pow(10, token0obj.decimals),
-              token1_real_liquidity: position.token1_real_liquidity / Math.pow(10, token1obj.decimals)
+              token0_real_liquidity: position.token0_locked / Math.pow(10, token0obj.decimals),
+              token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals)
             })
           }
         }
@@ -247,7 +260,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance'],
-            changeMethods: ['open_position', 'close_position', 'swap_in', 'swap_out', 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense']
+            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense']
           }
         )
       } else {

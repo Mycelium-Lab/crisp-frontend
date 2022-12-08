@@ -74,6 +74,9 @@
                         <span v-else>Please wait while we load pools. . .</span>
                     </div>
                     <div class="modal-body_row">
+                        <apexcharts type="area" width="400" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                    </div>
+                    <div class="modal-body_row">
                         <div class="input-wrapper">
                             <span class="input-title">Lower bound price</span>
                             <input v-model="lowerPrice" @change="calculateLower()" id="lowerPrice" class="modal-body_row-input"/>
@@ -102,7 +105,7 @@
                 <div class="heading">
                     <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
                 </div>
-                <div v-if="$store.state.userPositions[0]" class="list-header">
+                <!--<div v-if="$store.state.userPositions[0]" class="list-header">
                     <span class="pos-list-header_unit" style="width: 7%">
                         # Pool
                     </span>
@@ -134,7 +137,117 @@
                         Close
                     </span>
                 </div>
-                <div v-if="$store.state.userPositions[0]" class="list">
+                -->
+                <template v-if="$store.state.userPositions[0]">
+                    <div v-for="pos in $store.state.userPositions" :key="pos.id" class="pos-table_wrapper">
+                        <div class="pos-table">
+                            <div class="pos-table_header">
+                                <div class="pos-table_header-cell">
+                                    <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
+                                    <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                                </div>
+                                <div class="pos-table_header-cell">
+                                    Liquidity
+                                </div>
+                                <div class="pos-table_header-cell">
+                                    Rewards
+                                </div>
+                                <div class="pos-table_header-cell">
+                                    <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
+                                    <button v-else @click="closePosition(pos)" class="close-pos">
+                                        X
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pos-table_data">
+                                <div class="pos-table_data-cell">
+                                    <div v-if="$store.state.tokens" class="pos-table-tokens">
+                                        <img class="cell-icon" :src="$store.state.tokens[pos.token0].icon">
+                                        <img class="cell-icon" :src="$store.state.tokens[pos.token1].icon">
+                                        <div>
+                                            {{$store.state.tokens[pos.token0].symbol}} - {{$store.state.tokens[pos.token1].symbol}}
+                                        </div>
+                                    </div>
+                                    <div v-else class="pos-table-tokens">
+                                        {{pos.token0}} - {{pos.token1}}
+                                    </div>
+                                    <div class="pos-table-poolprice">
+                                        <span>POOL PRICE</span>
+                                        <span>{{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals)).toFixed(2)}}</span>
+                                    </div>
+                                    <div class="pos-table-range">
+                                        <span>({{(pos.lower_bound_price_decimals).toFixed(2)}} - </span>
+                                        <span>{{(pos.upper_bound_price_decimals).toFixed(2)}})</span>
+                                    </div>
+                                </div>
+                                <div class="pos-table_data-cell stacked">
+                                    <div class="pos-table_data-cell_row">
+                                        <div class="token_index">
+                                            T0
+                                        </div>
+                                        <span class="token_value">
+                                            {{(pos.token0_real_liquidity).toFixed(6)}}
+                                        </span>
+                                    </div>
+                                    <div class="pos-table_data-cell_row">
+                                        <div class="token_index">
+                                            T1
+                                        </div>
+                                        <span class="token_value">
+                                            {{(pos.token1_real_liquidity).toFixed(6)}}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="pos-table_data-cell stacked">
+                                    <div class="pos-table_data-cell_row">
+                                        <div class="token_index">
+                                            T0
+                                        </div>
+                                        <span class="token_value">
+                                            {{(pos.fees0).toFixed(6)}}
+                                        </span>
+                                    </div>
+                                    <div class="pos-table_data-cell_row">
+                                        <div class="token_index">
+                                            T1
+                                        </div>
+                                        <span class="token_value">
+                                            {{(pos.fees1).toFixed(6)}}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="pos-table_data-cell">
+                                    <img @click="expandPos(pos)" src="../assets/icons/expand.svg">
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="pos.expanded" class="pos-table pos-table-expanded">
+                            <template v-if="tokensLoaded">
+                                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                <button v-else @click="editAddLiq(pos)" class="edit-btn">
+                                    Add liquidity
+                                </button>
+                                <div class="input-wrapper">
+                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} liquidity</span></span>
+                                    <input type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
+                                    <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
+                                    <!--<button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>-->
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} liquidity</span></span>
+                                    <input type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
+                                    <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
+                                    <!--<button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>-->
+                                </div>
+                                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                <button v-else @click="editRemoveLiq(pos)" class="edit-btn">
+                                    Remove liquidity
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <!--<div v-if="$store.state.userPositions[0]" class="list">
                     <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
                         <span class="pos-list-pool_unit" style="width: 7%">
                             {{pos.poolId}}
@@ -180,10 +293,10 @@
                             </button>
                         </span>
                     </div>
-                </div>
+                </div>-->
             </template>
 
-            <div v-if="$store.state.pools && $store.state.tokens" class="heading">
+            <div v-if="$store.state.pools && $store.state.tokens" class="heading pools-heading">
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
 
@@ -336,10 +449,17 @@
 <script>
 import { isNumber, toFixed } from '../utils/number'
 import store from '../store'
+import apexcharts from "vue3-apexcharts"
+import {
+    defaultOptions
+} from '../constants/charts'
 
 export default {
     name: 'LiquidityView',
     store,
+    components: {
+        apexcharts
+    },
     data () {
         return {
             /**
@@ -364,6 +484,9 @@ export default {
             poolId: null,          // e.g. 0
             t0_liq: null,          // e.g. 100000
             t1_liq: null,
+
+            edit_t0_liq: null,
+            edit_t1_liq: null,
             lowerPrice: null,      // e.g. 90
             upperPrice: null,      // e.g. 110
             t0_balance: null,
@@ -377,6 +500,12 @@ export default {
                 t0: false,
                 t1: false
             },
+
+            defaultOptions: defaultOptions,
+            graphSeries: [{
+                name: 'graphSeries',
+                data: []
+            }],
             loading: false,
         }
     },
@@ -447,11 +576,50 @@ export default {
             this.modalActive = false
             this.newPositionModalActive = false
         },
+        drawAnnotations: function (lp, up, cp) {
+            this.defaultOptions = {
+                ...this.defaultOptions,
+                annotations: {
+                    xaxis: [
+                        {
+                            x: lp,
+                            x2: up,
+                            borderColor: '#775DD0',
+                            fillColor: '#eca200',
+                        },
+                        {
+                            x: lp,
+                            label: {
+                                style: {
+                                color: '#eca200',
+                                },
+                                text: 'Lower bound price'
+                            }
+                        },
+                        {
+                            x: up,
+                            label: {
+                                style: {
+                                color: '#eca200',
+                                },
+                                text: 'Upper bound price',
+                            }
+                        },
+                        {
+                            x: cp,
+                            strokeDashArray: 3,
+                            borderColor: '#c2c2c2'
+                        },
+                    ]
+                }
+            }
+        },
         calculateInit: function () {
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
             const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+            
             console.log(this.$store.state.pools[this.poolId].sqrt_price)
             console.log(sp)
 
@@ -465,6 +633,76 @@ export default {
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
             this.t0_balance = balance0?.amount || 0
             this.t1_balance = balance1?.amount || 0
+
+            // console.log(this.$store.state.pools[this.poolId])
+            // console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+            const positions = []
+            let lowest
+            let highest
+            /**
+             * {
+             *  lower: 900,
+             *  upper: 1100,
+             *  liquidity: 10000
+             * }
+             * {
+             *  lower: 850,
+             *  upper: 1150,
+             *  liquidity: 10000
+             * }
+             */
+            const pool = this.$store.state.pools[this.poolId]
+            console.log(pool)
+
+            const decs = Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+            for (let [key, ] of Object.entries(pool.positions)) {
+                const pos = this.$store.state.pools[this.poolId].positions[key]
+                const lower = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price * decs
+                const upper = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price * decs
+                const liquidity = pos.liquidity
+
+                positions.push({
+                    lower: lower,
+                    upper: upper,
+                    liquidity: liquidity
+                })
+
+                if (!lowest || lower < lowest) {
+                    lowest = lower
+                }
+                if (!highest || upper > highest) {
+                    highest = upper
+                }
+            }
+            const graphTick = (highest - lowest) / 25
+            lowest = lowest - graphTick
+            highest = highest + graphTick
+
+            const xAxisValues = []
+            for (let i = 0; i < 30; i++) {
+                xAxisValues.push((lowest + graphTick * i))
+            }
+            console.log(xAxisValues)
+            
+            const graphSeries = []
+            for (let i = 0; i < xAxisValues.length; i++) {
+                let yValue = 0
+                for (let j = 0; j < positions.length; j++) {
+                    if (xAxisValues[i] > positions[j].lower && xAxisValues[i] < positions[j].upper) {
+                        yValue += positions[j].liquidity
+                    }
+                }
+                graphSeries.push({
+                    x: xAxisValues[i],
+                    y: yValue
+                })
+            }
+            this.graphSeries = [{
+                name: 'Available liquidity',
+                data: graphSeries
+            }]
+            console.log(this.graphSeries)
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         calculatePricesRatio: function () {
             if(Number(this.upperPrice) < Number(this.currentPrice)) {
@@ -491,7 +729,7 @@ export default {
             this.manual_input = 'first'
             if (this.$store.state.pools[0] && Number(this.t0_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-
+                console.log(this.lowerPrice)
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                 const x = Number(this.t0_liq) * Math.pow(10, tokenObj.decimals)
                 
@@ -508,6 +746,30 @@ export default {
                 console.log(liquidity, res)
 
                 this.t1_liq = toFixed(res)
+                // this.total = res
+            }
+        },
+        calcEditDefault: function (pos) {
+            this.manual_input = 'first'
+            if (this.$store.state.pools[0] && Number(this.edit_t0_liq)) {
+                const poolId = pos.poolId
+
+                const tokenObj = this.$store.state.tokens[this.$store.state.pools[poolId].token0]
+                const x = Number(this.edit_t0_liq) * Math.pow(10, tokenObj.decimals)
+                
+                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[poolId].token1]
+                const sa = pos.sqrt_lower_bound_price
+                const sb = pos.sqrt_upper_bound_price
+                let sp = this.$store.state.pools[poolId].sqrt_price
+
+                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                console.log(liquidity + '* (' + sp + ' - ' + sa + ') / ' + Math.pow(10, tokenObj2.decimals) )
+                console.log(x, sp, sb, sa)
+                console.log(liquidity, res)
+
+                this.edit_t1_liq = toFixed(res)
                 // this.total = res
             }
         },
@@ -529,6 +791,27 @@ export default {
                 const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
 
                 this.t0_liq = toFixed(res)
+                // this.total = res
+            }
+        },
+        calcEditAlternative: function(pos) {
+            this.manual_input = 'second'
+            if (this.$store.state.pools[0] && Number(this.edit_t1_liq)) {
+                const poolId = pos.poolId
+
+                const tokenObj = this.$store.state.tokens[this.$store.state.pools[poolId].token0]
+                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[poolId].token1]
+                const x = Number(this.edit_t1_liq) * Math.pow(10, tokenObj2.decimals)
+                
+                const sa = pos.sqrt_lower_bound_price
+                const sb = pos.sqrt_upper_bound_price
+                let sp = this.$store.state.pools[poolId].sqrt_price
+
+                const liquidity = x / (sp - sa)// amount of 1st token
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
+
+                this.edit_t0_liq = toFixed(res)
                 // this.total = res
             }
         },
@@ -557,6 +840,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -580,6 +864,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
+            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -629,6 +914,80 @@ export default {
                 }
             }
         },
+        editAddLiq: async function (pos) {
+            const contract = this.$store.state.crispContract
+            if (contract && this.edit_t0_liq !== 0) {
+                this.txPending = true
+                try {
+                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
+                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                    await contract.add_liquidity(
+                        {
+                            pool_id: Number(pos.poolId),
+                            id: Number(pos.id),
+                            token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully changed'
+                        })
+                        this.txPending = false
+                        this.$store.dispatch('reload', store.state)
+                    })
+                } catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
+            }
+        },
+        editRemoveLiq: async function (pos) {
+            const contract = this.$store.state.crispContract
+            if (contract && this.edit_t0_liq !== 0) {
+                this.txPending = true
+                try {
+                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
+                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                    await contract.remove_liquidity(
+                        {
+                            pool_id: Number(pos.poolId),
+                            id: Number(pos.id),
+                            token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                        }
+                    ).then((response) => {
+                        console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully changed'
+                        })
+                        this.txPending = false
+                        this.$store.dispatch('reload', store.state)
+                    })
+                } catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
+            }
+        },
         closePosition: async function (pos) {
             const contract = this.$store.state.crispContract
 
@@ -660,6 +1019,19 @@ export default {
                     })
                     this.txPending = false
                 }
+            }
+        },
+        expandPos: async function (pos) {
+            this.edit_t0_liq = 0
+            this.edit_t1_liq = 0
+            if (pos.expanded) {
+                pos.expanded = undefined
+            } else {
+                for (let i = 0; i < this.$store.state.userPositions.length; i++) {
+                    const position = this.$store.state.userPositions[i]
+                    position.expanded = undefined
+                }
+                pos.expanded = true
             }
         }
     }
@@ -702,6 +1074,10 @@ export default {
     margin-bottom: 32px;
 }
 
+.pools-heading {
+    margin-top: 64px;
+}
+
 .list {
     margin-bottom: 64px;
     display: flex;
@@ -731,7 +1107,7 @@ export default {
     font-size: $greaterTextSize;
 }
 
-.new-pool-btn, .new-position-btn {
+.new-pool-btn, .new-position-btn, .edit-btn {
     border: 1px solid transparent;
     width: 200px;
     padding: 8px;
@@ -743,7 +1119,7 @@ export default {
     transition: 0.3s;
 }
 
-.new-pool-btn:hover, .new-position-btn:hover {
+.new-pool-btn:hover, .new-position-btn:hover, .edit-btn:hover {
     background-color: $buttonTextColor;
     color: $buttonBgColor;
     transition: 0.3s;
@@ -851,6 +1227,8 @@ export default {
     border: $brightBorder;
     border-radius: $borderRadius;
     padding: 26px;
+    overflow: auto;
+    max-height: 95vh;
 }
 
 .modal-header {
@@ -894,7 +1272,7 @@ export default {
     padding-bottom: 48px;
 }
 
-.modal-body_row:first-child {
+.modal-body_row:first-child, .modal-body_row:nth-child(2) {
     border-bottom: $brightBorder;
 }
 
@@ -998,5 +1376,219 @@ export default {
     width: $textSize;
     height: $textSize;
     margin-right: 32px;
+}
+
+.pos-table {
+    display: flex;
+    flex-direction: column;
+    width: $interfaceBlocksWidth;
+    border: $border;
+    border-radius: $borderRadius;
+    margin-bottom: 16px;
+    -webkit-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    -moz-box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    box-shadow: 4px 4px 8px 0px rgba(34, 60, 80, 0.4);
+    transition: 0.5s;
+    cursor: pointer;
+}
+
+.pos-table:hover {
+    -webkit-box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    -moz-box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    box-shadow: 6px 6px 8px 0px rgba(34, 60, 80, 0.7);
+    transition: 0.5s;
+}
+
+.pos-table:last-child {
+    margin-bottom: 64px;
+}
+
+.pos-table-expanded {
+    background: #fff;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.pos-table_header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: $border;
+    background-color: #d9d9d9;
+    border-radius: $borderRadius;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.pos-table_header-cell {
+    padding: 14px;
+    width: 30%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: $textSize;
+    border-right: $border;
+    height: 50px;
+}
+
+.pos-table_header-cell:first-child {
+    justify-content: flex-start;
+    font-size: $lesserTextSize;
+}
+
+.pos-table_header-cell:last-child {
+    justify-content: flex-end;
+    border: 0;
+    width: 10%;
+}
+
+.close-pos {
+    border: 1px solid transparent;
+    width: $textSize;
+    height: $textSize;
+    padding: 2px;
+    border-radius: ($borderRadius/2);
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.status-caption {
+    margin-left: 12px;
+}
+
+.close-pos:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.pos-table_data {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-bottom-left-radius: $borderRadius;
+    border-bottom-right-radius: $borderRadius;
+}
+
+.pos-table_data-cell {
+    width: 30%;
+    font-size: $lesserTextSize;
+    border-right: $border;
+}
+
+.pos-table_data-cell:last-child {
+    width: 10%;
+    border: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.pos-table_data-cell:first-child {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pos-table-tokens {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    font-size: $textSize;
+    margin-right: 16px;
+    margin-bottom: 12px;
+    margin-top: 12px;
+    margin-left: 32px;
+}
+
+.cell-icon {
+    margin-right: 6px;
+    margin-top: 1px;
+    width: $textSize;
+    height: $textSize;
+}
+
+.cell-icon:first-child {
+    margin-left: 6px;
+}
+
+.cell-icon:nth-child(2) {
+    margin-right: 12px;
+}
+
+.pos-table-poolprice {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.pos-table-poolprice span:first-child {
+    margin-right: 16px;
+}
+
+.pos-table-poolprice span:last-child {
+    font-size: 20px;
+}
+
+.pos-table-range {
+    margin-bottom: 12px;
+}
+
+.stacked {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 120px;
+}
+
+.token_index {
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    font-size: $tinyTextSize;
+}
+
+.token_value {
+    font-size: $textSize;
+}
+
+.pos-table_data-cell_row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 50%;
+    width: 100%;
+    position: relative;
+}
+
+.pos-table_data-cell_row:first-child {
+    border-bottom: $border;
+}
+
+.cell-loader-icon {
+    width: $textSize;
+    height: $textSize;
+    margin-right: 24px;
 }
 </style>
