@@ -57,6 +57,7 @@
                 {{ swapError }}
             </div>
             <div class="modal-footer">
+                <span v-if="priceImpact" class="price-impact">Price impact: {{priceImpact}}</span>
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                 <template v-else>
                     <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
@@ -97,7 +98,8 @@ export default {
             token_out_balance: null,
             // animation for footerBtn
             footerBtnActive: false,
-            swapError: ''
+            swapError: '',
+            priceImpact: null,
         }
     },
     async created () {
@@ -195,6 +197,74 @@ export default {
                 this.getExpense()
             }
         },
+        calculatePriceImpact: async function (pool, t0, t1, t0_liquidity, t1_liquidity) {
+            console.log(pool)
+            console.log(t0)
+            console.log(t1)
+            console.log(t0_liquidity)
+            console.log(t1_liquidity)
+            let actualPriceImpact
+            if (pool.token0 === t0.token) {
+                const t0_init = pool.token0_locked / Math.pow(10, t0.decimals)
+                const t1_init = pool.token1_locked / Math.pow(10, t1.decimals)
+                const constantProduct = t0_init * t1_init
+                const price = 1 / (pool.sqrt_price * pool.sqrt_price * Math.pow(10, t0.decimals - t1.decimals))
+                console.log(price)
+
+                const t0_liq_decimals = t0_liquidity
+
+                const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                const t1_new = constantProduct / t0_new
+
+                const received = t1_init - t1_new
+                const pricePaid = t0_liq_decimals / received
+
+                let priceImpact = pricePaid / price * 100
+
+                console.log(pricePaid, price)
+
+                console.log(priceImpact)
+                priceImpact = (100 - priceImpact).toFixed(2) + ' % '
+
+                console.log(priceImpact)
+
+                console.log(price, pricePaid)
+                console.log(t0_init, t0_new, t0_liq_decimals, t1_init, t1_new, received, pricePaid)
+                actualPriceImpact = priceImpact
+            } else {
+                console.log(pool.token0_locked)
+                console.log(pool.token1_locked)
+                const t1_init = pool.token0_locked / Math.pow(10, t1.decimals)
+                const t0_init = pool.token1_locked / Math.pow(10, t0.decimals)
+                console.log(t0_init)
+                console.log(t1_init)
+                const constantProduct = t0_init * t1_init
+                const price = pool.sqrt_price * pool.sqrt_price * Math.pow(10, t1.decimals - t0.decimals)
+                console.log(price)
+
+                const t0_liq_decimals = t0_liquidity
+
+                const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                const t1_new = constantProduct / t0_new
+
+                console.log(t1_init, t1_new)
+                const received = t1_init - t1_new
+                const pricePaid = t0_liq_decimals / received
+
+                console.log(t0_liq_decimals, received)
+
+                console.log(price, pricePaid)
+                let priceImpact = pricePaid / price * 100
+
+                console.log(priceImpact)
+
+                priceImpact = (100 - priceImpact).toFixed(2) + ' % '
+
+                console.log(priceImpact)
+                actualPriceImpact = priceImpact
+            }
+            this.priceImpact = actualPriceImpact
+        },
         getReturn: async function () {
             this.tokenAmntLoading = true
             this.txPending = true
@@ -227,6 +297,8 @@ export default {
                         this.token_out_amnt = toFixed((res / Math.pow(10, tokenOutObj.decimals)))
                         this.tokenAmntLoading = false
                         this.txPending = false
+
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenObj, tokenOutObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
@@ -281,9 +353,11 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenInObj = this.$store.state.tokens[this.token_in.token]
                         }
-                        this.token_in_amnt = toFixed(res / Math.pow(10, tokenInObj.decimals))
+                        this.token_in_amnt = toFixed((res / Math.pow(10, tokenInObj.decimals)))
                         this.tokenAmntLoading = false
                         this.txPending = false
+
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenInObj, tokenObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
