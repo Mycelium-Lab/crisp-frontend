@@ -57,7 +57,7 @@
                 {{ swapError }}
             </div>
             <div class="modal-footer">
-                <span v-if="priceImpact" class="price-impact">Price impact: {{priceImpact}}</span>
+                <span v-if="priceImpact" v-bind:class="{green: priceImpactRange === 'green', yellow: priceImpactRange === 'yellow', red: priceImpactRange === 'red'}" class="price-impact">Price impact: {{priceImpact}}</span>
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                 <template v-else>
                     <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
@@ -100,6 +100,7 @@ export default {
             footerBtnActive: false,
             swapError: '',
             priceImpact: null,
+            priceImpactRange: null
         }
     },
     async created () {
@@ -198,6 +199,7 @@ export default {
             }
         },
         calculatePriceImpact: async function (pool, t0, t1, t0_liquidity, t1_liquidity) {
+            let priceImpact
             let actualPriceImpact
             if (pool.token0 === t0.token) {
                 console.log('1')
@@ -217,9 +219,9 @@ export default {
                 const pricePaid = t0_liq_decimals / received
                 console.log(pricePaid, price)
 
-                let priceImpact = pricePaid / price * 100
-                priceImpact = (100 - priceImpact).toFixed(2) + ' % '
-                actualPriceImpact = priceImpact
+                actualPriceImpact = pricePaid / price * 100
+                priceImpact = (100 - actualPriceImpact).toFixed(2) + ' % '
+                // actualPriceImpact = priceImpact
             } else {
                 // const t1_init = pool.token0_locked / Math.pow(10, t1.decimals)
                 // const t0_init = pool.token1_locked / Math.pow(10, t0.decimals)
@@ -236,11 +238,25 @@ export default {
                 const pricePaid = t0_liq_decimals / received
                 console.log(pricePaid, price)
 
-                let priceImpact = pricePaid / price * 100
-                priceImpact = (100 - priceImpact).toFixed(2) + ' % '
-                actualPriceImpact = priceImpact
+                actualPriceImpact = pricePaid / price * 100
+                priceImpact = (100 - actualPriceImpact).toFixed(2) + ' % '
+                // actualPriceImpact = priceImpact
             }
-            this.priceImpact = actualPriceImpact
+
+            this.priceImpact = priceImpact
+
+            if (actualPriceImpact) {
+                actualPriceImpact = -(100 - actualPriceImpact)
+            }
+            if (actualPriceImpact < 1) {
+                this.priceImpactRange = 'green'
+            } else if (actualPriceImpact >= 1 && actualPriceImpact <= 5) {
+                this.priceImpactRange = 'yellow'
+            } else if (actualPriceImpact > 5) {
+                this.priceImpactRange = 'red'
+            }
+
+            
         },
         getReturn: async function () {
             this.tokenAmntLoading = true
@@ -632,5 +648,17 @@ export default {
         background-color: $buttonAltBgColor;
         color: $buttonBgColor;
     }
+}
+
+.green {
+    text-shadow: 0px 0px 2px $green;
+}
+
+.yellow {
+    text-shadow: 0px 0px 2px $yellow;
+}
+
+.red {
+    text-shadow: 0px 0px 2px $red;
 }
 </style>
