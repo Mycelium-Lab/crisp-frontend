@@ -197,41 +197,44 @@ export default {
                 this.getExpense()
             }
         },
-        calculatePriceImpact: async function (pool, t0, t1, t0_liquidity) {
-
+        calculatePriceImpact: async function (pool, t0, t1, t0_liquidity, t1_liquidity) {
             let actualPriceImpact
             if (pool.token0 === t0.token) {
-                const t0_init = pool.token0_locked / Math.pow(10, t0.decimals)
-                const t1_init = pool.token1_locked / Math.pow(10, t1.decimals)
-                const constantProduct = t0_init * t1_init
+                console.log('1')
+                // const t0_init = pool.token0_locked / Math.pow(10, t0.decimals)
+                // const t1_init = pool.token1_locked / Math.pow(10, t1.decimals)
+                // const constantProduct = t0_init * t1_init
                 const price = 1 / (pool.sqrt_price * pool.sqrt_price * Math.pow(10, t0.decimals - t1.decimals))
                 console.log(price)
 
                 const t0_liq_decimals = t0_liquidity
 
-                const t0_new = Number(t0_init) + Number(t0_liq_decimals)
-                const t1_new = constantProduct / t0_new
+                // const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                // const t1_new = constantProduct / t0_new
 
-                const received = t1_init - t1_new
+                const received = t1_liquidity// t1_init - t1_new
+                console.log(t0_liq_decimals, received)
                 const pricePaid = t0_liq_decimals / received
+                console.log(pricePaid, price)
 
                 let priceImpact = pricePaid / price * 100
                 priceImpact = (100 - priceImpact).toFixed(2) + ' % '
                 actualPriceImpact = priceImpact
             } else {
-                const t1_init = pool.token0_locked / Math.pow(10, t1.decimals)
-                const t0_init = pool.token1_locked / Math.pow(10, t0.decimals)
-                const constantProduct = t0_init * t1_init
+                // const t1_init = pool.token0_locked / Math.pow(10, t1.decimals)
+                // const t0_init = pool.token1_locked / Math.pow(10, t0.decimals)
+                // const constantProduct = t0_init * t1_init
                 const price = pool.sqrt_price * pool.sqrt_price * Math.pow(10, t1.decimals - t0.decimals)
                 console.log(price)
 
                 const t0_liq_decimals = t0_liquidity
 
-                const t0_new = Number(t0_init) + Number(t0_liq_decimals)
-                const t1_new = constantProduct / t0_new
+                // const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                // const t1_new = constantProduct / t0_new
 
-                const received = t1_init - t1_new
+                const received = t1_liquidity
                 const pricePaid = t0_liq_decimals / received
+                console.log(pricePaid, price)
 
                 let priceImpact = pricePaid / price * 100
                 priceImpact = (100 - priceImpact).toFixed(2) + ' % '
@@ -272,7 +275,7 @@ export default {
                         this.tokenAmntLoading = false
                         this.txPending = false
 
-                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenObj, tokenOutObj, this.token_in_amnt)
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenObj, tokenOutObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
@@ -331,7 +334,7 @@ export default {
                         this.tokenAmntLoading = false
                         this.txPending = false
 
-                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenInObj, tokenObj, this.token_in_amnt)
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenInObj, tokenObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
