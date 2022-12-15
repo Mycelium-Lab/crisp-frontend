@@ -96,6 +96,22 @@
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
             </div>
+            <div v-if="deletePositionModalActive" class="modal">
+                <div class="modal-header">
+                    <div></div>
+                    <span class="modal-title">Confirm action</span>
+                    <img @click="closeDeletePositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="modal-body modal-body-deletepos">
+                    Are you sure you want to close your position in pool 
+                    {{$store.state.tokens[positionChosenForClosing.token0].symbol}} - {{$store.state.tokens[positionChosenForClosing.token1].symbol}}?
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-if="!txPending" @click="closeDeletePositionModal()" class="confirm-btn">No</button>
+                    <button v-if="!txPending" @click="closePosition(this.positionChosenForClosing)" class="confirm-btn confirm-btn-deletepos">Yes</button>
+                </div>
+            </div>
         </div>
         <!--<div v-if="noLogin">
             Please, connect your wallet
@@ -154,7 +170,7 @@
                                 </div>
                                 <div class="pos-table_header-cell">
                                     <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
-                                    <button v-else @click="closePosition(pos)" class="close-pos">
+                                    <button v-else @click="closePositionPrompt(pos)" class="close-pos">
                                         X
                                     </button>
                                 </div>
@@ -468,7 +484,8 @@ export default {
             modalActive: false,
             newPoolModalActive: false,
             newPositionModalActive: false,
-
+            deletePositionModalActive: false,
+            
             /**
              * create_pool()
              */
@@ -500,6 +517,8 @@ export default {
                 t0: false,
                 t1: false
             },
+
+            positionChosenForClosing: null,
 
             defaultOptions: defaultOptions,
             graphSeries: [{
@@ -992,6 +1011,17 @@ export default {
                 }
             }
         },
+        closePositionPrompt: function (pos) {
+            console.log('1')
+            this.positionChosenForClosing = pos
+            this.modalActive = true
+            this.deletePositionModalActive = true
+        },
+        closeDeletePositionModal: function () {
+            this.positionChosenForClosing = null
+            this.modalActive = false
+            this.deletePositionModalActive = false
+        },
         closePosition: async function (pos) {
             const contract = this.$store.state.crispContract
 
@@ -1012,6 +1042,9 @@ export default {
                             text: 'Position successfully closed'
                         })
                         this.txPending = false
+                        this.modalActive = false
+                        this.deletePositionModalActive = false
+                        this.positionChosenForClosing = null
                         this.$store.dispatch('reload', store.state)
                     })
                 } catch (error) {
@@ -1267,6 +1300,12 @@ export default {
     align-items: center;
 }
 
+.modal-body-deletepos {
+    min-height: 320px;
+    justify-content: center;
+    font-size: $greaterTextSize;
+}
+
 .modal-body_row {
     display: flex;
     flex-direction: row;
@@ -1334,6 +1373,10 @@ export default {
     font-size: $lesserTextSize;
     cursor: pointer;
     transition: 0.3s;
+}
+
+.confirm-btn-deletepos {
+    margin-left: 12px;
 }
 
 .confirm-btn:hover {
