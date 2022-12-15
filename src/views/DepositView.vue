@@ -148,6 +148,7 @@ export default {
     if(this.$store.getters.tokenForDeposit) {
         this.token = this.$store.getters.tokenForDeposit.token
         this.$refs.depositInput.focus()
+        this.getTokenWalletBalance()
     }
   },
   methods: {
