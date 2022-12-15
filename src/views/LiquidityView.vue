@@ -59,14 +59,14 @@
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
-                                <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
+                                <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" ref="t0_liq" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
                                 <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                                 <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
-                                <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
+                                <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" ref="t1_liq" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
                                 <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                                 <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
@@ -871,7 +871,7 @@ export default {
             this.upperPrice = Number(this.upperPrice)
             const contract = this.$store.state.crispContract
 
-            if (contract && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+            if (contract && this.t0_liq && this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
                     let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
@@ -912,6 +912,10 @@ export default {
                     })
                     this.txPending = false
                 }
+            } else if (!this.t0_liq) {
+                this.$refs.t0_liq.focus()
+            } else if (!this.t1_liq) {
+                this.$refs.t1_liq.focus()
             }
         },
         editAddLiq: async function (pos) {
