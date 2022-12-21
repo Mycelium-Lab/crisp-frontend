@@ -1126,7 +1126,7 @@ export default {
                     await contract.add_liquidity(
                         {
                             pool_id: Number(pos.poolId),
-                            id: Number(pos.id),
+                            position_id: Number(pos.id),
                             token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
                         }
                     ).then((response) => {
@@ -1167,7 +1167,7 @@ export default {
                     await contract.remove_liquidity(
                         {
                             pool_id: Number(pos.poolId),
-                            id: Number(pos.id),
+                            position_id: Number(pos.id),
                             token0_liquidity: Number(desiredLiquidityForRemoval * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
                         }
                     ).then((response) => {
