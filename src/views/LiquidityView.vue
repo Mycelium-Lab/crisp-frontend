@@ -259,7 +259,7 @@
                                 </button>-->
 
                                 <div class="table-section">
-                                    <div class="section-top">
+                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
                                         <div class="table-header">
                                             <span class="table-heading">Add liquidity</span>
                                         </div>
@@ -350,13 +350,16 @@
                                     </div>
                                     <div class="section-bottom">
                                         <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else @click="editAddLiq(pos)" class="edit-btn">
+                                        <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
+                                            Confirm
+                                        </button>
+                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
                                             Add liquidity
                                         </button>
                                     </div>
                                 </div>
                                 <div class="table-section">
-                                    <div class="section-top">
+                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
                                         <div class="table-header">
                                             <span class="table-heading">Remove liquidity</span>
                                         </div>
@@ -420,7 +423,10 @@
                                     </div>
                                     <div class="section-bottom">
                                         <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else @click="editRemoveLiq(pos)" class="edit-btn">
+                                        <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
+                                            Confirm
+                                        </button>
+                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
                                             Remove liquidity
                                         </button>
                                     </div>
@@ -737,6 +743,13 @@ export default {
         },
         setRemoveAmount: function (val) {
             this.removeAmount = val
+        },
+        toggleTab: function (pos) {
+            if (pos.activeTab === 'in') {
+                pos.activeTab = 'out'
+            } else if (pos.activeTab === 'out') {
+                pos.activeTab = 'in'
+            }
         },
         confirmNewPoolModal: async function () {
             const contract = this.$store.state.crispContract
@@ -1833,6 +1846,13 @@ export default {
 .section-top {
     width: 100%;
     height: 500px;
+    filter: none;
+    transition: 0.3s;
+}
+
+.blurred {
+    filter: blur(5px);
+    transition: 0.3s;
 }
 
 .table-section:first-child {

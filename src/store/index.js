@@ -235,7 +235,8 @@ export default createStore({
               token0: pool.token0,
               token1: pool.token1,
               token0_real_liquidity: position.token0_locked / Math.pow(10, token0obj.decimals),
-              token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals)
+              token1_real_liquidity: position.token1_locked / Math.pow(10, token1obj.decimals),
+              activeTab: 'in'
             })
           }
         }
