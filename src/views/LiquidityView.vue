@@ -381,8 +381,26 @@
                                                         <button @click="setRemoveAmount(100)" class="block-RA-suggestion">Max</button>
                                                     </div>
                                                 </div>
+                                                <div class="block-row">
+                                                    <div class="block-row-left" style="padding-left: 8px;">
+                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                    </div>
+                                                    <div class="block-row-right">
+                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity0ForRemoval).toFixed(6)}}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="block-row">
+                                                    <div class="block-row-left" style="padding-left: 8px;">
+                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                    </div>
+                                                    <div class="block-row-right">
+                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity1ForRemoval).toFixed(6)}}</span>
+                                                    </div>
+                                                </div>
                                                 <div class="block-row" style="display: flex;flex-direction: row;justify-content: flex-end;">
-                                                    <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount()" type="range" min="0.01" max="100" step="0.01">
+                                                    <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount(pos)" type="range" min="0.01" max="100" step="0.01">
                                                 </div>
                                             </div>
                                             <div class="section-block">
@@ -735,10 +753,12 @@ export default {
             this.modalActive = false
             this.newPoolModalActive = false
         },
-        changeRemoveAmount: function () {
-            /**
-             * probably going to be used for further calculations
-             */
+        changeRemoveAmount: function (pos) {
+            const currentT0liquidity = pos.token0_real_liquidity
+            const currentT1liquidity = pos.token1_real_liquidity
+
+            pos.desiredLiquidity0ForRemoval = currentT0liquidity / 100 * this.removeAmount
+            pos.desiredLiquidity1ForRemoval = currentT1liquidity / 100 * this.removeAmount
             // console.log(this.removeAmount)
         },
         setRemoveAmount: function (val) {
@@ -1257,11 +1277,15 @@ export default {
             this.edit_t1_liq = 0
             if (pos.expanded) {
                 pos.expanded = undefined
+                pos.desiredLiquidity0ForRemoval = null
+                pos.desiredLiquidity1ForRemoval = null
             } else {
                 for (let i = 0; i < this.$store.state.userPositions.length; i++) {
                     const position = this.$store.state.userPositions[i]
                     position.expanded = undefined
                 }
+                pos.desiredLiquidity0ForRemoval = pos.token0_real_liquidity / 100 * this.removeAmount
+                pos.desiredLiquidity1ForRemoval = pos.token0_real_liquidity / 100 * this.removeAmount
                 pos.expanded = true
             }
         }
@@ -1851,6 +1875,7 @@ export default {
 }
 
 .blurred {
+    pointer-events: none;
     filter: blur(5px);
     transition: 0.3s;
 }
