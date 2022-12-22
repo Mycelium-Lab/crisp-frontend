@@ -1874,7 +1874,7 @@ export default {
     transition: 0.3s;
 }
 
-.blurred {
+.blurred .section-block-wrapper {
     pointer-events: none;
     filter: blur(5px);
     transition: 0.3s;
