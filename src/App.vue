@@ -19,6 +19,11 @@
       </div>
     </div>
   </div>
+  <div class="socials-wrapper">
+    <a href='https://t.me/crisp_exchange' target="_blank" class="social-button">
+      
+    </a>
+  </div>
   <header>
     <div class="header-nav">
         <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
@@ -117,6 +122,34 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+.socials-wrapper {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  pointer-events: none;
+}
+
+.social-button {
+  position: absolute;
+  bottom: 36px;
+  right: 36px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: $buttonBgColor;
+  background-image: url('assets/icons/telegram.svg');
+  background-position: left 12px bottom 12px;
+  background-size: 42px;
+  background-repeat: no-repeat;
+  pointer-events: all;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.social-button:hover {
+  opacity: 1;
 }
 
 .notifications-wrapper {

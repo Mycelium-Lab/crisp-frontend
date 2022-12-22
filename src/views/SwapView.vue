@@ -36,8 +36,11 @@
                     </div>
                     <input v-else type="text" @change="getReturn()" @keypress="isNumber" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="(token_in_balance && $store.state.tokenBalances[0])">{{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
-                <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
+                <span class="token-balance" v-if="token_in_balance">
+                    <span>
+                        {{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
+                    </span>
+                    <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
                 </span>
                 <div class="token-wrapper token-out">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
@@ -49,14 +52,18 @@
                     </div>
                     <input v-else type="text" @keypress="isNumber" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="(token_out_balance && $store.state.tokenBalances[0])">{{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
-                <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
+                <span class="token-balance" v-if="token_out_balance">
+                    <span>
+                        {{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
+                    </span>
+                    <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
                 </span>
             </div>
             <div v-if="swapError" class="swap-error">
                 {{ swapError }}
             </div>
             <div class="modal-footer">
+                <span v-if="priceImpact" v-bind:class="{green: priceImpactRange === 'green', yellow: priceImpactRange === 'yellow', red: priceImpactRange === 'red'}" class="price-impact">Price impact: {{priceImpact}}</span>
                 <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                 <template v-else>
                     <button @click="confirmSwap()" v-if="$store.state.account" class="footer-btn">Confirm</button>
@@ -97,7 +104,9 @@ export default {
             token_out_balance: null,
             // animation for footerBtn
             footerBtnActive: false,
-            swapError: ''
+            swapError: '',
+            priceImpact: null,
+            priceImpactRange: null
         }
     },
     async created () {
@@ -163,16 +172,19 @@ export default {
                 console.log(this.$store.state.tokenBalances)
                 const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_in.token)
                 if (balanceObj) {
+                    console.log('1')
                     this.token_in_balance = {
                         symbol: balanceObj.symbol,
                         amount: balanceObj.amount
                     }
                 } else {
+                    console.log('h')
                     this.token_in_balance = {
                         symbol: this.tokens.find((t) => t.token === this.token_in.token)?.symbol || 'Token',
                         amount: 0
                     }
                 }
+                console.log(this.token_in_balance)
             }
             if (this.token_out) {
                 const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_out.token)
@@ -194,6 +206,66 @@ export default {
             if (this.manual_input === 'out' && this.token_out_amnt !== null) {
                 this.getExpense()
             }
+        },
+        calculatePriceImpact: async function (pool, t0, t1, t0_liquidity, t1_liquidity) {
+            let priceImpact
+            let actualPriceImpact
+            if (pool.token0 === t0.token) {
+                console.log('1')
+                // const t0_init = pool.token0_locked / Math.pow(10, t0.decimals)
+                // const t1_init = pool.token1_locked / Math.pow(10, t1.decimals)
+                // const constantProduct = t0_init * t1_init
+                const price = 1 / (pool.sqrt_price * pool.sqrt_price * Math.pow(10, t0.decimals - t1.decimals))
+                console.log(price)
+
+                const t0_liq_decimals = t0_liquidity
+
+                // const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                // const t1_new = constantProduct / t0_new
+
+                const received = t1_liquidity// t1_init - t1_new
+                console.log(t0_liq_decimals, received)
+                const pricePaid = t0_liq_decimals / received
+                console.log(pricePaid, price)
+
+                actualPriceImpact = pricePaid / price * 100
+                priceImpact = (100 - actualPriceImpact).toFixed(2) + ' % '
+                // actualPriceImpact = priceImpact
+            } else {
+                // const t1_init = pool.token0_locked / Math.pow(10, t1.decimals)
+                // const t0_init = pool.token1_locked / Math.pow(10, t0.decimals)
+                // const constantProduct = t0_init * t1_init
+                const price = pool.sqrt_price * pool.sqrt_price * Math.pow(10, t1.decimals - t0.decimals)
+                console.log(price)
+
+                const t0_liq_decimals = t0_liquidity
+
+                // const t0_new = Number(t0_init) + Number(t0_liq_decimals)
+                // const t1_new = constantProduct / t0_new
+
+                const received = t1_liquidity
+                const pricePaid = t0_liq_decimals / received
+                console.log(pricePaid, price)
+
+                actualPriceImpact = pricePaid / price * 100
+                priceImpact = (100 - actualPriceImpact).toFixed(2) + ' % '
+                // actualPriceImpact = priceImpact
+            }
+
+            this.priceImpact = priceImpact
+
+            if (actualPriceImpact) {
+                actualPriceImpact = -(100 - actualPriceImpact)
+            }
+            if (actualPriceImpact < 1) {
+                this.priceImpactRange = 'green'
+            } else if (actualPriceImpact >= 1 && actualPriceImpact <= 5) {
+                this.priceImpactRange = 'yellow'
+            } else if (actualPriceImpact > 5) {
+                this.priceImpactRange = 'red'
+            }
+
+            
         },
         getReturn: async function () {
             this.tokenAmntLoading = true
@@ -227,6 +299,8 @@ export default {
                         this.token_out_amnt = toFixed((res / Math.pow(10, tokenOutObj.decimals)))
                         this.tokenAmntLoading = false
                         this.txPending = false
+
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenObj, tokenOutObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
@@ -281,9 +355,11 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenInObj = this.$store.state.tokens[this.token_in.token]
                         }
-                        this.token_in_amnt = toFixed(res / Math.pow(10, tokenInObj.decimals))
+                        this.token_in_amnt = toFixed((res / Math.pow(10, tokenInObj.decimals)))
                         this.tokenAmntLoading = false
                         this.txPending = false
+
+                        this.calculatePriceImpact(this.$store.state.pools[this.pool_id], tokenInObj, tokenObj, this.token_in_amnt, this.token_out_amnt)
                     })
                 } catch (error) {
                     if(error.message.toLowerCase().includes(NOT_ENOUGH_LIQUIDITY_ERROR)) {
@@ -544,6 +620,7 @@ export default {
     transition: 0.3s;
     border-radius: 8px;
     padding: 4px 8px;
+    margin-left: 8px;
 }
 .deposit_nav_btn:hover {
     background-color: $buttonBgColor;
@@ -581,5 +658,17 @@ export default {
         background-color: $buttonAltBgColor;
         color: $buttonBgColor;
     }
+}
+
+.green {
+    text-shadow: 0px 0px 2px $green;
+}
+
+.yellow {
+    text-shadow: 0px 0px 2px $yellow;
+}
+
+.red {
+    text-shadow: 0px 0px 2px $red;
 }
 </style>
