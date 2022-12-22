@@ -258,7 +258,7 @@
                                     Remove liquidity
                                 </button>-->
 
-                                <div class="table-section">
+                                <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
                                     <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
                                         <div class="table-header">
                                             <span class="table-heading">Add liquidity</span>
@@ -358,7 +358,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="table-section">
+                                <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
                                     <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
                                         <div class="table-header">
                                             <span class="table-heading">Remove liquidity</span>
@@ -770,6 +770,9 @@ export default {
             } else if (pos.activeTab === 'out') {
                 pos.activeTab = 'in'
             }
+        },
+        setTab: function (pos, val) {
+            pos.activeTab = val
         },
         confirmNewPoolModal: async function () {
             const contract = this.$store.state.crispContract
@@ -1874,7 +1877,7 @@ export default {
     transition: 0.3s;
 }
 
-.blurred {
+.blurred .section-block-wrapper {
     pointer-events: none;
     filter: blur(5px);
     transition: 0.3s;
