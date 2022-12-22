@@ -258,7 +258,7 @@
                                     Remove liquidity
                                 </button>-->
 
-                                <div class="table-section">
+                                <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
                                     <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
                                         <div class="table-header">
                                             <span class="table-heading">Add liquidity</span>
@@ -358,7 +358,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="table-section">
+                                <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
                                     <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
                                         <div class="table-header">
                                             <span class="table-heading">Remove liquidity</span>
