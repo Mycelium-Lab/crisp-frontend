@@ -771,9 +771,6 @@ export default {
                 pos.activeTab = 'in'
             }
         },
-        setTab: function (pos, val) {
-            pos.activeTab = val
-        },
         confirmNewPoolModal: async function () {
             const contract = this.$store.state.crispContract
 
@@ -851,9 +848,6 @@ export default {
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
             const sp = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
-            
-            console.log(this.$store.state.pools[this.poolId].sqrt_price)
-            console.log(sp)
 
             const lp = sp * 0.9
             const up = sp * 1.1
@@ -868,23 +862,15 @@ export default {
 
             // console.log(this.$store.state.pools[this.poolId])
             // console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+            
+            this.buildGraph()
+        },
+        buildGraph: function () {
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
             const positions = []
             let lowest
-            let highest
-            /**
-             * {
-             *  lower: 900,
-             *  upper: 1100,
-             *  liquidity: 10000
-             * }
-             * {
-             *  lower: 850,
-             *  upper: 1150,
-             *  liquidity: 10000
-             * }
-             */
             const pool = this.$store.state.pools[this.poolId]
-            console.log(pool)
 
             const decs = Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             for (let [key, ] of Object.entries(pool.positions)) {
@@ -892,29 +878,21 @@ export default {
                 const lower = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price * decs
                 const upper = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price * decs
                 const liquidity = pos.liquidity
-
+            
                 positions.push({
                     lower: lower,
                     upper: upper,
                     liquidity: liquidity
                 })
-
-                if (!lowest || lower < lowest) {
-                    lowest = lower
-                }
-                if (!highest || upper > highest) {
-                    highest = upper
-                }
             }
-            const graphTick = (highest - lowest) / 25
-            lowest = lowest - graphTick
-            highest = highest + graphTick
+
+            const graphTick = (this.upperPrice - this.lowerPrice) / 25
+            lowest = this.lowerPrice - graphTick * 5
 
             const xAxisValues = []
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 36; i++) {
                 xAxisValues.push((lowest + graphTick * i))
             }
-            console.log(xAxisValues)
             
             const graphSeries = []
             for (let i = 0; i < xAxisValues.length; i++) {
@@ -933,7 +911,6 @@ export default {
                 name: 'Available liquidity',
                 data: graphSeries
             }]
-            console.log(this.graphSeries)
             this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
         },
         calculatePricesRatio: function () {
@@ -961,7 +938,6 @@ export default {
             this.manual_input = 'first'
             if (this.$store.state.pools[0] && Number(this.t0_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 const poolId = this.poolId
-                console.log(this.lowerPrice)
                 const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
                 const x = Number(this.t0_liq) * Math.pow(10, tokenObj.decimals)
                 
@@ -973,9 +949,6 @@ export default {
                 const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
                 sp = Math.max(Math.min(sp, sb), sa) // ?
                 const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
-                console.log(liquidity + '* (' + sp + ' - ' + sa + ') / ' + Math.pow(10, tokenObj2.decimals) )
-                console.log(x, sp, sb, sa)
-                console.log(liquidity, res)
 
                 this.t1_liq = toFixed(res)
                 // this.total = res
@@ -1072,7 +1045,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
-            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
+            this.buildGraph()
         },
         calculateUpper: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -1096,7 +1069,7 @@ export default {
                 }
             }
             this.calculatePricesRatio()
-            this.drawAnnotations(this.lowerPrice, this.upperPrice, this.currentPrice)
+            this.buildGraph()
         },
         confirmNewPositionModal: async function () {
             this.lowerPrice = Number(this.lowerPrice)
@@ -1116,6 +1089,7 @@ export default {
                     console.log(Number(this.lowerPrice))
                     console.log(Number(this.upperPrice))
                     console.log(tokenObj)
+
                     await contract.open_position(
                         {
                             pool_id: Number(this.poolId),
