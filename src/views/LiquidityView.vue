@@ -303,7 +303,7 @@
                                             <div class="section-block">
                                                 <div class="block-row">
                                                     <div class="block-row-left">
-                                                        <input id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
+                                                        <input :ref="'edit_t0' + pos.id" id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
                                                     </div>
                                                     <div class="block-row-right">
                                                         <div class="block-row_token-wrapper">
@@ -326,7 +326,7 @@
                                             <div class="section-block">
                                                 <div class="block-row">
                                                     <div class="block-row-left">
-                                                        <input id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
+                                                        <input :ref="'edit_t1' + pos.id" id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
                                                     </div>
                                                     <div class="block-row-right">
                                                         <div class="block-row_token-wrapper">
@@ -349,6 +349,8 @@
                                         </div>
                                     </div>
                                     <div class="section-bottom">
+                                        <span v-if="editAddLiqErrorMsg" class="error-msg">{{ editAddLiqErrorMsg }}</span>
+                                        <span v-else class="error-msg-disabled"></span>
                                         <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                                         <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
                                             Confirm
@@ -440,6 +442,7 @@
                                         </div>
                                     </div>
                                     <div class="section-bottom">
+                                        <span class="error-msg-disabled"></span>
                                         <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                                         <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
                                             Confirm
@@ -694,6 +697,8 @@ export default {
 
             edit_t0_liq: null,
             edit_t1_liq: null,
+            editAddLiqErrorMsg: '',
+
             lowerPrice: null,      // e.g. 90
             upperPrice: null,      // e.g. 110
             t0_balance: null,
@@ -766,6 +771,7 @@ export default {
             this.changeRemoveAmount(pos)
         },
         toggleTab: function (pos) {
+            this.editAddLiqErrorMsg = ''
             if (pos.activeTab === 'in') {
                 pos.activeTab = 'out'
             } else if (pos.activeTab === 'out') {
@@ -955,30 +961,6 @@ export default {
                 // this.total = res
             }
         },
-        calcEditDefault: function (pos) {
-            this.manual_input = 'first'
-            if (this.$store.state.pools[0] && Number(this.edit_t0_liq)) {
-                const poolId = pos.poolId
-
-                const tokenObj = this.$store.state.tokens[this.$store.state.pools[poolId].token0]
-                const x = Number(this.edit_t0_liq) * Math.pow(10, tokenObj.decimals)
-                
-                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[poolId].token1]
-                const sa = pos.sqrt_lower_bound_price
-                const sb = pos.sqrt_upper_bound_price
-                let sp = this.$store.state.pools[poolId].sqrt_price
-
-                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
-                sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
-                console.log(liquidity + '* (' + sp + ' - ' + sa + ') / ' + Math.pow(10, tokenObj2.decimals) )
-                console.log(x, sp, sb, sa)
-                console.log(liquidity, res)
-
-                this.edit_t1_liq = toFixed(res)
-                // this.total = res
-            }
-        },
         calculateAlternative: function () {
             this.manual_input = 'second'
             if (this.$store.state.pools[0] && Number(this.t1_liq) && this.lowerPrice && this.upperPrice && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
@@ -1000,7 +982,39 @@ export default {
                 // this.total = res
             }
         },
+        calcEditDefault: function (pos) {
+            this.editAddLiqErrorMsg = ''
+            this.manual_input = 'first'
+            if (this.$store.state.pools[0] && Number(this.edit_t0_liq)) {
+                const poolId = pos.poolId
+
+                const tokenObj = this.$store.state.tokens[this.$store.state.pools[poolId].token0]
+                const x = Number(this.edit_t0_liq) * Math.pow(10, tokenObj.decimals)
+                
+                const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[poolId].token1]
+                const sa = pos.sqrt_lower_bound_price
+                const sb = pos.sqrt_upper_bound_price
+                let sp = this.$store.state.pools[poolId].sqrt_price
+
+                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
+                sp = Math.max(Math.min(sp, sb), sa) // ?
+                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                console.log(liquidity + '* (' + sp + ' - ' + sa + ') / ' + Math.pow(10, tokenObj2.decimals) )
+                console.log(x, sp, sb, sa)
+                console.log(liquidity, res)
+
+                this.edit_t1_liq = toFixed(res)
+
+                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
+                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+
+                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                }
+            }
+        },
         calcEditAlternative: function(pos) {
+            this.editAddLiqErrorMsg = ''
             this.manual_input = 'second'
             if (this.$store.state.pools[0] && Number(this.edit_t1_liq)) {
                 const poolId = pos.poolId
@@ -1019,6 +1033,12 @@ export default {
 
                 this.edit_t0_liq = toFixed(res)
                 // this.total = res
+                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
+                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+
+                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                }
             }
         },
         calculateLower: async function () {
@@ -1126,8 +1146,11 @@ export default {
             }
         },
         editAddLiq: async function (pos) {
+            this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
-            if (contract && this.edit_t0_liq > 0) {
+            const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
+            const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+            if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
                 this.txPending = true
                 try {
                     let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
@@ -1160,6 +1183,22 @@ export default {
                     })
                     this.txPending = false
                 }
+            } else if (!contract) {
+                this.$store.commit('pushNotification', {
+                    title: 'Error',
+                    type: 'error',
+                    text: 'Error: No contract!'
+                })
+            } else if (!this.edit_t0_liq) {
+                this.editAddLiqErrorMsg = 'Wrong amount'
+            } else if (Number(this.edit_t0_liq) > Number(t0_balance)) {
+                const ref = 'edit_t0' + pos.id
+                this.editAddLiqErrorMsg = 'Not enough balance'
+                this.$refs[ref][0].focus()
+            } else if (Number(this.edit_t1_liq) > Number(t1_balance)) {
+                const ref = 'edit_t1' + pos.id
+                this.editAddLiqErrorMsg = 'Not enough balance'
+                this.$refs[ref][0].focus()
             }
         },
         editRemoveLiq: async function (pos) {
@@ -1251,6 +1290,7 @@ export default {
             }
         },
         expandPos: async function (pos) {
+            this.editAddLiqErrorMsg = ''
             this.edit_t0_liq = 0
             this.edit_t1_liq = 0
             if (pos.expanded) {
@@ -1850,6 +1890,24 @@ export default {
     height: 500px;
     filter: none;
     transition: 0.3s;
+}
+
+.section-bottom {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.error-msg {
+    font-size: $lesserTextSize;
+    box-sizing: border-box;
+    height: 26px;
+}
+
+.error-msg-disabled {
+    box-sizing: border-box;
+    height: 26px;
 }
 
 .blurred .section-block-wrapper {
