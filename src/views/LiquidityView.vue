@@ -375,10 +375,10 @@
                                                         </span>
                                                     </div>
                                                     <div class="block-row-right">
-                                                        <button @click="setRemoveAmount(25)" class="block-RA-suggestion">25%</button>
-                                                        <button @click="setRemoveAmount(50)" class="block-RA-suggestion">50%</button>
-                                                        <button @click="setRemoveAmount(75)" class="block-RA-suggestion">75%</button>
-                                                        <button @click="setRemoveAmount(100)" class="block-RA-suggestion">Max</button>
+                                                        <button @click="setRemoveAmount(pos, 25)" class="block-RA-suggestion">25%</button>
+                                                        <button @click="setRemoveAmount(pos, 50)" class="block-RA-suggestion">50%</button>
+                                                        <button @click="setRemoveAmount(pos, 75)" class="block-RA-suggestion">75%</button>
+                                                        <button @click="setRemoveAmount(pos, 100)" class="block-RA-suggestion">Max</button>
                                                     </div>
                                                 </div>
                                                 <div class="block-row">
@@ -761,8 +761,9 @@ export default {
             pos.desiredLiquidity1ForRemoval = currentT1liquidity / 100 * this.removeAmount
             // console.log(this.removeAmount)
         },
-        setRemoveAmount: function (val) {
+        setRemoveAmount: function (pos, val) {
             this.removeAmount = val
+            this.changeRemoveAmount(pos)
         },
         toggleTab: function (pos) {
             if (pos.activeTab === 'in') {
