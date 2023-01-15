@@ -26,14 +26,18 @@
   </div>
   <header>
     <div class="header-nav">
-        <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
-        <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+        <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png"><span class="desktop-link">Swap</span></router-link>
+        <router-link class="header-link desktop-link" to="/pools">Manage Liquidity</router-link>
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
-      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>
-      <button v-else @click="signIn()" class="header-link">Connect wallet</button>
+      <!--<router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
+      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
+      <button v-if="$store.state.account" @click="signOut()" class="header-link account"><span>{{ $store.state.account.accountId }}</span><img class="logout-gfx" src="./assets/icons/logout.svg"/></button>
+      <button v-else @click="signIn()" class="header-link connect">Connect wallet</button>
+    </div>
+    <div class="burger-wrapper">
+      <button class="burger-button"></button>
     </div>
   </header>
   <div class="page">
@@ -110,7 +114,7 @@ html {
 #app {
   min-height: 100vh;
   min-width: 99vw;
-  background: linear-gradient($gradientPrimary, $gradientSecondary)
+  background: linear-gradient(356.97deg, #F5BF52 -20.04%, rgba(245, 191, 82, 0.53125) 42.31%, rgba(245, 191, 82, 0) 112.97%);
 }
 
 input::-webkit-outer-spin-button,
@@ -263,6 +267,7 @@ header {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  padding-top: 12px;
 }
 
 .header-nav:nth-child(2) {
@@ -271,9 +276,11 @@ header {
 
 .header-link {
   padding: 12px;
-  font-size: $textSize;
+  padding-top: 0;
+  font-size: $mediumTextSize;
   text-decoration: none;
   color: $textColor !important;
+  font-weight: 500;
   height: 48px;
   display: flex;
   flex-direction: row;
@@ -336,6 +343,78 @@ header {
   display: none;
 }
 
+.burger-wrapper {
+  display: none;
+}
+
+@media screen and (max-width: 1050px) {
+  .desktop-link {
+    display: none;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    padding-top: 44px;
+    width: 340px;
+  }
+
+  .header-link {
+    margin-right: 0;
+    padding-left: 0;
+  }
+
+  .connect {
+    background: #F5BF52;
+    font-size: 14px;
+    margin-right: 32px;
+    padding: 8px 20px !important;
+    height: 40px;
+  }
+
+  .account {
+    margin-right: 32px;
+    font-size: 16px;
+  }
+
+  .logout-gfx {
+    width: 16px;
+    height: 16px;
+  }
+
+  .logo {
+    margin: 0;
+  }
+
+  .burger-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-top: 12px;
+  }
+
+  .burger-button {
+    width: 24px;
+    height: 24px;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    background-image: url('./assets/icons/burger.svg');
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+  }
+
+  .socials-wrapper {
+    display: none;
+  }
+}
+
+/*
 @media screen and (max-width: 1200px) {
   .fatal-error-msg {
     display: flex;
@@ -363,6 +442,8 @@ header {
     display: none;
   }
 }
+*/
+
 @keyframes draw-loader {
       0% {
         width: 0;
@@ -393,5 +474,36 @@ header {
 }
 .notification-title.error, .notification-text.error {
   color:#C46060;
+}
+
+.header-link.connect {
+  background-color: $blockBgColor;
+  padding: 11px 25px;
+  border-radius: 20px;
+  height: auto;
+}
+
+.account {
+  background: #FDDEA0;
+  border: 0.5px solid #000000;
+  border-radius: 20px;
+  padding: 9px 16px;
+  height: 40px;
+  box-sizing: border-box;
+  color: #000 !important;
+}
+
+.account:hover {
+  color: #000 !important;
+  background: #f3c76f;
+}
+
+.logout-gfx {
+  margin-left: 6px;
+}
+
+.header-link.connect:hover {
+  background-color: $buttonSecondaryColor;
+  color: $blockBgColor !important;
 }
 </style>

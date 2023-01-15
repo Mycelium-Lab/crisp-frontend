@@ -1,4 +1,7 @@
 export const defaultOptions = {
+    annotations: {
+      position: 'front'
+    },
     chart: {
       type: 'area',
       toolbar: {
@@ -13,8 +16,8 @@ export const defaultOptions = {
           speed: 500
         }
       },
-      height: 350,
-      width: 600,
+      height: 240,
+      width: 380,
       zoom: {
         enabled: false
       },
@@ -37,13 +40,13 @@ export const defaultOptions = {
           }
         }
     },
-    colors: ['#eca200'],
+    colors: ['#000'],
     fill: {
       gradient: {
         opacityFrom: 0.75,
         opacityTo: 0.35,
         shadeIntensity: 0,
-        gradientToColors: ['#eca200', '#fff']
+        gradientToColors: ['#E7B35A', '#fff']
       }
     },
     tooltip: {

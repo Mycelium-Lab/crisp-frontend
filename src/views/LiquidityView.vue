@@ -39,7 +39,6 @@
             </div>
             <div v-if="newPositionModalActive" class="modal">
                 <div class="modal-header">
-                    <div></div>
                     <span class="modal-title">Create new position</span>
                     <img @click="closeNewPositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
                 </div>
@@ -60,21 +59,24 @@
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" ref="t0_liq" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
-                                <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
                                 <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" ref="t1_liq" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
-                                <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
                                 <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
                         </template>
                         <span v-else>Please wait while we load pools. . .</span>
                     </div>
-                    <div class="modal-body_row">
-                        <apexcharts type="area" width="400" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                    <div class="modal-body_row" v-if="graphSeries[0].data[0]">
+                        <apexcharts style="max-width: 380px" type="area" width="380" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                    </div>
+                    <div class="modal-body_row-placeholder" v-else>
+
                     </div>
                     <div class="modal-body_row">
                         <div class="input-wrapper">
@@ -509,6 +511,77 @@
                 <span class="title">Pools</span><!--<button @click="openNewPoolModal()" class="new-pool-btn">+ New pool</button>-->
             </div>
 
+            <!-- Pools, mobile -->
+            <template v-if="$store.state.pools && $store.state.tokens">
+                <div v-if="$store.state.pools[0]" class="mob-pools-wrapper">
+                    <div v-for="(pool, index) in $store.state.pools" :key="index" class="mob-pool">
+                        <div class="mob-pool_header">
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Icon
+                                </div>
+                                <div v-if="$store.state.tokens" class="pool_data-wrapper_value">
+                                    <img class="pool-tokenicon" :src="$store.state.tokens[pool.token0].icon"/>
+                                    <img class="pool-tokenicon" :src="$store.state.tokens[pool.token1].icon"/>
+                                </div>
+                                <div v-else class="pool_data-wrapper_value">
+                            
+                                </div>
+                            </div>
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Token pair
+                                </div>
+                                <div class="pool_data-wrapper_value column">
+                                    <span>{{ $store.state.tokens[pool.token0].symbol }}</span>
+                                    <span>{{ $store.state.tokens[pool.token1].symbol }}</span>
+                                </div>
+                            </div>
+                            <div>
+
+                            </div>
+                        </div>
+                        <div class="mob-pool_body">
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Liquidity
+                                </div>
+                                <div class="pool_data-wrapper_value">
+                                    {{ pool.liquidity }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mob-pool_footer">
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Protocol fee
+                                </div>
+                                <div class="pool_data-wrapper_value">
+                                    {{ pool.protocol_fee / 100 }}%
+                                </div>
+                            </div>
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Rewards
+                                </div>
+                                <div class="pool_data-wrapper_value">
+                                    {{ pool.rewards / 100 }}%
+                                </div>
+                            </div>
+                            <div class="pool_data-wrapper">
+                                <div class="pool_data-wrapper_heading">
+                                    Price
+                                </div>
+                                <div class="pool_data-wrapper_value">
+                                    {{(pool.sqrt_price * pool.sqrt_price * Math.pow(10, $store.state.tokens[pool.token0].decimals - $store.state.tokens[pool.token1].decimals)).toFixed(2)}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Pools, desktop -->
             <template v-if="$store.state.pools && $store.state.tokens">
                 <div v-if="$store.state.pools[0]" class="list-header">
                         <!--<span class="list-header_unit">
@@ -572,10 +645,82 @@
                 Loading pools. . .
             </template>
             
+
             <template v-if="$store.state.positions">
-                <div class="heading">
+                <div class="heading allposheading">
                     <span class="title">All Positions</span>
                 </div>
+
+                <!-- All positions, mobile -->
+
+                <div v-if="$store.state.positions[0]" class="mob-pos-wrapper">
+                    <div v-for="pos in $store.state.positions" :key="pos.id" class="mob-pos">
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                Pool tokens
+                            </div>
+                            <div class="mob-pos_value">
+                                <img class="icon" :src="$store.state.tokens[pos.token0].icon">
+                                <img class="icon" :src="$store.state.tokens[pos.token1].icon">
+                                <div>
+                                    {{$store.state.tokens[pos.token0].symbol}}<br>
+                                    {{$store.state.tokens[pos.token1].symbol}}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                # Pool 
+                            </div>
+                            <div class="mob-pos_value">
+                                {{pos.poolId}}
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                # Pos 
+                            </div>
+                            <div class="mob-pos_value">
+                                {{pos.id}}
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                L. bound price 
+                            </div>
+                            <div class="mob-pos_value">
+                                {{(pos.lower_bound_price_decimals).toFixed(2)}}
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                U. bound price 
+                            </div>
+                            <div class="mob-pos_value">
+                                {{(pos.upper_bound_price_decimals).toFixed(2)}}
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                T0 Liquidity
+                            </div>
+                            <div class="mob-pos_value">
+                                {{(pos.token0_real_liquidity).toFixed(6)}}
+                            </div>
+                        </div>
+                        <div class="mob-pos_row">
+                            <div class="mob-pos_parameter">
+                                T1 Liquidity
+                            </div>
+                            <div class="mob-pos_value">
+                                {{(pos.token1_real_liquidity).toFixed(6)}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All positions, desktop -->
+
                 <div v-if="$store.state.positions[0]" class="list-header">
                     <span class="pos-list-header_unit">
                         # Pool
@@ -813,15 +958,18 @@ export default {
             this.newPositionModalActive = false
         },
         drawAnnotations: function (lp, up, cp) {
+            console.log(lp, up, cp)
             this.defaultOptions = {
                 ...this.defaultOptions,
                 annotations: {
+                    position: 'front',
                     xaxis: [
                         {
                             x: lp,
                             x2: up,
-                            borderColor: '#775DD0',
-                            fillColor: '#eca200',
+                            borderColor: '#E4AB47',
+                            fillColor: '#F6E3C4',
+                            opacity: 0.6
                         },
                         {
                             x: lp,
@@ -1325,6 +1473,12 @@ export default {
     padding: 4px 8px;
     margin-top: 6px;
 }
+
+.input-balance, .deposit_nav_btn {
+    padding-left: 15px;
+    margin-top: 4px;
+}
+
 .deposit_nav_btn:hover {
     background-color: $buttonBgColor;
     color: $buttonAltBgColor;
@@ -1352,11 +1506,10 @@ export default {
 }
 
 .list {
+    @extend %default-element;
     margin-bottom: 64px;
     display: flex;
     flex-direction: column;
-    background-color: $cardBgColor;
-    border: $border;
     border-radius: $borderRadius;
     box-sizing: border-box;
 }
@@ -1371,25 +1524,27 @@ export default {
 }
 
 .pool:hover {
-    background-color: $cardHoverBgColor;
+    background-color: #FDDEA04D;
     border-radius: $borderRadius;
 }
 
 .title {
     color: $textColor;
-    font-size: $greaterTextSize;
+    font-size: $mediumTextSize;
+    font-weight: 600;
 }
 
 .new-pool-btn, .new-position-btn, .edit-btn {
     border: 1px solid transparent;
     width: 200px;
     padding: 8px;
-    border-radius: $borderRadius;
-    background-color: $buttonBgColor;
+    border-radius: 20px;
+    background-color: $blockBgColor;
     color: $buttonTextColor;
     font-size: $lesserTextSize;
     cursor: pointer;
     transition: 0.3s;
+    font-weight: 600;
 }
 
 .new-pool-btn:hover, .new-position-btn:hover, .edit-btn:hover {
@@ -1404,37 +1559,56 @@ export default {
     flex-direction: row;
     justify-content: space-between;
     padding: 16px;
+    padding-left: 0;
     box-sizing: border-box;
 }
 
 .list-header_unit, .list-pool_unit {
     width: 19%;
     font-size: $tinyTextSize;
+    font-weight: 600;
+}
+
+.list-header_unit:first-child {
+    padding-right: 22px;
 }
 
 .list-header_unit:first-child, .list-pool_unit:first-child {
-    width: 5%;
+    width: 8%;
 }
 .list-header_unit:nth-child(2), .list-pool_unit:nth-child(2) {
-    width: 6%;
+    width: 12%;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
 }
 
+.list-pool_unit:nth-child(2) {
+    padding-left: 4px;
+}
+
+.list-header_unit:nth-child(3), .list-pool_unit:nth-child(3) {
+    width: 22%;
+}
+
 .pos-list-header_unit, .pos-list-pool_unit {
     width: 14%;
     font-size: $tinyTextSize;
     box-sizing: border-box;
+    font-weight: 600;
 }
 
 .pos-list-header_unit:first-child, .pos-list-pool_unit:first-child, .pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
     width: 5%;
 }
 
-.pos-list-header_unit:first-child, .pos-list-pool_unit:first-child, .pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
+.pos-list-header_unit:nth-child(2), .pos-list-pool_unit:nth-child(2) {
     width: 7%;
+}
+
+.pos-list-header_unit:nth-child(2) {
+    margin-left: 22px;
 }
 
 .pos-list-header_unit:nth-child(3), .pos-list-pool_unit:nth-child(3), .pos-list-header_unit:nth-child(4), .pos-list-pool_unit:nth-child(4) {
@@ -1460,8 +1634,8 @@ export default {
 .icon {
     margin: 6px;
     margin-left: 0;
-    width: $lesserTextSize;
-    height: $lesserTextSize;
+    width: $textSize;
+    height: $textSize;
 }
 
 .bold {
@@ -1494,11 +1668,9 @@ export default {
 }
 
 .modal {
+    @extend %default-block;
     width: $interfaceBlocksWidth;
-    background-color: $cardBgColor;
     min-height: $defaultCardHeight;
-    border: $brightBorder;
-    border-radius: $borderRadius;
     padding: 26px;
     overflow: auto;
     max-height: 95vh;
@@ -1509,8 +1681,10 @@ export default {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    border-bottom: $brightBorder;
+    // border-bottom: $brightBorder;
     padding-bottom: 26px;
+    padding-left: 18px;
+    padding-right: 18px;
 }
 
 .modal-title {
@@ -1546,31 +1720,41 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    margin-top: 48px;
-    width: 60%;
-    padding-bottom: 48px;
+    // margin-top: 48px;
+    width: 100%;
+    // padding-bottom: 48px;
 }
 
-.modal-body_row:first-child, .modal-body_row:nth-child(2) {
-    border-bottom: $brightBorder;
+.modal-body_row-placeholder {
+    height: 40px;
 }
+
+/*.modal-body_row:first-child, .modal-body_row:nth-child(2) {
+    border-bottom: $brightBorder;
+}*/
 
 .modal-body_row-input {
-    border: $border;
-    background: none;
+    border: 0;
+    background-color: $elementBgColor;
     font-size: $lesserTextSize;
     border-radius: $borderRadius;
     padding: 4px;
-    margin-left: 8px;
-    margin-right: 8px;
+    margin-left: 15px;
+    margin-right: 15px;
     transition: 0.3s;
-    min-width: 238px;
-    min-height: 29px;
+    min-width: 300px;
+    min-height: 60px;
     box-sizing: border-box;
 }
 
+#currentPrice {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
 .modal-body_row-input:focus {
-    border: 1px solid $buttonBgColor;
     outline: none;
     transition: 0.3s;
 }
@@ -1578,7 +1762,7 @@ export default {
 .input-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .input-title {
@@ -1588,15 +1772,19 @@ export default {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    padding-left: 15px;
+    font-weight: 600;
 }
 
 .modal-footer {
-    border-top: $brightBorder;
+    // border-top: $brightBorder;
     padding-top: 26px;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+    padding-left: 18px;
+    padding-right: 18px;
 }
 
 .confirm-btn {
@@ -1604,8 +1792,8 @@ export default {
     width: 200px;
     padding: 8px;
     border-radius: $borderRadius;
-    background-color: $buttonBgColor;
-    color: $buttonTextColor;
+    background-color: #212121;
+    color: #F5C352;
     font-size: $lesserTextSize;
     cursor: pointer;
     transition: 0.3s;
@@ -1951,7 +2139,7 @@ export default {
 
 .section-block {
     width: 100%;
-    background-color: $blockBgColor;
+    background-color: #f5f6fb;
     border-radius: $borderRadius;
     display: flex;
     flex-direction: column;
@@ -2048,5 +2236,194 @@ export default {
 
 .block-parameter {
     margin-right: 4px;
+}
+
+.mob-pools-wrapper {
+    display: none;
+}
+
+.mob-pos-wrapper {
+    display: none;
+}
+
+@media screen and (max-width: 1050px) {
+
+    .list, .list-header, .pos-table_wrapper {
+        display: none;
+    }
+
+    .wrapper {
+        width: 340px;
+    }
+
+    .title {
+        font-size: 16px;
+    }
+
+    .new-position-btn {
+        font-size: 16px;
+        padding: 8px 22px;
+    }
+
+    .pools-heading {
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
+
+    .mob-pools-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border-radius: 15px;
+    }
+
+    .mob-pool {
+        background: #FDEFD4;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 240px;
+        border-bottom: 0.5px solid #000000;
+        padding: 20px;
+    }
+
+    .mob-pool:first-child {
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+
+    .mob-pool:last-child {
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+        border: 0;
+    }
+
+    .mob-pool_header, .mob-pool_body, .mob-pool_footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .pool_data-wrapper_heading {
+        font-size: 14px;
+        font-weight: 500;
+        color: #000000;
+        margin-bottom: 12px;
+    }
+
+    .pool_data-wrapper_value {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pool-tokenicon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .pool-tokenicon:first-child {
+        margin-right: 5px;
+    }
+
+    .allposheading {
+        margin-top: 40px;
+        margin-bottom: 20px !important;
+    }
+
+    .mob-pos-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border-radius: 15px;
+        margin-bottom: 40px;
+    }
+
+    .mob-pos {
+        background: #FDEFD4;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 320;
+        border-bottom: 0.5px solid #000000;
+        padding: 20px;
+    }
+
+    .mob-pos:first-child {
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+    }
+
+    .mob-pos:last-child {
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+        border: 0;
+    }
+
+    .mob-pos_row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 22px;
+    }
+
+    .mob-pos_row:last-child {
+        margin: 0;
+    }
+
+    .mob-pos_parameter, .mob-pos_value {
+        width: 50%;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    .mob-pos_parameter {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .mob-pos_value {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .modal {
+        width: 340px;
+    }
+
+    .modal-body_row {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .input-wrapper {
+        margin-top: 16px;
+    }
+
+    .modal-body_row-input {
+        height: 40px;
+        box-sizing: border-box;
+        min-height: 40px;
+    }
+
+    .confirm-btn {
+        width: 100%;
+    }
+
+    .deposit_nav_btn {
+        margin-left: 15px;
+        padding-left: 8px;
+    }
 }
 </style>
