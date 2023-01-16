@@ -9,10 +9,10 @@
                 <div class="picker_body">
                     <div class="picker_search-wrapper">
                         <img class="search-icon" src="../assets/icons/search.svg">
-                        <input type="text" class="picker_search" placeholder="Search name or paste address">
+                        <input v-model="searchPrompt" type="text" class="picker_search" placeholder="Search name or paste address">
                     </div>
                     <div class="picker_suggestions">
-                        <div @click="selectToken(token)" v-bind:class="{suggestionActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in tokens" :key="token.symbol" class="picker_suggestion">
+                        <div @click="selectToken(token)" v-bind:class="{suggestionActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in searchPromptResult" :key="token.symbol" class="picker_suggestion">
                             <img class="suggestion_icon" :src="$store.state.tokens[token.token].icon"/>
                             <span class="suggestion_token">{{token.symbol}}</span>
                         </div>
@@ -145,7 +145,8 @@ export default {
             priceImpactRange: null,
 
             tokenPickerActive: false,
-            tokenForSelection: null
+            tokenForSelection: null,
+            searchPrompt: null
         }
     },
     async created () {
@@ -158,6 +159,23 @@ export default {
             } else {
                 return false
             }
+        },
+        searchPromptResult: function () {
+            if (this.searchPrompt) {
+                let tokens = this.tokens
+                let prompt = this.searchPrompt
+                
+                if (this.tokens.find(item => item.token.toLowerCase() === prompt.toLowerCase())) {
+                    return [this.tokens.find(item => item.token.toLowerCase() === prompt.toLowerCase())]
+                } else {
+                    const filteredTokens = tokens.filter((item) => {
+                        if (item.symbol.toLowerCase().indexOf(prompt.toLowerCase()) !== -1) {
+                            return item
+                        }
+                    })
+                    return filteredTokens
+                }
+            } else return this.tokens
         }
     },
     watch: {
