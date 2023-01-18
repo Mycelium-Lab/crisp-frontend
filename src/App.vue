@@ -239,9 +239,6 @@ input[type=number] {
 .notification-close {
   width: $textSize;
   height: $textSize;
-  // border: 1px solid $buttonBgColor;
-  // color: $buttonBgColor;
-  // background-color: $buttonTextColor;
   background-color: transparent;
   border: 0;
   background-image: url('./assets/icons/x.svg');
@@ -417,36 +414,6 @@ header {
   }
 }
 
-/*
-@media screen and (max-width: 1200px) {
-  .fatal-error-msg {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    z-index: 800;
-    position: relative;
-    background: linear-gradient($gradientPrimary, $gradientSecondary)
-  }
-
-  .fatal-error-msg .str {
-    font-size: $tinyTextSize;
-    text-align: center;
-    max-width: 90vw;
-  }
-
-  header {
-    display: none;
-  }
-
-  .page {
-    display: none;
-  }
-}
-*/
-
 @keyframes draw-loader {
       0% {
         width: 0;
@@ -472,12 +439,6 @@ header {
   background: #000;
 }
 
-/*.loader.success{
-  background:#70B8A1;
-}
-.loader.error{
-  background:#C46060;
-}*/
 .notification-title.success {
   color: #008653;
 }
