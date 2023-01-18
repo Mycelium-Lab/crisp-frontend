@@ -15,7 +15,14 @@ export default createStore({
     positions: null,
     userPositions: null,
     tokens: null,
-    notifications: [],
+    notifications: [
+      {
+        id: 0,
+        title: 'Approve <Token>',
+        type: 'success',
+        text: 'Lorem ipsum'
+      }
+    ],
     tokenForDeposit: null,
     loaded: {
       balances: false,

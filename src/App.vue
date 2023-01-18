@@ -8,7 +8,7 @@
               {{notification.title}}
             </span>
             <button @click="removeNotif(notification.id)" class="notification-close">
-              X
+              
             </button>
           </div>
           <span :class="['notification-text', notification.type]">
@@ -184,15 +184,13 @@ input[type=number] {
 }
 
 .notification {
-  background-color: $cardBgColor;
-  border: $border;
-  border-radius: $borderRadius;
+  @extend %default-block;
   opacity: 1;
-  padding: 16px;
+  padding: 32px 40px;
   position: absolute;
   width: ($interfaceBlocksWidth/2)-36px;
   animation: shiftIn 0.6s linear;
-  height: 160px;
+  height: 169px;
   box-sizing: border-box;
   pointer-events: all;
   overflow: hidden;
@@ -226,30 +224,35 @@ input[type=number] {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-bottom: 12px;
+  padding-bottom: 24px;
 }
 
 .notification-title {
-  font-size: $textSize;
+  font-size: 20px;
 }
 
 .notification-text {
-  font-size: $tinyTextSize;
+  font-size: 18px;
+  color: #fff;
 }
 
 .notification-close {
   width: $textSize;
   height: $textSize;
-  border: 1px solid $buttonBgColor;
-  color: $buttonBgColor;
-  background-color: $buttonTextColor;
+  // border: 1px solid $buttonBgColor;
+  // color: $buttonBgColor;
+  // background-color: $buttonTextColor;
+  background-color: transparent;
+  border: 0;
+  background-image: url('./assets/icons/x.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
   opacity: 0.8;
   transition: 0.3s;
   cursor: pointer;
 }
 
 .notification-close:hover {
-  background-color: $buttonAltBgColor;
   opacity: 1;
   transition: 0.3s;
 }
@@ -449,7 +452,7 @@ header {
         width: 0;
       }
       95% {
-        width: 100%;
+        width: 83%;
         opacity: 1;
       }
       100% {
@@ -458,22 +461,28 @@ header {
 }
 .loader{
   position: absolute;
-  bottom: 0;
-  left: 0px;
-  height: 2px;
+  bottom: 40px;
+  left: 40px;
+  height: 10px;
+  border-radius: 10px;
   animation: draw-loader 5s ease-in-out;
 }
-.loader.success{
+
+.loader {
+  background: #000;
+}
+
+/*.loader.success{
   background:#70B8A1;
 }
 .loader.error{
   background:#C46060;
+}*/
+.notification-title.success {
+  color: #008653;
 }
-.notification-title.success, .notification-text.success {
-  color:#70B8A1;
-}
-.notification-title.error, .notification-text.error {
-  color:#C46060;
+.notification-title.error {
+  color:#A90203;
 }
 
 .header-link.connect {
