@@ -24,7 +24,7 @@ export const SWAP_TOKENS = [
     {
         symbol: 'USN',
         token: 'usdn.testnet'
-    }
+    },
     {
         symbol: 'wNEAR',
         token: 'wrap.testnet'
