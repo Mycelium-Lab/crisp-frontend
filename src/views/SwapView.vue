@@ -13,13 +13,13 @@
                     </div>
                     <div class="picker_suggestions">
                         <div @click="selectToken(token)" v-bind:class="{suggestionActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in searchPromptResult" :key="token.symbol" class="picker_suggestion">
-                            <img class="suggestion_icon" :src="$store.state.tokens[token.token].icon"/>
+                            <!--<img class="suggestion_icon" :src="$store.state.tokens[token.token].icon"/>-->
                             <span class="suggestion_token">{{token.symbol}}</span>
                         </div>
                     </div>
                     <div class="picker_list">
                         <div @click="selectToken(token)" v-bind:class="{listItemActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in tokens" :key="token.symbol" class="picker_list_item">
-                            <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
+                            <!--<img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>-->
                             <span class="list_item_token">{{token.symbol}}</span>
                         </div>
                     </div>
@@ -190,6 +190,10 @@ export default {
             this.$store.dispatch('depositToken', token)
         },
         openTokenPicker: function (token) {
+            console.log(this.tokens)
+            console.log(this.searchPromptResult)
+            console.log(this.$store.state.tokens)
+            console.log(this.$store.state.tokens)
             this.tokenForSelection = token
             this.tokenPickerActive = true
         },
