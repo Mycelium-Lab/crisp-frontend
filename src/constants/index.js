@@ -3,8 +3,8 @@ export const METHOD_NAMES = ['get_pools', 'get_balance', 'get_balance_all_tokens
 
 export const DEFAULT_SWAP_PAIR = {
     token_in: {
-        symbol:"USDC",
-        token:"usdc.fakes.testnet"
+        symbol:"wNEAR",
+        token:"wrap.testnet"
     },
     token_out: {
         symbol:"USN",
@@ -25,10 +25,10 @@ export const SWAP_TOKENS = [
         symbol: 'USN',
         token: 'usdn.testnet'
     }
-    // {
-    //     symbol: 'wNEAR',
-    //     token: 'wrap.testnet'
-    // }
+    {
+        symbol: 'wNEAR',
+        token: 'wrap.testnet'
+    }
 ]
 
 export const NOT_ENOUGH_LIQUIDITY_ERROR = 'not enough liquidity in pool to cover this swap'
