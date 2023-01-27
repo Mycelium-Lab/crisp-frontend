@@ -2080,24 +2080,6 @@ export default {
     transition: 0.3s;
 }
 
-.section-bottom {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.error-msg {
-    font-size: $lesserTextSize;
-    box-sizing: border-box;
-    height: 26px;
-}
-
-.error-msg-disabled {
-    box-sizing: border-box;
-    height: 26px;
-}
-
 .blurred .section-block-wrapper {
     pointer-events: none;
     filter: blur(5px);
