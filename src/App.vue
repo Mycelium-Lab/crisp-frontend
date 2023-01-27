@@ -8,7 +8,7 @@
               {{notification.title}}
             </span>
             <button @click="removeNotif(notification.id)" class="notification-close">
-              X
+              
             </button>
           </div>
           <span :class="['notification-text', notification.type]">
@@ -26,14 +26,18 @@
   </div>
   <header>
     <div class="header-nav">
-        <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png">Swap</router-link>
-        <router-link class="header-link" to="/pools">Manage Liquidity</router-link>
+        <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png"><span class="desktop-link">Swap</span></router-link>
+        <router-link class="header-link desktop-link" to="/pools">Manage Liquidity</router-link>
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
-      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>
-      <button v-else @click="signIn()" class="header-link">Connect wallet</button>
+      <!--<router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
+      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
+      <button v-if="$store.state.account" @click="signOut()" class="header-link account"><span>{{ $store.state.account.accountId }}</span><img class="logout-gfx" src="./assets/icons/logout.svg"/></button>
+      <button v-else @click="signIn()" class="header-link connect">Connect wallet</button>
+    </div>
+    <div class="burger-wrapper">
+      <button class="burger-button"></button>
     </div>
   </header>
   <div class="page">
@@ -110,7 +114,7 @@ html {
 #app {
   min-height: 100vh;
   min-width: 99vw;
-  background: linear-gradient($gradientPrimary, $gradientSecondary)
+  background: linear-gradient(356.97deg, #F5BF52 -20.04%, rgba(245, 191, 82, 0.53125) 42.31%, rgba(245, 191, 82, 0) 112.97%);
 }
 
 input::-webkit-outer-spin-button,
@@ -180,15 +184,13 @@ input[type=number] {
 }
 
 .notification {
-  background-color: $cardBgColor;
-  border: $border;
-  border-radius: $borderRadius;
+  @extend %default-block;
   opacity: 1;
-  padding: 16px;
+  padding: 32px 40px;
   position: absolute;
   width: ($interfaceBlocksWidth/2)-36px;
   animation: shiftIn 0.6s linear;
-  height: 160px;
+  height: 169px;
   box-sizing: border-box;
   pointer-events: all;
   overflow: hidden;
@@ -222,30 +224,32 @@ input[type=number] {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-bottom: 12px;
+  padding-bottom: 24px;
 }
 
 .notification-title {
-  font-size: $textSize;
+  font-size: 20px;
 }
 
 .notification-text {
-  font-size: $tinyTextSize;
+  font-size: 18px;
+  color: #fff;
 }
 
 .notification-close {
   width: $textSize;
   height: $textSize;
-  border: 1px solid $buttonBgColor;
-  color: $buttonBgColor;
-  background-color: $buttonTextColor;
+  background-color: transparent;
+  border: 0;
+  background-image: url('./assets/icons/x.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
   opacity: 0.8;
   transition: 0.3s;
   cursor: pointer;
 }
 
 .notification-close:hover {
-  background-color: $buttonAltBgColor;
   opacity: 1;
   transition: 0.3s;
 }
@@ -263,6 +267,7 @@ header {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  padding-top: 12px;
 }
 
 .header-nav:nth-child(2) {
@@ -271,9 +276,11 @@ header {
 
 .header-link {
   padding: 12px;
-  font-size: $textSize;
+  padding-top: 0;
+  font-size: $mediumTextSize;
   text-decoration: none;
   color: $textColor !important;
+  font-weight: 500;
   height: 48px;
   display: flex;
   flex-direction: row;
@@ -336,39 +343,83 @@ header {
   display: none;
 }
 
-@media screen and (max-width: 1200px) {
-  .fatal-error-msg {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    z-index: 800;
-    position: relative;
-    background: linear-gradient($gradientPrimary, $gradientSecondary)
+.burger-wrapper {
+  display: none;
+}
+
+@media screen and (max-width: 1050px) {
+  .desktop-link {
+    display: none;
   }
 
-  .fatal-error-msg .str {
-    font-size: $tinyTextSize;
-    text-align: center;
-    max-width: 90vw;
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   header {
-    display: none;
+    padding-top: 44px;
+    width: 340px;
   }
 
-  .page {
+  .header-link {
+    margin-right: 0;
+    padding-left: 0;
+  }
+
+  .connect {
+    background: #F5BF52;
+    font-size: 14px;
+    margin-right: 32px;
+    padding: 8px 20px !important;
+    height: 40px;
+  }
+
+  .account {
+    margin-right: 32px;
+    font-size: 16px;
+  }
+
+  .logout-gfx {
+    width: 16px;
+    height: 16px;
+  }
+
+  .logo {
+    margin: 0;
+  }
+
+  .burger-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-top: 12px;
+  }
+
+  .burger-button {
+    width: 24px;
+    height: 24px;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    background-image: url('./assets/icons/burger.svg');
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+  }
+
+  .socials-wrapper {
     display: none;
   }
 }
+
 @keyframes draw-loader {
       0% {
         width: 0;
       }
       95% {
-        width: 100%;
+        width: 83%;
         opacity: 1;
       }
       100% {
@@ -377,21 +428,52 @@ header {
 }
 .loader{
   position: absolute;
-  bottom: 0;
-  left: 0px;
-  height: 2px;
+  bottom: 40px;
+  left: 40px;
+  height: 10px;
+  border-radius: 10px;
   animation: draw-loader 5s ease-in-out;
 }
-.loader.success{
-  background:#70B8A1;
+
+.loader {
+  background: #000;
 }
-.loader.error{
-  background:#C46060;
+
+.notification-title.success {
+  color: #008653;
 }
-.notification-title.success, .notification-text.success {
-  color:#70B8A1;
+.notification-title.error {
+  color:#A90203;
 }
-.notification-title.error, .notification-text.error {
-  color:#C46060;
+
+.header-link.connect {
+  background-color: $blockBgColor;
+  padding: 11px 25px;
+  border-radius: 20px;
+  height: auto;
+}
+
+.account {
+  background: #FDDEA0;
+  border: 0.5px solid #000000;
+  border-radius: 20px;
+  padding: 9px 16px;
+  height: 40px;
+  box-sizing: border-box;
+  color: #000 !important;
+}
+
+.account:hover {
+  color: #000 !important;
+  background: #f3c76f;
+}
+
+.logout-gfx {
+  margin-left: 6px;
+}
+
+.header-link.connect:hover {
+  background-color: $buttonSecondaryColor;
+  color: $blockBgColor !important;
 }
 </style>

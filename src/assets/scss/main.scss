@@ -10,7 +10,7 @@ $tinyTextSize: 14px;
 $textHoverColor: #680051;
 
 $gradientPrimary: #fff;
-$gradientSecondary: #fff0aa;
+$gradientSecondary: #fcd68c;
 
 $buttonBgColor: #eca200; // #fb118e;
 $buttonAltBgColor: #fff; // #fec6e4;
@@ -38,3 +38,28 @@ $defaultCardHeight: 200px;
 $green: #49ff00;
 $yellow: #eca200;
 $red: #ff6464;
+
+$blockBgColor: #F5BF52;
+$elementBgColor: #FDEFD4;
+
+$buttonPrimaryColor: #FDDEA0;
+$buttonSecondaryColor: #212121;
+
+%default-block {
+    background-color: $blockBgColor;
+    border-radius: 15px;
+}
+
+%default-element {
+    background-color: $elementBgColor;
+}
+
+%light-btn {
+    background-color: $buttonPrimaryColor;
+    color: $buttonSecondaryColor;
+}
+
+%dark-btn {
+    background-color: $buttonSecondaryColor;
+    color: $buttonPrimaryColor;
+}

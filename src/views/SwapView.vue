@@ -1,5 +1,31 @@
 <template>
     <div class="wrapper">
+        <div v-if="tokenPickerActive" class="token-picker-wrapper">
+            <div class="token-picker">
+                <div class="picker_header">
+                    <span class="picker_title">Select a token</span>
+                    <img @click="closeTokenPicker()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="picker_body">
+                    <div class="picker_search-wrapper">
+                        <img class="search-icon" src="../assets/icons/search.svg">
+                        <input v-model="searchPrompt" type="text" class="picker_search" placeholder="Search name or paste address">
+                    </div>
+                    <div class="picker_suggestions">
+                        <div @click="selectToken(token)" v-bind:class="{suggestionActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in searchPromptResult" :key="token.symbol" class="picker_suggestion">
+                            <img class="suggestion_icon" :src="$store.state.tokens[token.token].icon"/>
+                            <span class="suggestion_token">{{token.symbol}}</span>
+                        </div>
+                    </div>
+                    <div class="picker_list">
+                        <div @click="selectToken(token)" v-bind:class="{listItemActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in tokens" :key="token.symbol" class="picker_list_item">
+                            <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
+                            <span class="list_item_token">{{token.symbol}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">
@@ -28,9 +54,14 @@
                 <button @click="swapPositions()" class="swap-tokens"></button> <!--position: absolute-->
                 <div class="token-wrapper token-in">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select :disabled="loaded === false" v-model="token_in" @change="findPool()" class="token-select"> <!--position: absolute-->
+                    <div v-if="$store.state.tokens" @click="openTokenPicker('in')" class="token-select">
+                        <img v-if="token_in" class="selected-icon" :src="$store.state.tokens[token_in.token].icon"/>
+                        <span class="selected-symbol">{{ token_in.symbol }}</span>
+                        <img class="selected-expand" src="../assets/icons/arrow-down.svg"/>
+                    </div>
+                    <!--<select :disabled="loaded === false" v-model="token_in" @change="findPool()" class="token-select">
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
-                    </select>
+                    </select>-->
                     <div class="token-input" v-if="manual_input === 'out' && tokenAmntLoading === true">
                         loading . . .
                     </div>
@@ -44,9 +75,14 @@
                 </span>
                 <div class="token-wrapper token-out">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
-                    <select :disabled="loaded === false" v-model="token_out" @change="findPool()" class="token-select"> <!--position: absolute-->
+                    <div v-if="$store.state.tokens" @click="openTokenPicker('out')" class="token-select">
+                        <img v-if="token_out" class="selected-icon" :src="$store.state.tokens[token_out.token].icon"/>
+                        <span class="selected-symbol">{{ token_out.symbol }}</span>
+                        <img class="selected-expand" src="../assets/icons/arrow-down.svg"/>
+                    </div>
+                    <!--<select :disabled="loaded === false" v-model="token_out" @change="findPool()" class="token-select">
                         <option v-for="(token, index) in tokens" :key="index" :value="token" class="select-option">{{token.symbol}}</option>
-                    </select>
+                    </select>-->
                     <div class="token-input" v-if="manual_input === 'in' && tokenAmntLoading === true">
                         loading . . .
                     </div>
@@ -106,7 +142,11 @@ export default {
             footerBtnActive: false,
             swapError: '',
             priceImpact: null,
-            priceImpactRange: null
+            priceImpactRange: null,
+
+            tokenPickerActive: false,
+            tokenForSelection: null,
+            searchPrompt: null
         }
     },
     async created () {
@@ -119,6 +159,23 @@ export default {
             } else {
                 return false
             }
+        },
+        searchPromptResult: function () {
+            if (this.searchPrompt) {
+                let tokens = this.tokens
+                let prompt = this.searchPrompt
+                
+                if (this.tokens.find(item => item.token.toLowerCase() === prompt.toLowerCase())) {
+                    return [this.tokens.find(item => item.token.toLowerCase() === prompt.toLowerCase())]
+                } else {
+                    const filteredTokens = tokens.filter((item) => {
+                        if (item.symbol.toLowerCase().indexOf(prompt.toLowerCase()) !== -1) {
+                            return item
+                        }
+                    })
+                    return filteredTokens
+                }
+            } else return this.tokens
         }
     },
     watch: {
@@ -131,6 +188,26 @@ export default {
         depositToken (token) {
             console.log(token)
             this.$store.dispatch('depositToken', token)
+        },
+        openTokenPicker: function (token) {
+            console.log(this.tokens)
+            console.log(this.searchPromptResult)
+            console.log(this.$store.state.tokens)
+            console.log(this.$store.state.tokens)
+            this.tokenForSelection = token
+            this.tokenPickerActive = true
+        },
+        closeTokenPicker: function () {
+            this.tokenForSelection = null
+            this.tokenPickerActive = false
+        },
+        selectToken: function (token) {
+            if (this.tokenForSelection === 'in') {
+                this.token_in = token
+            } else {
+                this.token_out = token
+            }
+            this.findPool()
         },
         swapPositions: async function () {
             const tin = this.token_out
@@ -482,13 +559,179 @@ export default {
 <style lang="scss" scoped>
 @import "~@/assets/scss/main.scss";
 
+.token-picker-wrapper {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    animation: appear 0.3s linear;
+    background-color: rgb(59, 60, 63, 0.8);
+    z-index: 600;
+}
+
+.token-picker {
+    @extend %default-block;
+    width: 430px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+}
+
+.picker_header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 32px;
+}
+
+.picker_title {
+    font-size: $textSize;
+    font-weight: 500;
+}
+
+.x-icon {
+    width: $textSize;
+    height: $textSize;
+    cursor: pointer;
+}
+
+.picker_body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.picker_search-wrapper {
+    width: 100%;
+    position: relative;
+    background: #FDEFD4;
+    border-radius: 15px;
+    padding: 16px 20px;
+    box-sizing: border-box;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+.picker_search {
+    width: 100%;
+    height: 100%;
+    padding-left: 24px;
+    box-sizing: border-box;
+    background: none;
+    border: none;
+    font-size: $lesserTextSize;
+    font-weight: 500;
+    padding-top: 3px;
+    outline: none;
+    color: rgba(33, 33, 33, 0.78);
+}
+
+.picker_suggestions {
+    margin-top: 20px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, fit-content(100px));
+    grid-column-gap: 10px;
+    grid-row-gap: 10px; 
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.picker_suggestion {
+    background: #FDDEA0;
+    height: 30px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 5px;
+    box-sizing: border-box;
+    cursor: pointer;
+    border: 1px solid transparent;
+    max-width: 103px;
+}
+
+.picker_suggestion:hover, .suggestionActive {
+    transition: 0.3s;
+    border: 1px solid #000;
+}
+
+.suggestion_icon {
+    width: $textSize;
+    height: $textSize;
+    margin-right: 5px;
+}
+
+.suggestion_token {
+    font-size: 16px;
+    font-weight: 500;
+    color: #212121;
+}
+
+.picker_list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: #FDEFD4;
+    border-radius: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.picker_list_item {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 40px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.picker_list_item:hover, .listItemActive {
+    background: rgba(253, 222, 160, 0.6);
+}
+
+.list_item_icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 5px;
+}
+
+.list_item_token {
+    font-size: 18px;
+    font-weight: 500;
+    color: #212121;
+}
+
 .modal {
+    @extend %default-block;
     width: ($interfaceBlocksWidth/2);
-    background-color: $cardBgColor;
+    // background-color: $cardBgColor;
     min-height: $defaultCardHeight;
-    border: $brightBorder;
-    border-radius: $borderRadius;
-    padding: 12px;
+    border: 0;
+    // border-radius: $borderRadius;
+    padding: 30px 40px;
     margin-top: 32px;
 }
 
@@ -501,8 +744,8 @@ export default {
 }
 
 .modal-title {
-    font-size: $lesserTextSize;
-    font-weight: 400;
+    font-size: $mediumTextSize;
+    font-weight: 600;
     padding-left: 8px;
 }
 
@@ -522,10 +765,10 @@ export default {
     left: 0;
     right: 0;
     text-align: center;
-    background-image: url('../assets/icons/swap.png');
+    background-image: url('../assets/icons/ArrowsClockwise.svg');
     background-size: 100% 100%;
-    background-color: #e8ecfb;
-    border: 3px solid $cardBgColor;
+    background-color: #FDE4A0;
+    border: 3px solid #FDE4A0;
     border-radius: $borderRadius/2;
     z-index: 100;
     cursor: pointer;
@@ -533,33 +776,35 @@ export default {
 }
 
 .swap-tokens:hover {
-    background-color: #d9e2ff;
-    -webkit-box-shadow: 2px 2px 12px -4px rgba(34, 60, 80, 0.2);
-    -moz-box-shadow: 2px 2px 12px -4px rgba(34, 60, 80, 0.2);
-    box-shadow: 2px 2px 12px -4px rgba(34, 60, 80, 0.2);
+    background-color: $buttonPrimaryColor;
+    border: 3px solid $buttonPrimaryColor;
 }
 
 .token-wrapper {
+    @extend %default-element;
     position: relative;
-    height: $largeInputSize;
-    background-color: $inputBgColor;
-    border-radius: $borderRadius;
+    height: 60px;
     margin-bottom: 2px;
-    margin-top: 2px;
+    margin-top: 20px;
     padding: 12px;
     padding-top: 16px;
+    border-radius: 15px;
     box-sizing: border-box;
 }
 
+.token-balance {
+    margin-bottom: 24px;
+}
+
 .token-out {
-    margin-top: 24px !important;
+    margin-top: 44px !important;
 }
 
 .token-input {
     width: 80%;
     background-color: transparent;
     border: 0;
-    height: $largeInputSize*0.6;
+    height: 30px;
     font-size: $greaterTextSize;
     outline: none;
 }
@@ -567,6 +812,7 @@ export default {
 .token-balance {
     padding: 8px;
     padding-left: 0;
+    font-weight: 500;
 }
 .swap-error{
     font-size: $lesserTextSize;
@@ -574,19 +820,40 @@ export default {
 }
 .token-select {
     position: absolute;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     right: 12px;
-    background-color: #e8ecfb;
     font-size: $lesserTextSize;
     font-weight: 600;
     border: 0;
-    border-radius: $borderRadius;
+    background: #FDDEA0;
+    border-radius: 10px;
     padding: 4px;
     transition: 0.3s;
 }
 
 .token-select:hover {
-    background-color: #d9e2ff;
+    background: #ffce6c;
     cursor: pointer;
+}
+
+.selected-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.selected-symbol {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.selected-expand {
+    width: 14px;
+    height: 14px;
+    margin-left: 5px;
 }
 
 .modal-footer {
@@ -597,13 +864,12 @@ export default {
 }
 
 .footer-btn {
+    @extend %dark-btn;
     border: 1px solid transparent;
     width: 100%;
     padding: 8px;
     border: 1px solid $buttonBgColor; 
     border-radius: $borderRadius;
-    background-color: $buttonAltBgColor;
-    color: $buttonBgColor;
     font-size: $textSize;
     font-weight: 500;
     cursor: pointer;
@@ -612,25 +878,22 @@ export default {
 }
 
 .deposit_nav_btn{
+    @extend %light-btn;
     border: 1px solid transparent;
-    border: 1px solid $buttonBgColor;
-    background-color: $buttonAltBgColor;
-    color: $buttonBgColor;
     box-sizing: border-box;
     transition: 0.3s;
     border-radius: 8px;
     padding: 4px 8px;
     margin-left: 8px;
+    font-weight: 500;
 }
 .deposit_nav_btn:hover {
-    background-color: $buttonBgColor;
-    color: $buttonAltBgColor;
+    @extend %dark-btn;
     cursor: pointer;
 }
 
 .footer-btn:hover {
-    background-color: $buttonBgColor;
-    color: $buttonAltBgColor;
+    @extend %light-btn;
 }
 
 .footerbtnactive {
@@ -670,5 +933,67 @@ export default {
 
 .red {
     text-shadow: 0px 0px 2px $red;
+}
+
+@media screen and (max-width: 1050px) {
+    .modal {
+        width: auto;
+        min-width: 330px;
+        max-width: 341px;
+        box-sizing: border-box;
+        padding: 18px;
+    }
+
+    .modal-title {
+        font-size: 18px;
+        padding-left: 0;
+    }
+
+    .token-wrapper {
+        height: 40px;
+        padding: 10px;
+    }
+    
+    .token-input {
+        height: 20px;
+        font-size: 16px;
+    }
+
+    .token-select {
+        box-sizing: border-box;
+        top: 5px;
+        right: 5px;
+    }
+
+    .selected-symbol {
+        font-size: 14px;
+    }
+
+    .selected-expand {
+        width: 12px;
+        height: 12px;
+    }
+
+    .token-balance {
+        margin-bottom: 12px;
+    }
+
+    .token-balance span {
+        font-size: 14px;
+    }
+
+    .deposit_nav_btn {
+        font-size: 12px;
+    }
+
+    .footer-btn {
+        background: #212121;
+        border-radius: 20px;
+        font-size: 18px;
+    }
+
+    .price-impact {
+        font-size: 12px;
+    }
 }
 </style>
