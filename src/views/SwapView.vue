@@ -120,6 +120,7 @@ import store from '../store'
 import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
+import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
     store,
@@ -479,6 +480,7 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
+                const { utils, transactions } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
                 //     // swap_in
@@ -487,6 +489,54 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenObj = this.$store.state.tokens[this.token_in.token]
                         }
+
+                        // Get return, so we know how much we will need to withdraw
+
+                        await this.$store.state.walletConnection.account().viewFunction(
+                            {
+                                contractId: CONTRACT_ID,
+                                methodName: 'get_return',
+                                args: {
+                                    pool_id: this.pool_id,
+                                    token_in: this.token_in.token,
+                                    amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                }
+                            }
+                        ).then(async (res) => {
+                            // let tokenOutObj
+                            // if (this.$store.state.tokens[this.token_out.token]) {
+                            //     tokenOutObj = this.$store.state.tokens[this.token_out.token]
+                            // }
+                            const withdrawAmount = res
+                            const depositAmount = (this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+
+                            const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                            const argsTransfer = { 
+                                receiver_id: CONTRACT_ID, 
+                                amount: depositAmount, 
+                                msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
+                            }
+
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: this.token_in.token,
+                                actions: [
+                                    transactions.functionCall(
+                                        "storage_deposit",
+                                        Buffer.from(JSON.stringify(argsDeposit)),
+                                        150000000000000,
+                                        utils.format.parseNearAmount("1")
+                                    ),
+                                    transactions.functionCall(
+                                        'ft_transfer_call',
+                                        Buffer.from(JSON.stringify(argsTransfer)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
+                            })
+
+                        })
+
                         await contract.swap(
                             {
                                 pool_id: this.pool_id,
