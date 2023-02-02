@@ -2096,6 +2096,17 @@ export default {
     transition: 0.3s;
 }
 
+.section-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.error-msg {
+    margin-bottom: 4px;
+    color: red;
+}
+
 .blurred .section-block-wrapper {
     pointer-events: none;
     filter: blur(5px);
