@@ -201,7 +201,8 @@
                                 <div class="pos-table_data-cell stacked">
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T0
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token0].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token0].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.token0_real_liquidity).toFixed(6)}}
@@ -209,7 +210,8 @@
                                     </div>
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T1
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token1].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token1].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.token1_real_liquidity).toFixed(6)}}
@@ -219,7 +221,8 @@
                                 <div class="pos-table_data-cell stacked">
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T0
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token0].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token0].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.fees0).toFixed(6)}}
@@ -227,7 +230,8 @@
                                     </div>
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T1
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token1].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token1].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.fees1).toFixed(6)}}
@@ -2037,6 +2041,18 @@ export default {
     left: 3px;
     top: 3px;
     font-size: $tinyTextSize;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.token_index_icon {
+    height: $tinyTextSize;
+}
+
+.token_index_title {
+    margin-left: 2px;
 }
 
 .token_value {
