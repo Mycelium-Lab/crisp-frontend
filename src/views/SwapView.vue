@@ -208,6 +208,7 @@ export default {
             } else {
                 this.token_out = token
             }
+            this.closeTokenPicker()
             this.findPool()
         },
         swapPositions: async function () {
@@ -537,24 +538,24 @@ export default {
 
                         })
 
-                        await contract.swap(
-                            {
-                                pool_id: this.pool_id,
-                                token_in: this.token_in.token,
-                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                                token_out: this.token_out.token
-                            }
-                        ).then((response) => {
-                            console.log(response)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Swap is successful'
-                            })
-                            this.txPending = false
-                            this.$store.dispatch('reload', store.state)
-                        })
+                        // await contract.swap(
+                        //     {
+                        //         pool_id: this.pool_id,
+                        //         token_in: this.token_in.token,
+                        //         amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                        //         token_out: this.token_out.token
+                        //     }
+                        // ).then((response) => {
+                        //     console.log(response)
+                        //     this.$store.commit('pushNotification', {
+                        //         title: 'Success',
+                        //         type: 'success',
+                        //         // text: response
+                        //         text: 'Swap is successful'
+                        //     })
+                        //     this.txPending = false
+                        //     this.$store.dispatch('reload', store.state)
+                        // })
                     } catch (error) {
                         console.log(error)
                         this.$store.commit('pushNotification', {
