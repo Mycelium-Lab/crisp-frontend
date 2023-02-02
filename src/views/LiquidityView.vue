@@ -1475,10 +1475,11 @@ export default {
     transition: 0.3s;
     border-radius: 8px;
     padding: 4px 8px;
-    margin-top: 6px;
+    margin-top: 4px;
+    margin-left: 15px;
 }
 
-.input-balance, .deposit_nav_btn {
+.input-balance {
     padding-left: 15px;
     margin-top: 4px;
 }
