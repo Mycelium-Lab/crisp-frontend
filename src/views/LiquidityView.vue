@@ -1286,7 +1286,7 @@ export default {
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
-                    ).then((response) => {
+                    ).then(async (response) => {
                         console.log(response)
                         this.$store.commit('pushNotification', {
                             title: 'Success',
@@ -1296,7 +1296,8 @@ export default {
                         })
                         this.txPending = false
                         this.closeNewPositionModal()
-                        this.$store.dispatch('reload', store.state)
+                        await this.$store.dispatch('reload', store.state)
+                        this.calculateInit()
                     })
                 } catch (error) {
                     console.log(error)
