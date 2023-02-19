@@ -31,8 +31,11 @@
                     <span class="list-pool_unit">
                         <!--{{tokenObject.token}} -->{{tokenObject.symbol}}
                     </span>
-                    <span class="list-pool_unit">
-                        {{tokenObject.amount}}
+                    <span v-if="tokenObject.amount !== 0" class="list-pool_unit">
+                        {{ tokenObject.amount.toFixed(14) }}
+                    </span>
+                    <span v-else class="list-pool_unit">
+                        {{ tokenObject.amount }}
                     </span>
                     <span class="list-pool_unit">
                         <button @click="setWithdraw(tokenObject)" class="withdraw-btn">

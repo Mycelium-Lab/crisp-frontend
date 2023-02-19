@@ -120,6 +120,7 @@ import store from '../store'
 import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
+import { addDecimals } from '@/utils/format'
 import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
@@ -366,7 +367,7 @@ export default {
                             args: {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                amount_in: addDecimals(this.token_in_amnt, tokenObj)
                             }
                         }
                     ).then((res) => {
@@ -425,7 +426,7 @@ export default {
                             args: {
                                 pool_id: this.pool_id,
                                 token_out: this.token_out.token,
-                                amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                amount_out: addDecimals(this.token_out_amnt, tokenObj)
                             }
                         }
                     ).then((res) => {
@@ -500,7 +501,7 @@ export default {
                                 args: {
                                     pool_id: this.pool_id,
                                     token_in: this.token_in.token,
-                                    amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                    amount_in: addDecimals(this.token_in_amnt, tokenObj)
                                 }
                             }
                         ).then(async (res) => {
@@ -509,7 +510,7 @@ export default {
                             //     tokenOutObj = this.$store.state.tokens[this.token_out.token]
                             // }
                             const withdrawAmount = res
-                            const depositAmount = (this.token_in_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                            const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
 
                             const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                             const argsTransfer = { 
@@ -535,27 +536,7 @@ export default {
                                     )
                                 ]
                             })
-
                         })
-
-                        // await contract.swap(
-                        //     {
-                        //         pool_id: this.pool_id,
-                        //         token_in: this.token_in.token,
-                        //         amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                        //         token_out: this.token_out.token
-                        //     }
-                        // ).then((response) => {
-                        //     console.log(response)
-                        //     this.$store.commit('pushNotification', {
-                        //         title: 'Success',
-                        //         type: 'success',
-                        //         // text: response
-                        //         text: 'Swap is successful'
-                        //     })
-                        //     this.txPending = false
-                        //     this.$store.dispatch('reload', store.state)
-                        // })
                     } catch (error) {
                         console.log(error)
                         this.$store.commit('pushNotification', {
@@ -565,41 +546,6 @@ export default {
                         })
                         this.txPending = false
                     }
-                // } else if (this.manual_input === 'out') {
-                //     // swap_out
-                //     try {
-                //         let tokenObj
-                //         if (this.$store.state.tokens[this.token_out.token]) {
-                //             tokenObj = this.$store.state.tokens[this.token_out.token]
-                //         }
-                //         await contract.swap_out(
-                //             {
-                //                 pool_id: this.pool_id,
-                //                 token_in: this.token_in.token,
-                //                 amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                //                 token_out: this.token_out.token
-                //             }
-                //         ).then((response) => {
-                //             console.log(response)
-                //             this.$store.commit('pushNotification', {
-                //                 title: 'Success',
-                //                 type: 'success',
-                //                 // text: response
-                //                 text: 'Swap is successful'
-                //             })
-                //             this.txPending = false
-                //             this.$store.dispatch('reload', store.state)
-                //         })
-                //     } catch (error) {
-                //         console.log(error)
-                //         this.$store.commit('pushNotification', {
-                //             title: 'Error',
-                //             type: 'error',
-                //             text: error
-                //         })
-                //         this.txPending = false
-                //     }
-                // }
             }
         }
     }
