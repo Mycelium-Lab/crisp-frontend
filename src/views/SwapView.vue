@@ -120,6 +120,8 @@ import store from '../store'
 import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
+import { addDecimals } from '@/utils/format'
+import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
     store,
@@ -207,6 +209,7 @@ export default {
             } else {
                 this.token_out = token
             }
+            this.closeTokenPicker()
             this.findPool()
         },
         swapPositions: async function () {
@@ -364,7 +367,7 @@ export default {
                             args: {
                                 pool_id: this.pool_id,
                                 token_in: this.token_in.token,
-                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                amount_in: addDecimals(this.token_in_amnt, tokenObj)
                             }
                         }
                     ).then((res) => {
@@ -423,7 +426,7 @@ export default {
                             args: {
                                 pool_id: this.pool_id,
                                 token_out: this.token_out.token,
-                                amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
+                                amount_out: addDecimals(this.token_out_amnt, tokenObj)
                             }
                         }
                     ).then((res) => {
@@ -479,6 +482,7 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract) {
+                const { utils, transactions } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
                 //     // swap_in
@@ -487,23 +491,51 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenObj = this.$store.state.tokens[this.token_in.token]
                         }
-                        await contract.swap(
+
+                        // Get return, so we know how much we will need to withdraw
+
+                        await this.$store.state.walletConnection.account().viewFunction(
                             {
-                                pool_id: this.pool_id,
-                                token_in: this.token_in.token,
-                                amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                                token_out: this.token_out.token
+                                contractId: CONTRACT_ID,
+                                methodName: 'get_return',
+                                args: {
+                                    pool_id: this.pool_id,
+                                    token_in: this.token_in.token,
+                                    amount_in: addDecimals(this.token_in_amnt, tokenObj)
+                                }
                             }
-                        ).then((response) => {
-                            console.log(response)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Swap is successful'
+                        ).then(async (res) => {
+                            // let tokenOutObj
+                            // if (this.$store.state.tokens[this.token_out.token]) {
+                            //     tokenOutObj = this.$store.state.tokens[this.token_out.token]
+                            // }
+                            const withdrawAmount = res
+                            const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
+
+                            const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                            const argsTransfer = { 
+                                receiver_id: CONTRACT_ID, 
+                                amount: depositAmount, 
+                                msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
+                            }
+
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: this.token_in.token,
+                                actions: [
+                                    transactions.functionCall(
+                                        "storage_deposit",
+                                        Buffer.from(JSON.stringify(argsDeposit)),
+                                        150000000000000,
+                                        utils.format.parseNearAmount("1")
+                                    ),
+                                    transactions.functionCall(
+                                        'ft_transfer_call',
+                                        Buffer.from(JSON.stringify(argsTransfer)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
                             })
-                            this.txPending = false
-                            this.$store.dispatch('reload', store.state)
                         })
                     } catch (error) {
                         console.log(error)
@@ -514,41 +546,6 @@ export default {
                         })
                         this.txPending = false
                     }
-                // } else if (this.manual_input === 'out') {
-                //     // swap_out
-                //     try {
-                //         let tokenObj
-                //         if (this.$store.state.tokens[this.token_out.token]) {
-                //             tokenObj = this.$store.state.tokens[this.token_out.token]
-                //         }
-                //         await contract.swap_out(
-                //             {
-                //                 pool_id: this.pool_id,
-                //                 token_in: this.token_in.token,
-                //                 amount_out: ((this.token_out_amnt * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                //                 token_out: this.token_out.token
-                //             }
-                //         ).then((response) => {
-                //             console.log(response)
-                //             this.$store.commit('pushNotification', {
-                //                 title: 'Success',
-                //                 type: 'success',
-                //                 // text: response
-                //                 text: 'Swap is successful'
-                //             })
-                //             this.txPending = false
-                //             this.$store.dispatch('reload', store.state)
-                //         })
-                //     } catch (error) {
-                //         console.log(error)
-                //         this.$store.commit('pushNotification', {
-                //             title: 'Error',
-                //             type: 'error',
-                //             text: error
-                //         })
-                //         this.txPending = false
-                //     }
-                // }
             }
         }
     }

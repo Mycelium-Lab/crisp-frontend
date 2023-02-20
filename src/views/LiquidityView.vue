@@ -201,7 +201,8 @@
                                 <div class="pos-table_data-cell stacked">
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T0
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token0].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token0].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.token0_real_liquidity).toFixed(6)}}
@@ -209,7 +210,8 @@
                                     </div>
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T1
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token1].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token1].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.token1_real_liquidity).toFixed(6)}}
@@ -219,7 +221,8 @@
                                 <div class="pos-table_data-cell stacked">
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T0
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token0].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token0].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.fees0).toFixed(6)}}
@@ -227,7 +230,8 @@
                                     </div>
                                     <div class="pos-table_data-cell_row">
                                         <div class="token_index">
-                                            T1
+                                            <img class="token_index_icon" :src="$store.state.tokens[pos.token1].icon">
+                                            <span class="token_index_title">{{$store.state.tokens[pos.token1].symbol}}</span>
                                         </div>
                                         <span class="token_value">
                                             {{(pos.fees1).toFixed(6)}}
@@ -1244,20 +1248,36 @@ export default {
             this.lowerPrice = Number(this.lowerPrice)
             this.upperPrice = Number(this.upperPrice)
             const contract = this.$store.state.crispContract
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+            let t0_balance = 0
+            let t1_balance = 0
 
-            if (contract && this.t0_liq && this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+            if (tokenObj) {
+                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
+                if (balanceObj) {
+                    t0_balance = balanceObj.amount
+                }
+            }
+            if (tokenObj2) {
+                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
+                if (balanceObj) {
+                    t1_balance = balanceObj.amount
+                }
+            }
+
+            console.log(t0_balance)
+            console.log(t1_balance)
+
+            if (contract && this.t0_liq && this.t1_liq && t0_balance >= this.t0_liq && t1_balance >= this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
-                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
-                        console.log(this.$store.state.tokens[this.$store.state.pools[this.poolId].token0])
-                        const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
-
                     console.log(Number(this.poolId))
                     console.log(Number(this.t0_liq).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                     console.log(Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
                     console.log(Number(this.lowerPrice))
                     console.log(Number(this.upperPrice))
-                    console.log(tokenObj)
+                    console.log(tokenObj2)
 
                     await contract.open_position(
                         {
@@ -1266,7 +1286,7 @@ export default {
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
-                    ).then((response) => {
+                    ).then(async (response) => {
                         console.log(response)
                         this.$store.commit('pushNotification', {
                             title: 'Success',
@@ -1276,7 +1296,8 @@ export default {
                         })
                         this.txPending = false
                         this.closeNewPositionModal()
-                        this.$store.dispatch('reload', store.state)
+                        await this.$store.dispatch('reload', store.state)
+                        this.calculateInit()
                     })
                 } catch (error) {
                     console.log(error)
@@ -1290,6 +1311,10 @@ export default {
             } else if (!this.t0_liq) {
                 this.$refs.t0_liq.focus()
             } else if (!this.t1_liq) {
+                this.$refs.t1_liq.focus()
+            } else if (!t0_balance || t0_balance < this.t0_liq) {
+                this.$refs.t0_liq.focus()
+            } else if (!t1_balance || t1_balance < this.t1_liq) {
                 this.$refs.t1_liq.focus()
             }
         },
@@ -1471,10 +1496,11 @@ export default {
     transition: 0.3s;
     border-radius: 8px;
     padding: 4px 8px;
-    margin-top: 6px;
+    margin-top: 4px;
+    margin-left: 15px;
 }
 
-.input-balance, .deposit_nav_btn {
+.input-balance {
     padding-left: 15px;
     margin-top: 4px;
 }
@@ -2037,6 +2063,18 @@ export default {
     left: 3px;
     top: 3px;
     font-size: $tinyTextSize;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.token_index_icon {
+    height: $tinyTextSize;
+}
+
+.token_index_title {
+    margin-left: 2px;
 }
 
 .token_value {
@@ -2078,6 +2116,17 @@ export default {
     height: 500px;
     filter: none;
     transition: 0.3s;
+}
+
+.section-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.error-msg {
+    margin-bottom: 4px;
+    color: red;
 }
 
 .blurred .section-block-wrapper {
