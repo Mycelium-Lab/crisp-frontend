@@ -31,8 +31,8 @@
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <!--<router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
-      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
+      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Balance</router-link>
+      <!--<button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
       <button v-if="$store.state.account" @click="signOut()" class="header-link account"><span>{{ $store.state.account.accountId }}</span><img class="logout-gfx" src="./assets/icons/logout.svg"/></button>
       <button v-else @click="signIn()" class="header-link connect">Connect wallet</button>
     </div>
@@ -458,6 +458,7 @@ header {
   border: 0.5px solid #000000;
   border-radius: 20px;
   padding: 9px 16px;
+  margin-bottom: 12px;
   height: 40px;
   box-sizing: border-box;
   color: #000 !important;
