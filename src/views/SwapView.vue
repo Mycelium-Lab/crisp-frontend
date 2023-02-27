@@ -354,7 +354,7 @@ export default {
             this.swapError = ''
             console.log('getReturn()')
             // let decimals
-            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null) {
+            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null && Number(this.token_in_amnt)) {
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_in.token]) {
@@ -413,7 +413,7 @@ export default {
             this.swapError = ''
             console.log('getExpense()')
             // let decimals
-            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null) {
+            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null && Number(this.token_out_amnt)) {
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_out.token]) {
