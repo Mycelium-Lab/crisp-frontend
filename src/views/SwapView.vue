@@ -481,7 +481,7 @@ export default {
         confirmSwap: async function () {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
+            if (contract && this.token_in.token && this.token_out.token && this.token_in.token !== this.token_out.token && Number(this.token_in_amnt)) {
                 const { utils, transactions } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
