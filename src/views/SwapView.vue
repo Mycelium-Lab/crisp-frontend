@@ -46,8 +46,14 @@
                         (please wait, we are loading your tokens)
                     </template>
                 </span>
-                <div>
-                    <!-- ... -->
+                <div class="toggler-wrapper">
+                    Near
+                    <div class="toggler" @click="swapDepositSource()">
+                        <div class="toggle" :class="{toggleActive: depositSource === 'inner'}">
+
+                        </div>
+                    </div>
+                    Crisp
                 </div>
             </div>
             <div class="modal-body">
@@ -148,7 +154,9 @@ export default {
 
             tokenPickerActive: false,
             tokenForSelection: null,
-            searchPrompt: null
+            searchPrompt: null,
+
+            depositSource: 'outer'
         }
     },
     async created () {
@@ -226,6 +234,17 @@ export default {
                 this.getReturn()
             } else if (this.manual_input === 'out' && this.token_out_amnt) {
                 this.getExpense()
+            }
+        },
+        swapDepositSource: async function () {
+            if (this.depositSource === 'outer') {
+                // ...
+
+                this.depositSource = 'inner'
+            } else {
+                // ...
+
+                this.depositSource = 'outer'
             }
         },
         findPool: async function () {
@@ -393,8 +412,8 @@ export default {
                         })
                     }
                     console.log(error)
-                    this.token_in_amnt = null
-                    this.token_out_amnt = null
+                    // this.token_in_amnt = null
+                    // this.token_out_amnt = null
                     this.tokenAmntLoading = false
                     this.txPending = false
                 }
@@ -451,8 +470,8 @@ export default {
                             text: error
                         })
                     }
-                    this.token_in_amnt = null
-                    this.token_out_amnt = null
+                    // this.token_in_amnt = null
+                    // this.token_out_amnt = null
                     this.tokenAmntLoading = false
                     this.txPending = false
                 }
@@ -491,52 +510,67 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenObj = this.$store.state.tokens[this.token_in.token]
                         }
+                        if (this.depositSource === 'outer' && tokenObj) {
+                            // Get return, so we know how much we will need to withdraw
+                            await this.$store.state.walletConnection.account().viewFunction(
+                                {
+                                    contractId: CONTRACT_ID,
+                                    methodName: 'get_return',
+                                    args: {
+                                        pool_id: this.pool_id,
+                                        token_in: this.token_in.token,
+                                        amount_in: addDecimals(this.token_in_amnt, tokenObj)
+                                    }
+                                }
+                            ).then(async (res) => {
+                                const withdrawAmount = res
+                                const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
 
-                        // Get return, so we know how much we will need to withdraw
+                                const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                                const argsTransfer = { 
+                                    receiver_id: CONTRACT_ID, 
+                                    amount: depositAmount, 
+                                    msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
+                                }
 
-                        await this.$store.state.walletConnection.account().viewFunction(
-                            {
-                                contractId: CONTRACT_ID,
-                                methodName: 'get_return',
-                                args: {
+                                await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                    receiverId: this.token_in.token,
+                                    actions: [
+                                        transactions.functionCall(
+                                            "storage_deposit",
+                                            Buffer.from(JSON.stringify(argsDeposit)),
+                                            150000000000000,
+                                            utils.format.parseNearAmount("1")
+                                        ),
+                                        transactions.functionCall(
+                                            'ft_transfer_call',
+                                            Buffer.from(JSON.stringify(argsTransfer)),
+                                            150000000000000,
+                                            1
+                                        )
+                                    ]
+                                })
+                            })
+                        } else if (tokenObj) {
+                            await contract.swap(
+                                {
                                     pool_id: this.pool_id,
                                     token_in: this.token_in.token,
-                                    amount_in: addDecimals(this.token_in_amnt, tokenObj)
+                                    amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                                    token_out: this.token_out.token
                                 }
-                            }
-                        ).then(async (res) => {
-                            // let tokenOutObj
-                            // if (this.$store.state.tokens[this.token_out.token]) {
-                            //     tokenOutObj = this.$store.state.tokens[this.token_out.token]
-                            // }
-                            const withdrawAmount = res
-                            const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
-
-                            const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
-                            const argsTransfer = { 
-                                receiver_id: CONTRACT_ID, 
-                                amount: depositAmount, 
-                                msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
-                            }
-
-                            await this.$store.state.walletConnection.account().signAndSendTransaction({
-                                receiverId: this.token_in.token,
-                                actions: [
-                                    transactions.functionCall(
-                                        "storage_deposit",
-                                        Buffer.from(JSON.stringify(argsDeposit)),
-                                        150000000000000,
-                                        utils.format.parseNearAmount("1")
-                                    ),
-                                    transactions.functionCall(
-                                        'ft_transfer_call',
-                                        Buffer.from(JSON.stringify(argsTransfer)),
-                                        150000000000000,
-                                        1
-                                    )
-                                ]
+                            ).then((response) => {
+                                console.log(response)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    // text: response
+                                    text: 'Swap is successful'
+                                })
+                                this.txPending = false
+                                this.$store.dispatch('reload', store.state)
                             })
-                        })
+                        }
                     } catch (error) {
                         console.log(error)
                         this.$store.commit('pushNotification', {
@@ -578,6 +612,20 @@ export default {
     flex-direction: column;
     align-items: center;
     padding: 24px;
+}
+
+.toggler-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+}
+
+.toggler {
+    @extend %toggler;
+    margin-left: 6px;
+    margin-right: 6px;
 }
 
 .picker_header {
@@ -735,15 +783,17 @@ export default {
 .modal-header {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     padding-bottom: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .modal-title {
     font-size: $mediumTextSize;
     font-weight: 600;
-    padding-left: 8px;
+    max-width: 400px;
 }
 
 .modal-body {
