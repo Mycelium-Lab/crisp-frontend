@@ -1,6 +1,61 @@
 <template>
     <div class="wrapper">
+        <div v-if="modalActive" class="modal-wrapper">
+            <div v-if="depositModalActive" class="modal">
+                <div class="modal-header">
+                    <div></div>
+                    <span class="modal-title">Deposit {{ tokenForDeposit.symbol }}</span>
+                    <img @click="closeDepositModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="modal-body modal-body-deletepos">
+                    <div class="input-wrapper">
+                        <span class="input-title">Amount</span>
+                        <input type="text" @keypress="isNumber" placeholder="0" v-model="create_deposit_amount" id="depositAmount" class="input-inputbox"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-if="!txPending" @click="create_deposit()" class="confirm-btn confirm-btn-deletepos">Yes</button>
+                </div>
+            </div>
+        </div>
         <template v-if="$store.state.account">
+            <template v-if="tokensSupportedForDeposit && $store.state.tokens">
+                <span class="heading">Deposit Assets</span>
+                <div class="table_wrapper">
+                    <div class="table">
+                        <div @click="openDepositModal(token)" v-for="token in tokensSupportedForDeposit" :key="token.token" class="token">
+                            <span class="token-unit">
+                                <img class="icon" :src="$store.state.tokens[token.token].icon">
+                            </span>
+                            <span class="token-unit symbol">
+                                {{ $store.state.tokens[token.token].symbol }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template v-if="$store.state.userDeposits && $store.state.userDeposits[0] && $store.state.tokens">
+                <div class="token-table_wrapper">
+                    <div class="token-table">
+                        <span class="heading">Deposited assets</span>
+                        <div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit">
+                            <div class="deposit-unit">
+                                <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
+                            </div>
+                            <div class="deposit-unit">
+                                {{ $store.state.tokens[deposit.asset].symbol }}
+                            </div>
+                            <div class="deposit-unit">
+                                {{ deposit.amount }}
+                            </div>
+                            <div class="deposit-unit">
+                                {{ deposit.id }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
             <div class="heading">
                 <span class="title">Signed in as {{$store.state.account.accountId}}</span>
             </div>
@@ -132,6 +187,8 @@
 <script>
 // import { CONTRACT_ID } from '../constants/index.js'
 // import { toFixed } from '../utils/number'
+import { SWAP_TOKENS } from '@/constants'
+import { isNumber } from '../utils/number'
 import { addDecimals } from '@/utils/format'
 import store from '../store'
 // import * as nearAPI from "near-api-js"
@@ -141,7 +198,11 @@ export default {
     store,
     data () {
         return {
+            txPending: false,
+            tokensSupportedForDeposit: SWAP_TOKENS,
             addDecimals: addDecimals,
+            modalActive: false,
+            depositModalActive: false,
             /**
              * create_reserve()
              */
@@ -206,6 +267,18 @@ export default {
         }
     },
     methods: {
+        isNumber,
+        openDepositModal: async function (token) {
+            this.modalActive = true
+            this.depositModalActive = true
+            this.tokenForDeposit = token
+            this.create_deposit_asset = token.token
+        },
+        closeDepositModal: async function () {
+            this.modalActive = false
+            this.depositModalActive = false
+            this.tokenForDeposit = null
+        },
         create_reserve: async function () {
             const contract = this.$store.state.crispContract
 
@@ -237,6 +310,7 @@ export default {
             }
         },
         create_deposit: async function () {
+            this.txPending = true
             const contract = this.$store.state.crispContract
 
             if (contract) {
@@ -254,7 +328,9 @@ export default {
                             amount: amount
                         }
                     ).then(data => {
+                        this.txPending = false
                         console.log(data)
+                        this.closeDepositModal()
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
@@ -265,6 +341,7 @@ export default {
                     })
                 }
                 catch (err) {
+                    this.txPending = false
                     console.log(err)
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -574,7 +651,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "~@/assets/scss/main.scss";
 
 .heading {
@@ -599,5 +676,207 @@ export default {
 
 .method-title {
     cursor: pointer;
+}
+
+.table_wrapper {
+    max-width: $interfaceBlocksWidth;
+}
+
+.token-table_wrapper {
+    max-width: $interfaceBlocksWidth;
+}
+
+.table {
+    border-radius: $borderRadius;
+    background-color: $blockBgColor;
+    padding: 8px 12px;
+    margin-bottom: 40px;
+}
+
+.token-table {
+    border-radius: $borderRadius;
+    background-color: $elementBgColor;
+    padding: 8px 12px;
+    margin-bottom: 40px;
+}
+
+.token {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background-color: $elementBgColor;
+    opacity: 0.9;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+    cursor: pointer;
+}
+
+.token:hover {
+    opacity: 1;
+}
+
+.token-unit {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.symbol {
+    font-size: $textSize;
+    margin-left: 8px;
+}
+
+.icon {
+    width: 24px;
+}
+
+.modal-wrapper {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    animation: appear 0.3s linear;
+    background-color: rgb(59, 60, 63, 0.8);
+    z-index: 600;
+
+}
+
+@keyframes appear {
+    0% {
+        background-color: rgb(59, 60, 63, 0);
+    }
+    100% {
+        background-color: rgb(59, 60, 63, 0.8);
+    }
+}
+
+.modal {
+    @extend %default-block;
+    width: $interfaceBlocksWidth;
+    min-height: $defaultCardHeight;
+    padding: 26px;
+    overflow: auto;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.modal-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    // border-bottom: $brightBorder;
+    padding-bottom: 26px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.modal-title {
+    font-size: $textSize;
+}
+
+.x-icon {
+    width: $textSize;
+    height: $textSize;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: 0.2s;
+}
+
+.x-icon:hover {
+    opacity: 1;
+    transition: 0.2s;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-title {
+    font-size: $tinyTextSize;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+}
+
+.modal-footer {
+    // border-top: $brightBorder;
+    padding-top: 26px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.confirm-btn {
+    border: 1px solid transparent;
+    width: 200px;
+    padding: 8px;
+    border-radius: $borderRadius;
+    background-color: #212121;
+    color: #F5C352;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.confirm-btn:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.input-inputbox {
+    width: 80%;
+    background-color: $elementBgColor;
+    border: 0;
+    border-radius: $borderRadius;
+    height: 30px;
+    font-size: $mediumTextSize;
+    padding: 8px;
+    outline: none;
+}
+
+.deposit {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.deposit-unit {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-right: 8px;
+    margin-bottom: 4px;
+    font-size: $mediumTextSize;
 }
 </style>

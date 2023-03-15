@@ -14,6 +14,7 @@ export default createStore({
     pools: [],
     positions: null,
     userPositions: null,
+    userDeposits: null,
     tokens: null,
     notifications: [],
     tokenForDeposit: null,
@@ -21,7 +22,8 @@ export default createStore({
       balances: false,
       pools: false,
       positions: false,
-      tokens: false
+      tokens: false,
+      deposits: false
     }
   },
   getters: {
@@ -69,16 +71,19 @@ export default createStore({
         balances: false,
         pools: false,
         positions: false,
-        tokens: false
+        tokens: false,
+        deposits: false
       }
       state.tokenBalances = []
       state.tokens = null
       state.pools = []
       state.positions = null
       state.userPositions = null
+      state.userDeposits = null
       await dispatch('fetchCrispContract', state)
       await dispatch('fetchPools', state)
       await dispatch('fetchBalances', state)
+      await dispatch('fetchDeposits', state)
       if (state.pools[0]) {
         await dispatch('processTokenMetadata', state)
       } else {
@@ -335,6 +340,30 @@ export default createStore({
         }
       }
       state.tokensBeingLoaded = false
+    },
+    async fetchDeposits ({state}) {
+      if (state.crispContract && state.walletConnection.isSignedIn()) {
+        await state.walletConnection.account().viewFunction(
+          {
+            contractId: CONTRACT_ID,
+            methodName: 'get_account_deposits',
+            args: {
+              account_id: state.account.accountId
+            },
+          }
+        ).then((res) => {
+          const depositsArray = Object.entries(res)
+          for (let i = 0; i < depositsArray.length; i++) {
+            const id = depositsArray[i][0]
+            depositsArray[i].splice(0, 1)
+            depositsArray[i] = depositsArray[i][0]
+            depositsArray[i].id = id
+          }
+          console.log(depositsArray)
+          state.userDeposits = depositsArray
+          state.loaded.deposits = true
+        })
+      }
     }
   },
   modules: {

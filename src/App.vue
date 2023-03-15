@@ -70,6 +70,7 @@ export default {
       await this.$store.dispatch('fetchCrispContract', store.state)
       await this.$store.dispatch('fetchPools', store.state)
       await this.$store.dispatch('fetchBalances', store.state)
+      await this.$store.dispatch('fetchDeposits', store.state)
       if (this.$store.state.pools[0]) {
         await this.$store.dispatch('processTokenMetadata', store.state)
       } else {
