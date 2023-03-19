@@ -28,7 +28,7 @@
     <div class="header-nav">
         <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png"><span class="desktop-link">Swap</span></router-link>
         <router-link class="header-link desktop-link" to="/pools">Manage Liquidity</router-link>
-        <router-link class="header-link desktop-link" to="/lending">Lending (test)</router-link>
+        <router-link class="header-link desktop-link" to="/lending">Earn</router-link>
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
