@@ -98,6 +98,36 @@
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
             </div>
+            <div v-if="borrowModalActive" class="modal">
+                <div class="modal-header">
+                    <span class="modal-title">Supply your position as collateral</span>
+                    <img @click="closeBorrowModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-body_row">
+                        <div class="input-wrapper">
+                            <span class="input-title"><span>Leverage</span></span>
+                            <div class="input-wrapper-element">
+                                <div class="input-wrapper-row">
+                                    <input type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">
+                                    <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
+                                </div>
+                                <div v-if="useLeverageInBorrow" class="input-wrapper-row">
+                                    Selected leverage amount: {{ leverageAmount }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-title">Expected borrow amount</span>
+                            <span class="input-balance">{{ expectedBorrowAmount }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-else @click="confirmBorrowModal()" class="confirm-btn">Confirm</button>
+                </div>
+            </div>
             <div v-if="deletePositionModalActive" class="modal">
                 <div class="modal-header">
                     <div></div>
@@ -161,8 +191,13 @@
                         <div class="pos-table">
                             <div class="pos-table_header">
                                 <div class="pos-table_header-cell">
-                                    <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
-                                    <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                                    <div class="header-cell-unit">
+                                        <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
+                                        <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                                    </div>
+                                    <div class="header-cell-unit">
+                                        <button @click="openBorrowModal(pos)" class="block-RA-suggestion">Borrow</button>
+                                    </div>
                                 </div>
                                 <div class="pos-table_header-cell">
                                     Liquidity
@@ -827,6 +862,7 @@ export default {
             newPoolModalActive: false,
             newPositionModalActive: false,
             deletePositionModalActive: false,
+            borrowModalActive: false,
             
             /**
              * create_pool()
@@ -872,6 +908,10 @@ export default {
                 data: []
             }],
             loading: false,
+
+            useLeverageInBorrow: false,
+            expectedBorrowAmount: null,
+            leverageAmount: 2
         }
     },
     async created () {
@@ -960,6 +1000,97 @@ export default {
         closeNewPositionModal: function () {
             this.modalActive = false
             this.newPositionModalActive = false
+        },
+        openBorrowModal: function (pos) {
+            this.modalActive = true
+            this.borrowModalActive = true
+            this.positionToBorrow = pos
+            console.log(this.positionToBorrow)
+            this.calculateBorrowAmount()
+        },
+        closeBorrowModal: function () {
+            this.modalActive = false
+            this.expectedBorrowAmount = null
+            this.useLeverageInBorrow = false
+            this.leverageAmount = 2
+            this.borrowModalActive = false
+        },
+        calculateBorrowAmount: function () {
+            const pos = this.positionToBorrow
+            const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
+            const x = Number(pos.token0_real_liquidity)
+            const y = Number(pos.token1_real_liquidity)
+            console.log(p)
+            console.log(x)
+            console.log(y)
+            const res = p * x + y
+            console.log(res)
+            console.log(res / Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals))
+            this.expectedBorrowAmount = res
+        },
+        confirmBorrowModal: async function () {
+            if (this.useLeverageInBorrow === false) {
+                const contract = this.$store.state.crispContract
+
+                if (contract) {
+                    try {
+                        await contract.supply_collateral_and_borrow_simple(
+                            { 
+                                pool_id: Number(this.positionToBorrow.poolId),
+                                position_id: Number(this.positionToBorrow.id)
+                            }
+                        ).then(data => {
+                            console.log(data)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Supply_collateral_and_borrow_simple() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    }
+                    catch (err) {
+                        console.log(err)
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: err
+                        })
+                    }
+                }
+            } else {
+                const contract = this.$store.state.crispContract
+
+                if (contract) {
+                    try {
+                        await contract.supply_collateral_and_borrow_leveraged(
+                                { 
+                                    pool_id: Number(this.positionToBorrow.poolId),
+                                    position_id: Number(this.positionToBorrow.id),
+                                    leverage: Number(this.leverageAmount)
+                                }
+                            ).then(data => {
+                                console.log(data)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    // text: response
+                                    text: 'Supply_collateral_and_borrow_leveraged() is successful'
+                                })
+                                this.$store.dispatch('reload', store.state)
+                            })
+                        }
+                    catch (err) {
+                        console.log(err)
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: err
+                        })
+                    }
+                }
+            }
         },
         drawAnnotations: function (lp, up, cp) {
             console.log(lp, up, cp)
@@ -1791,6 +1922,41 @@ export default {
     align-items: flex-start;
 }
 
+.input-wrapper-element {
+    border: 0;
+    background-color: $elementBgColor;
+    font-size: $lesserTextSize;
+    border-radius: $borderRadius;
+    padding: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
+    transition: 0.3s;
+    min-width: 300px;
+    min-height: 60px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-wrapper-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.input-wrapper-row:nth-child(2) {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.leverage-checkbox {
+    margin-right: 16px;
+}
+
 .input-title {
     font-size: $tinyTextSize;
     margin-bottom: 8px;
@@ -1936,7 +2102,7 @@ export default {
 }
 
 .pos-table_header-cell:first-child {
-    justify-content: flex-start;
+    justify-content: space-between;
     font-size: $lesserTextSize;
 }
 
@@ -1944,6 +2110,32 @@ export default {
     justify-content: flex-end;
     border: 0;
     width: 10%;
+}
+
+.header-cell-unit {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.borrow-btn  {
+    border: 1px solid transparent;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-left: 4px;
+}
+
+.borrow-btn:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
 }
 
 .close-pos {
