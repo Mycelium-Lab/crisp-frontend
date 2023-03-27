@@ -215,7 +215,7 @@
                                         <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
                                     </div>
                                     <div class="header-cell-unit">
-                                        <button @click="openBorrowModal(pos)" class="block-RA-suggestion">Borrow</button>
+                                        <button @click="openBorrowModal(pos)" class="block-RA-suggestion">Leverage</button>
                                     </div>
                                 </div>
                                 <div class="pos-table_header-cell">
@@ -1423,11 +1423,7 @@ export default {
                 }
             }
 
-            console.log(t0_balance)
-            console.log(t1_balance)
-
             let newId
-
             await contract.positions_opened()
             .then(
                 (async (res) => {
@@ -1448,7 +1444,6 @@ export default {
 
                     /// 
                     if (this.supplyPosAfterOpening) {
-                        console.log('...')
                         const { transactions } = nearAPI
 
                         const argsOpenPos = {
@@ -1508,7 +1503,6 @@ export default {
                             })
                         }
                     } else {
-                        console.log('test')
                         await contract.open_position(
                             {
                                 pool_id: Number(this.poolId),
