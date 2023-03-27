@@ -11,6 +11,7 @@
                     <div class="input-wrapper">
                         <span class="input-title">Amount</span>
                         <input type="text" @keypress="isNumber" placeholder="0" v-model="create_deposit_amount" id="depositAmount" class="input-inputbox"/>
+                        <span class="input-balance">Available balance on Crisp: {{this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol).amount.toFixed(4)}}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -815,6 +816,16 @@ export default {
 .input-title {
     font-size: $tinyTextSize;
     margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+}
+
+.input-balance {
+    font-size: $tinyTextSize;
+    margin-top: 14px;
     display: flex;
     flex-direction: row;
     justify-content: center;
