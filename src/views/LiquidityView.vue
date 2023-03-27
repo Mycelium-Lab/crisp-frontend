@@ -93,7 +93,26 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer split-footer">
+                    <div class="footer-toggler">
+                        <span>Supply position as collateral after opening?</span>
+                        <div class="footer-toggler-row">
+                            <button v-bind:class="{responseActive: supplyPosAfterOpening}" @click="supplyPosAfterOpening = true" class="toggler-response-btn">Yes</button>
+                            <button v-bind:class="{responseActive: !supplyPosAfterOpening}" @click="supplyPosAfterOpening = false" class="toggler-response-btn">No</button>
+                        </div>
+                    </div>
+                    <div v-if="supplyPosAfterOpening" class="input-wrapper">
+                        <span class="input-title"><span>Leverage</span></span>
+                        <div class="input-wrapper-element">
+                            <div class="input-wrapper-row">
+                                <input type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">
+                                <input class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
+                            </div>
+                            <div v-if="leverageSupplyPosAfterOpening" class="input-wrapper-row">
+                                Selected leverage amount: {{ leverageAmount }}
+                            </div>
+                        </div>
+                    </div>
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
@@ -109,7 +128,7 @@
                             <span class="input-title"><span>Leverage</span></span>
                             <div class="input-wrapper-element">
                                 <div class="input-wrapper-row">
-                                    <input type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">
+                                    <input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">
                                     <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
                                 </div>
                                 <div v-if="useLeverageInBorrow" class="input-wrapper-row">
@@ -846,6 +865,8 @@ import apexcharts from "vue3-apexcharts"
 import {
     defaultOptions
 } from '../constants/charts'
+import { CONTRACT_ID } from '@/constants'
+import * as nearAPI from "near-api-js"
 
 export default {
     name: 'LiquidityView',
@@ -879,6 +900,7 @@ export default {
             poolId: null,          // e.g. 0
             t0_liq: null,          // e.g. 100000
             t1_liq: null,
+            supplyPosAfterOpening: false,
 
             edit_t0_liq: null,
             edit_t1_liq: null,
@@ -911,7 +933,10 @@ export default {
 
             useLeverageInBorrow: false,
             expectedBorrowAmount: null,
-            leverageAmount: 2
+            leverageAmount: 2,
+            leverageSupplyPosAfterOpening: false
+
+
         }
     },
     async created () {
@@ -1000,12 +1025,14 @@ export default {
         closeNewPositionModal: function () {
             this.modalActive = false
             this.newPositionModalActive = false
+            this.leverageAmount = null
+            this.supplyPosAfterOpening = false
+            this.leverageSupplyPosAfterOpening = false
         },
         openBorrowModal: function (pos) {
             this.modalActive = true
             this.borrowModalActive = true
             this.positionToBorrow = pos
-            console.log(this.positionToBorrow)
             this.calculateBorrowAmount()
         },
         closeBorrowModal: function () {
@@ -1020,13 +1047,12 @@ export default {
             const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
             const x = Number(pos.token0_real_liquidity)
             const y = Number(pos.token1_real_liquidity)
-            console.log(p)
-            console.log(x)
-            console.log(y)
             const res = p * x + y
-            console.log(res)
-            console.log(res / Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals))
-            this.expectedBorrowAmount = res
+            if (this.useLeverageInBorrow) {
+                this.expectedBorrowAmount = res * this.leverageAmount
+            } else {
+                this.expectedBorrowAmount = res
+            }
         },
         confirmBorrowModal: async function () {
             if (this.useLeverageInBorrow === false) {
@@ -1400,6 +1426,16 @@ export default {
             console.log(t0_balance)
             console.log(t1_balance)
 
+            let newId
+
+            await contract.positions_opened()
+            .then(
+                (async (res) => {
+                    newId = res
+                })
+            )
+
+
             if (contract && this.t0_liq && this.t1_liq && t0_balance >= this.t0_liq && t1_balance >= this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
@@ -1410,26 +1446,90 @@ export default {
                     console.log(Number(this.upperPrice))
                     console.log(tokenObj2)
 
-                    await contract.open_position(
-                        {
+                    /// 
+                    if (this.supplyPosAfterOpening) {
+                        console.log('...')
+                        const { transactions } = nearAPI
+
+                        const argsOpenPos = {
                             pool_id: Number(this.poolId),
                             token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
-                    ).then(async (response) => {
-                        console.log(response)
-                        this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully opened'
+
+                        const argsSupplySimple = {
+                            pool_id: Number(this.poolId),
+                            position_id: Number(newId)
+                        }
+
+                        const argsSupplyLeveraged = {
+                            pool_id: Number(this.poolId),
+                            position_id: Number(newId),
+                            leverage: Number(this.leverageAmount)
+                        }
+
+                        // const argsSupplySimple = ...
+                        // or const argsSupplyLeveraged = ...
+
+                        if (this.leverageSupplyPosAfterOpening) {
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    transactions.functionCall(
+                                        "open_position",
+                                        Buffer.from(JSON.stringify(argsOpenPos)),
+                                        150000000000000,
+                                    ),
+                                    transactions.functionCall(
+                                        'supply_collateral_and_borrow_leveraged',
+                                        Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
+                            })
+                        } else {
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    transactions.functionCall(
+                                        "open_position",
+                                        Buffer.from(JSON.stringify(argsOpenPos)),
+                                        150000000000000,
+                                    ),
+                                    transactions.functionCall(
+                                        'supply_collateral_and_borrow_simple',
+                                        Buffer.from(JSON.stringify(argsSupplySimple)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
+                            })
+                        }
+                    } else {
+                        console.log('test')
+                        await contract.open_position(
+                            {
+                                pool_id: Number(this.poolId),
+                                token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                                lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                                upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                            }
+                        ).then(async (response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Position successfully opened'
+                            })
+                            this.txPending = false
+                            this.closeNewPositionModal()
+                            await this.$store.dispatch('reload', store.state)
+                            this.calculateInit()
                         })
-                        this.txPending = false
-                        this.closeNewPositionModal()
-                        await this.$store.dispatch('reload', store.state)
-                        this.calculateInit()
-                    })
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
@@ -1977,6 +2077,41 @@ export default {
     align-items: center;
     padding-left: 18px;
     padding-right: 18px;
+}
+
+.split-footer {
+    justify-content: space-between;
+}
+
+.footer-toggler {
+    display: flex;
+    flex-direction: column;
+}
+
+.footer-toggler-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.toggler-response-btn {
+    border: 1px solid transparent;
+    width: 80px;
+    padding: 8px;
+    border-radius: $borderRadius;
+    background-color: #212121;
+    color: #F5C352;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-right: 8px;
+}
+
+.responseActive {
+    background-color: $buttonTextColor !important;
+    color: $buttonBgColor !important;
+    transition: 0.3s !important;
+    border: 1px solid $buttonBgColor !important;
 }
 
 .confirm-btn {
