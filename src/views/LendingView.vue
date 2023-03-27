@@ -40,6 +40,11 @@
                 <div class="token-table_wrapper">
                     <div class="token-table">
                         <span class="heading">Deposited assets</span>
+                        <div class="deposit">
+                            <div class="deposit-unit"></div>
+                            <div class="deposit-unit">Asset</div>
+                            <div class="deposit-unit">Amount</div>
+                        </div>
                         <div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit">
                             <div class="deposit-unit">
                                 <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
@@ -48,11 +53,11 @@
                                 {{ $store.state.tokens[deposit.asset].symbol }}
                             </div>
                             <div class="deposit-unit">
-                                {{ deposit.amount }}
+                                {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
                             </div>
-                            <div class="deposit-unit">
+                            <!--<div class="deposit-unit">
                                 {{ deposit.id }}
-                            </div>
+                            </div>-->
                         </div>
                     </div>
                 </div>
@@ -879,15 +884,21 @@ export default {
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
+    border-bottom: 1px solid black;
 }
-
 .deposit-unit {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     margin-right: 8px;
     margin-bottom: 4px;
+    padding-top: 4px;
     font-size: $mediumTextSize;
+    width: 46%;
+}
+
+.deposit-unit:first-child {
+    width: 6%;
 }
 </style>
