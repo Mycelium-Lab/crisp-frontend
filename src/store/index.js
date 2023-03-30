@@ -352,15 +352,22 @@ export default createStore({
             },
           }
         ).then((res) => {
+          console.log(res)
           const depositsArray = Object.entries(res)
+          const userDeposits = []
           for (let i = 0; i < depositsArray.length; i++) {
-            const id = depositsArray[i][0]
-            depositsArray[i].splice(0, 1)
-            depositsArray[i] = depositsArray[i][0]
-            depositsArray[i].id = id
+            const asset = depositsArray[i][0]
+            const amount = depositsArray[i][1]
+            const id = i
+
+            userDeposits.push({
+              asset: asset,
+              amount: amount,
+              id: id
+            })
           }
-          console.log(depositsArray)
-          state.userDeposits = depositsArray
+          console.log(userDeposits)
+          state.userDeposits = userDeposits
           state.loaded.deposits = true
         })
       }
