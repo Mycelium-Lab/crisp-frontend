@@ -36,6 +36,10 @@
                     </div>
                 </div>
             </template>
+            <template v-else>
+                <span class="heading">Loading your tokens</span>
+                <span class="heading">Signed in as {{$store.state.account.accountId}}</span>
+            </template>
             <template v-if="$store.state.userDeposits && $store.state.userDeposits[0] && $store.state.tokens">
                 <div class="token-table_wrapper">
                     <div class="token-table">
@@ -44,6 +48,7 @@
                             <div class="deposit-unit"></div>
                             <div class="deposit-unit">Asset</div>
                             <div class="deposit-unit">Amount</div>
+                            <div class="deposit-unit"></div>
                         </div>
                         <div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit">
                             <div class="deposit-unit">
@@ -55,17 +60,17 @@
                             <div class="deposit-unit">
                                 {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
                             </div>
-                            <!--<div class="deposit-unit">
-                                {{ deposit.id }}
-                            </div>-->
+                            <div class="deposit-unit">
+                                <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
+                                <button v-else @click="close_deposit(deposit.id)" class="close-pos">
+                                    X
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </template>
-            <div class="heading">
-                <span class="title">Signed in as {{$store.state.account.accountId}}</span>
-            </div>
-            <div class="methods-table">
+            <!--<div class="methods-table">
                 <div class="method">
                     <div @click="create_reserve()" class="method-title">
                         Create_reserve
@@ -185,7 +190,7 @@
                         <span class="var-title">borrow_id e.g. 0</span>
                     </div>
                 </div>
-            </div>
+            </div>-->
         </template>
     </div>
 </template>
@@ -223,7 +228,7 @@ export default {
             /**
              * close_deposit()
              */
-            close_deposit_deposit_id: '',
+            // close_deposit_deposit_id: '',
 
             /**
              * refresh_deposits_growth()
@@ -357,14 +362,16 @@ export default {
                 }
             }
         },
-        close_deposit: async function () {
+        close_deposit: async function (id) {
+            console.log(id)
+            this.txPending = true
             const contract = this.$store.state.crispContract
 
             if (contract) {
                 try {
                     await contract.close_deposit(
                         { 
-                            deposit_id: Number(this.close_deposit_deposit_id)
+                            deposit_id: Number(id)
                         }
                     ).then(data => {
                         console.log(data)
@@ -375,6 +382,7 @@ export default {
                             text: 'Close_deposit() is successful'
                         })
                         this.$store.dispatch('reload', store.state)
+                        this.txPending = false
                     })
                 }
                 catch (err) {
@@ -384,6 +392,7 @@ export default {
                         type: 'error',
                         text: err
                     })
+                    this.txPending = false
                 }
             }
         },
@@ -684,6 +693,10 @@ export default {
     cursor: pointer;
 }
 
+.wrapper {
+    width: ($interfaceBlocksWidth/2);
+}
+
 .table_wrapper {
     max-width: $interfaceBlocksWidth;
 }
@@ -900,5 +913,35 @@ export default {
 
 .deposit-unit:first-child {
     width: 6%;
+}
+
+.deposit-unit:last-child {
+    width: 10%;
+}
+
+.close-pos {
+    border: 1px solid transparent;
+    width: $textSize;
+    height: $textSize;
+    padding: 2px;
+    border-radius: ($borderRadius/2);
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.close-pos:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.cell-loader-icon {
+    width: $textSize;
+    height: $textSize;
+    margin-right: 24px;
 }
 </style>
