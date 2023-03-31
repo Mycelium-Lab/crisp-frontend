@@ -853,8 +853,9 @@ export default {
     left: 0;
     right: 0;
     text-align: center;
-    background-image: url('../assets/icons/ArrowsClockwise.svg');
+    background-image: url('../assets/icons/arrow-twin.svg');
     background-size: 100% 100%;
+    transform: rotateZ(90deg);
     background-color: #FDE4A0;
     border: 3px solid #FDE4A0;
     border-radius: $borderRadius/2;
