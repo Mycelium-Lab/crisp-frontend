@@ -79,10 +79,13 @@
                     </span>
                     <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
                 </span>
-                <span v-if="depositSource === 'outer' && token_in_balance && token_in_near_balance" class="token-balance">
+                <span v-else-if="depositSource === 'outer' && token_in_balance && token_in_near_balance" class="token-balance">
                     <span>
                         {{token_in_balance.symbol}} balance: {{token_in_near_balance}}
                     </span>
+                </span>
+                <span v-else class="token-balance">
+                    
                 </span>
                 <div class="token-wrapper token-out">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
@@ -105,10 +108,13 @@
                     </span>
                     <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
                 </span>
-                <span v-if="depositSource === 'outer' && token_out_balance && token_out_near_balance" class="token-balance">
+                <span v-else-if="depositSource === 'outer' && token_out_balance && token_out_near_balance" class="token-balance">
                     <span>
                         {{token_out_balance.symbol}} balance: {{token_out_near_balance}}
                     </span>
+                </span>
+                <span v-else class="token-balance">
+                    
                 </span>
             </div>
             <div v-if="swapError" class="swap-error">
@@ -203,7 +209,10 @@ export default {
     watch: {
         '$store.state.tokenBalances': function () {
             this.findPool()
-        }
+        },
+        '$store.state.tokens': function () {
+            this.findPool()
+        },
     },
     methods: {
         isNumber,
