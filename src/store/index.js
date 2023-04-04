@@ -15,6 +15,7 @@ export default createStore({
     positions: null,
     userPositions: null,
     userDeposits: null,
+    userDepositsByToken: null,
     tokens: null,
     notifications: [],
     tokenForDeposit: null,
@@ -80,6 +81,7 @@ export default createStore({
       state.positions = null
       state.userPositions = null
       state.userDeposits = null
+      state.userDepositsByToken = null
       await dispatch('fetchCrispContract', state)
       await dispatch('fetchPools', state)
       await dispatch('fetchBalances', state)
@@ -366,8 +368,35 @@ export default createStore({
               id: id
             })
           }
+
+          const depositedUserTokens = []
+
+          for (let i = 0; i < userDeposits.length; i++) {
+            const token = depositedUserTokens.findIndex(item => item.asset === userDeposits[i].asset)
+
+            if (token !== -1) {
+              depositedUserTokens[token].deposits.push(userDeposits[i])
+            } else {
+              depositedUserTokens.push({
+                asset: userDeposits[i].asset,
+                deposits: [userDeposits[i]]
+              })
+            }
+          }
+
+          for (let i = 0; i < depositedUserTokens.length; i++) {
+            depositedUserTokens[i].totalAmount = 0
+            depositedUserTokens[i].ids = []
+            for (let j = 0; j < depositedUserTokens[i].deposits.length; j++) {
+              depositedUserTokens[i].totalAmount += depositedUserTokens[i].deposits[j].amount
+              depositedUserTokens[i].ids.push(depositedUserTokens[i].deposits[j].id)
+            }
+          }
           console.log(userDeposits)
+          console.log(depositedUserTokens)
+
           state.userDeposits = userDeposits
+          state.userDepositsByToken = depositedUserTokens
           state.loaded.deposits = true
         })
       }

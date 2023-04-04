@@ -50,7 +50,58 @@
                             <div class="deposit-unit">Amount</div>
                             <div class="deposit-unit"></div>
                         </div>
-                        <div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit">
+                        <div v-for="token in $store.state.userDepositsByToken" :key="token.id" class="deposit-token-wrapper">
+                            <template v-if="token.expanded === true">
+                                <div v-for="deposit in token.deposits" :key="deposit.id" class="deposit">
+                                    <div class="deposit-unit">
+                                        <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
+                                    </div>
+                                    <div class="deposit-unit">
+                                        {{ $store.state.tokens[deposit.asset].symbol }}
+                                    </div>
+                                    <div class="deposit-unit">
+                                        {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
+                                    </div>
+                                    <div class="deposit-unit">
+                                        <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
+                                        <template v-else>
+                                            <button @click="close_deposit(deposit.id)" class="close-pos">
+                                                X
+                                            </button>
+                                            <button @click="token.expanded = false" class="expand-pos expand-pos-reverse">
+                                                V
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <div v-else class="deposit">
+                                <div class="deposit-unit">
+                                    <img class="icon" :src="$store.state.tokens[token.asset].icon">
+                                </div>
+                                <div class="deposit-unit">
+                                    {{ $store.state.tokens[token.asset].symbol }}
+                                </div>
+                                <div class="deposit-unit">
+                                    {{ token.totalAmount / Math.pow(10, $store.state.tokens[token.asset].decimals) }}
+                                </div>
+                                <div class="deposit-unit">
+                                    <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
+                                    <template v-else>
+                                        <button @click="close_deposit_by_token(token)" class="close-pos">
+                                            X
+                                        </button>
+                                        <button v-if="token.deposits.length > 1" @click="token.expanded = true" class="expand-pos">
+                                            V
+                                        </button>
+                                        <button v-else class="expand-pos expand-pos-disabled" disabled>
+                                            V
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit">
                             <div class="deposit-unit">
                                 <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
                             </div>
@@ -66,7 +117,7 @@
                                     X
                                 </button>
                             </div>
-                        </div>
+                        </div>-->
                     </div>
                 </div>
             </template>
@@ -196,13 +247,13 @@
 </template>
 
 <script>
-// import { CONTRACT_ID } from '../constants/index.js'
+import { CONTRACT_ID } from '../constants/index.js'
 // import { toFixed } from '../utils/number'
 import { SWAP_TOKENS } from '@/constants'
 import { isNumber } from '../utils/number'
 import { addDecimals } from '@/utils/format'
 import store from '../store'
-// import * as nearAPI from "near-api-js"
+import * as nearAPI from "near-api-js"
 
 export default {
     name: 'LendingView',
@@ -284,6 +335,7 @@ export default {
             this.depositModalActive = true
             this.tokenForDeposit = token
             this.create_deposit_asset = token.token
+            this.create_deposit_amount = 0
         },
         closeDepositModal: async function () {
             this.modalActive = false
@@ -395,6 +447,38 @@ export default {
                     this.txPending = false
                 }
             }
+        },
+        close_deposit_by_token: async function (token) {
+            this.txPending = true
+            const { transactions } = nearAPI
+            if (token.deposits) {
+
+                for (let i = 0; i < token.deposits.length; i++) {
+                    const args = {
+                        deposit_id: Number(token.deposits[i].id)
+                    }
+
+                    await this.$store.state.walletConnection.account().signAndSendTransaction({
+                        receiverId: CONTRACT_ID,
+                        actions: [
+                            transactions.functionCall(
+                                "close_deposit",
+                                Buffer.from(JSON.stringify(args)),
+                                150000000000000,
+                            ),
+                        ]
+                    })
+                }
+            }
+            this.$store.commit('pushNotification', {
+                title: 'Success',
+                type: 'success',
+                // text: response
+                text: 'Close_deposit_by_token() is successful'
+            })
+            this.$store.dispatch('reload', store.state)
+
+            this.txPending = false
         },
         refresh_deposits_growth: async function () {
             const contract = this.$store.state.crispContract
@@ -916,7 +1000,7 @@ export default {
 }
 
 .deposit-unit:last-child {
-    width: 10%;
+    width: 12%;
 }
 
 .close-pos {
@@ -933,6 +1017,35 @@ export default {
 }
 
 .close-pos:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
+}
+
+.expand-pos {
+    border: 1px solid transparent;
+    width: $textSize;
+    height: $textSize;
+    padding: 2px;
+    border-radius: ($borderRadius/2);
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-left: 4px;
+}
+
+.expand-pos-reverse {
+    transform: rotateZ(180deg);
+}
+
+.expand-pos-disabled {
+    filter: grayscale(0.8);
+}
+
+.expand-pos:hover {
     background-color: $buttonTextColor;
     color: $buttonBgColor;
     transition: 0.3s;
