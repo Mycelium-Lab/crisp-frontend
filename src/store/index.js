@@ -13,6 +13,7 @@ export default createStore({
     tokensBeingLoaded: false,
     pools: [],
     positions: null,
+    borrows: null,
     userPositions: null,
     userDeposits: null,
     userDepositsByToken: null,
@@ -78,6 +79,7 @@ export default createStore({
       state.tokenBalances = []
       state.tokens = null
       state.pools = []
+      state.borrows = null
       state.positions = null
       state.userPositions = null
       state.userDeposits = null
@@ -85,17 +87,18 @@ export default createStore({
       await dispatch('fetchCrispContract', state)
       await dispatch('fetchPools', state)
       await dispatch('fetchBalances', state)
-      await dispatch('fetchDeposits', state)
       if (state.pools[0]) {
         await dispatch('processTokenMetadata', state)
       } else {
-        await commit('emitLoading', 'tokens')
+        commit('emitLoading', 'tokens')
       }
       if (state.pools[0]) {
         await dispatch('processPositions', state)
       } else {
-        await commit('emitLoading', 'positions')
+        commit('emitLoading', 'positions')
       }
+      await dispatch('fetchDeposits', state)
+      await dispatch('fetchBorrows', state)
     },
     async signIn ({state}) {
       await state.walletConnection.requestSignIn({
@@ -248,6 +251,7 @@ export default createStore({
           }
         }
       }
+      console.log(state.userPositions)
       state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
@@ -268,7 +272,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance', 'positions_opened'],
-            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow_simple', 'supply_collateral_and_borrow_leveraged', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate']
+            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow_simple', 'supply_collateral_and_borrow_leveraged', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account']
           }
         )
       } else {
@@ -398,6 +402,42 @@ export default createStore({
           state.userDeposits = userDeposits
           state.userDepositsByToken = depositedUserTokens
           state.loaded.deposits = true
+        })
+      }
+    },
+    async fetchBorrows ({state}) {
+      if (state.crispContract && state.walletConnection.isSignedIn()) {
+        await state.walletConnection.account().viewFunction(
+          {
+            contractId: CONTRACT_ID,
+            methodName: 'get_borrows_by_account',
+            args: {
+              account_id: state.account.accountId
+            },
+          }
+        ).then((res) => { 
+          if (res && res[0]) {
+            console.log(res)
+            console.log(state.userPositions)
+            for (let i = 0; i < res.length; i++) {
+              const borrow = res[i]
+              const pos = state.userPositions.find((element) => Number(element.id) === Number(borrow.position_id) && Number(element.poolId) == Number(borrow.pool_id))
+              if (pos) {
+                if (state.tokens[borrow.asset]) {
+                  const tokenObj = state.tokens[borrow.asset]
+
+
+                  pos.leverageAsset = tokenObj
+                  pos.isBorrowed = true
+                  pos.borrowed = borrow.borrowed / Math.pow(10, tokenObj.decimals)
+                  pos.collateral = borrow.collateral / Math.pow(10, tokenObj.decimals)
+                  pos.leverage = borrow.leverage
+                  pos.liquidation_price = borrow.liquidation_price
+                  pos.apr = borrow.apr
+                }
+              }
+            }
+          }
         })
       }
     }

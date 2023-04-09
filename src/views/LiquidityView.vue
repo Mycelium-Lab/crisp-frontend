@@ -299,219 +299,240 @@
                         </div>
                         <div v-if="pos.expanded" class="pos-table pos-table-expanded">
                             <template v-if="tokensLoaded">
-                                <!--<img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                <button v-else @click="editAddLiq(pos)" class="edit-btn">
-                                    Add liquidity
-                                </button>
-                                <div class="input-wrapper">
-                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} liquidity</span></span>
-                                    <input type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
-                                    <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} liquidity</span></span>
-                                    <input type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
-                                    <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
-                                </div>
-                                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                <button v-else @click="editRemoveLiq(pos)" class="edit-btn">
-                                    Remove liquidity
-                                </button>-->
-
-                                <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
-                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
-                                        <div class="table-header">
-                                            <span class="table-heading">Add liquidity</span>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <span class="section-block-title">
-                                                Current liquidity
-                                            </span>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.token0_real_liquidity).toFixed(6)}}</span>
-                                                    </div>
+                                <div v-if="pos.isBorrowed" class="table-leverage">
+                                    <div class="table-header">
+                                        <span class="table-heading">Leverage info (this position is borrowed)</span>
+                                    </div>
+                                    <div class="section-block-wrapper">
+                                        <span class="section-block-title">
+                                            Current liquidity
+                                        </span>
+                                        <div class="section-block">
+                                            <div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_symbol">Borrowed</span>
                                                 </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.token1_real_liquidity).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <span class="block-row_fee-title">Fee tier</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_fee-amount">{{$store.state.pools[pos.poolId].protocol_fee}} %</span>
-                                                    </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_liquidity">{{pos.borrowed}}</span>
+                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <div class="section-block-title">
-                                                Add more liquidity
-                                            </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <input :ref="'edit_t0' + pos.id" id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="block-row_token-wrapper">
-                                                            <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                            <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
-                                                        </div>
-                                                    </div>
+                                            <div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_symbol">Collateral</span>
                                                 </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <!-- TODO: liquidity in $USD -->
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="row-balance">
-                                                            Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)}}
-                                                        </div>
-                                                    </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_liquidity">{{pos.collateral}}</span>
+                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
                                                 </div>
                                             </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <input :ref="'edit_t1' + pos.id" id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="block-row_token-wrapper">
-                                                            <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                            <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
-                                                        </div>
-                                                    </div>
+                                            <div v-if="pos.leverage" class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_fee-title">Leverage</span>
                                                 </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <!-- TODO: liquidity in $USD -->
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="row-balance">
-                                                            Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)}}
-                                                        </div>
-                                                    </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_fee-amount">{{pos.leverage}}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="section-bottom">
-                                        <span v-if="editAddLiqErrorMsg" class="error-msg">{{ editAddLiqErrorMsg }}</span>
-                                        <span v-else class="error-msg-disabled"></span>
-                                        <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
-                                            Confirm
-                                        </button>
-                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
-                                            Add liquidity
-                                        </button>
-                                    </div>
                                 </div>
-                                <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
-                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
-                                        <div class="table-header">
-                                            <span class="table-heading">Remove liquidity</span>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <span class="section-block-title">
-                                                Amount to remove
-                                            </span>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <span class="remove-amount">
-                                                            {{removeAmount}} %
-                                                        </span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <button @click="setRemoveAmount(pos, 25)" class="block-RA-suggestion">25%</button>
-                                                        <button @click="setRemoveAmount(pos, 50)" class="block-RA-suggestion">50%</button>
-                                                        <button @click="setRemoveAmount(pos, 75)" class="block-RA-suggestion">75%</button>
-                                                        <button @click="setRemoveAmount(pos, 100)" class="block-RA-suggestion">Max</button>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left" style="padding-left: 8px;">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity0ForRemoval).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left" style="padding-left: 8px;">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity1ForRemoval).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row" style="display: flex;flex-direction: row;justify-content: flex-end;">
-                                                    <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount(pos)" type="range" min="0.01" max="100" step="0.01">
-                                                </div>
+                                <div class="table-liquidity-change">
+                                    <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
+                                        <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
+                                            <div class="table-header">
+                                                <span class="table-heading">Add liquidity</span>
                                             </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}:
+                                            <div class="section-block-wrapper">
+                                                <span class="section-block-title">
+                                                    Current liquidity
+                                                </span>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.token0_real_liquidity).toFixed(6)}}</span>
+                                                        </div>
                                                     </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.token0_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.token1_real_liquidity).toFixed(6)}}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.token1_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                    </div>
-                                                </div>
-                                                <div class="block-row" style="margin-top: 32px;">
-                                                    <div class="block-row-left">
-                                                        {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} Fees Earned:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.fees0).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} Fees Earned:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.fees1).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <span class="block-row_fee-title">Fee tier</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_fee-amount">{{$store.state.pools[pos.poolId].protocol_fee}} %</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="section-block-wrapper">
+                                                <div class="section-block-title">
+                                                    Add more liquidity
+                                                </div>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <input :ref="'edit_t0' + pos.id" id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="block-row_token-wrapper">
+                                                                <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                                <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <!-- TODO: liquidity in $USD -->
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <input :ref="'edit_t1' + pos.id" id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="block-row_token-wrapper">
+                                                                <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                                <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <!-- TODO: liquidity in $USD -->
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="section-bottom">
+                                            <span v-if="editAddLiqErrorMsg" class="error-msg">{{ editAddLiqErrorMsg }}</span>
+                                            <span v-else class="error-msg-disabled"></span>
+                                            <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                            <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
+                                                Confirm
+                                            </button>
+                                            <button v-else @click="toggleTab(pos)" class="edit-btn">
+                                                Add liquidity
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="section-bottom">
-                                        <span class="error-msg-disabled"></span>
-                                        <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
-                                            Confirm
-                                        </button>
-                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
-                                            Remove liquidity
-                                        </button>
+                                    <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
+                                        <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
+                                            <div class="table-header">
+                                                <span class="table-heading">Remove liquidity</span>
+                                            </div>
+                                            <div class="section-block-wrapper">
+                                                <span class="section-block-title">
+                                                    Amount to remove
+                                                </span>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <span class="remove-amount">
+                                                                {{removeAmount}} %
+                                                            </span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <button @click="setRemoveAmount(pos, 25)" class="block-RA-suggestion">25%</button>
+                                                            <button @click="setRemoveAmount(pos, 50)" class="block-RA-suggestion">50%</button>
+                                                            <button @click="setRemoveAmount(pos, 75)" class="block-RA-suggestion">75%</button>
+                                                            <button @click="setRemoveAmount(pos, 100)" class="block-RA-suggestion">Max</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left" style="padding-left: 8px;">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.desiredLiquidity0ForRemoval).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left" style="padding-left: 8px;">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.desiredLiquidity1ForRemoval).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row" style="display: flex;flex-direction: row;justify-content: flex-end;">
+                                                        <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount(pos)" type="range" min="0.01" max="100" step="0.01">
+                                                    </div>
+                                                </div>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.token0_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.token1_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row" style="margin-top: 32px;">
+                                                        <div class="block-row-left">
+                                                            {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} Fees Earned:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.fees0).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} Fees Earned:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.fees1).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="section-bottom">
+                                            <span class="error-msg-disabled"></span>
+                                            <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                            <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
+                                                Confirm
+                                            </button>
+                                            <button v-else @click="toggleTab(pos)" class="edit-btn">
+                                                Remove liquidity
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                </div>        
                             </template>
                         </div>
                     </div>
@@ -963,6 +984,18 @@ export default {
         depositToken (token) {
             console.log(token)
             this.$store.dispatch('depositToken', token)
+        },
+        get_borrows_by_account: async function () {
+            const contract = this.$store.state.crispContract
+            if (contract) {
+                await contract.get_borrows_by_account(
+                    {
+                        account_id: this.$store.state.walletConnection.getAccountId()
+                    }
+                ).then(data => {
+                    console.log(data)
+                })
+            }
         },
         openNewPoolModal: function () {
             this.modalActive = true
@@ -1882,6 +1915,11 @@ export default {
     margin-right: 4px;
 }
 
+.small-icon-right {
+    margin-right: 0;
+    margin-left: 4px;
+}
+
 .icon {
     margin: 6px;
     margin-left: 0;
@@ -2198,11 +2236,41 @@ export default {
 .pos-table-expanded {
     background: #fff;
     display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 300px;
+}
+
+.table-liquidity-change {
+    border-top: $border;
+    min-height: 300px;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
     box-sizing: border-box;
-    min-height: 300px;
+    width: 100%;
+}
+
+.table-leverage {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.table-leverage .section-block-wrapper {
+    box-sizing: border-box;
+    padding: 24px;
+}
+
+.table-leverage .table-header {
+    padding-top: 16px;
 }
 
 .pos-table_header {
@@ -2490,6 +2558,7 @@ export default {
 }
 
 .section-block {
+    box-sizing: border-box;
     width: 100%;
     background-color: #f5f6fb;
     border-radius: $borderRadius;
