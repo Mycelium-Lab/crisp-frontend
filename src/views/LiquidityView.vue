@@ -101,20 +101,26 @@
                             <button v-bind:class="{responseActive: !supplyPosAfterOpening}" @click="supplyPosAfterOpening = false" class="toggler-response-btn">No</button>
                         </div>
                     </div>
-                    <div v-if="supplyPosAfterOpening" class="input-wrapper">
-                        <span class="input-title"><span>Leverage</span></span>
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
+                </div>
+                <div v-if="liquidation_price_preview || supplyPosAfterOpening" class="modal-footer modal-footer-extra">
+                    <div v-if="supplyPosAfterOpening" class="input-wrapper input-wrapper-margin-right">
+                        <span class="input-title">Leverage</span>
                         <div class="input-wrapper-element">
                             <div class="input-wrapper-row">
-                                <input type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">
-                                <input class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
+                                <input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">
+                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
                             </div>
                             <div v-if="leverageSupplyPosAfterOpening" class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
                             </div>
                         </div>
                     </div>
-                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                    <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
+                    <div v-if="liquidation_price_preview" class="input-wrapper">
+                        <span class="input-title">Expected liquidation price</span>
+                        <span class="modal-body_row-input input-flex-center">{{ liquidation_price_preview }}</span>
+                    </div>
                 </div>
             </div>
             <div v-if="borrowModalActive" class="modal">
@@ -332,6 +338,14 @@
                                                 </div>
                                                 <div class="block-row-right">
                                                     <span class="block-row_fee-amount">{{pos.leverage}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_fee-title">Liquidation price</span>
+                                                </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_fee-amount">{{pos.liquidation_price}}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -955,8 +969,8 @@ export default {
             useLeverageInBorrow: false,
             expectedBorrowAmount: null,
             leverageAmount: 2,
-            leverageSupplyPosAfterOpening: false
-
+            leverageSupplyPosAfterOpening: false,
+            liquidation_price_preview: null
 
         }
     },
@@ -1213,6 +1227,35 @@ export default {
             // console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
             
             this.buildGraph()
+
+            this.tryToCalculateLiquidationPrice()
+        },
+        tryToCalculateLiquidationPrice: async function () {
+            this.liquidation_price_preview = null
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+
+            if (this.t0_liq && this.t1_liq) {
+                await this.$store.state.walletConnection.account().viewFunction(
+                    {
+                        contractId: CONTRACT_ID,
+                        methodName: 'get_liquidation_price',
+                        args: {
+                            pool_id: Number(this.poolId),
+                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                            upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                        }
+                    }
+                ).then((res) => {
+                    if (this.useLeverageInBorrow) {
+                        this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals) * this.leverageAmount
+                    } else {
+                        this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+                    }
+                    console.log(this.liquidation_price_preview)
+                }) 
+            }
         },
         buildGraph: function () {
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
@@ -1282,6 +1325,7 @@ export default {
                 this.t1_liq = null
                 this.disabled.t1 = false
             }
+            this.tryToCalculateLiquidationPrice()
         },
         calculateDefault: function () {
             this.manual_input = 'first'
@@ -1302,6 +1346,8 @@ export default {
                 this.t1_liq = toFixed(res)
                 // this.total = res
             }
+
+            this.tryToCalculateLiquidationPrice()
         },
         calculateAlternative: function () {
             this.manual_input = 'second'
@@ -1323,6 +1369,8 @@ export default {
                 this.t0_liq = toFixed(res)
                 // this.total = res
             }
+
+            this.tryToCalculateLiquidationPrice()
         },
         calcEditDefault: function (pos) {
             this.editAddLiqErrorMsg = ''
@@ -1721,6 +1769,7 @@ export default {
             }
         },
         expandPos: async function (pos) {
+            console.log(pos)
             this.editAddLiqErrorMsg = ''
             this.edit_t0_liq = 0
             this.edit_t1_liq = 0
@@ -2036,6 +2085,15 @@ export default {
     box-sizing: border-box;
 }
 
+.input-flex-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin-left: 0;
+    padding-left: 15px;
+}
+
 #currentPrice {
     display: flex;
     flex-direction: row;
@@ -2052,6 +2110,10 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+}
+
+.input-wrapper-margin-right {
+    margin-right: 30px;
 }
 
 .input-wrapper-element {
@@ -2109,6 +2171,10 @@ export default {
     align-items: center;
     padding-left: 18px;
     padding-right: 18px;
+}
+
+.modal-footer-extra {
+    justify-content: flex-start;
 }
 
 .split-footer {

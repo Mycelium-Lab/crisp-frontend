@@ -272,7 +272,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance', 'positions_opened'],
-            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow_simple', 'supply_collateral_and_borrow_leveraged', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account']
+            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow_simple', 'supply_collateral_and_borrow_leveraged', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account', 'get_liquidation_price']
           }
         )
       } else {
@@ -425,14 +425,18 @@ export default createStore({
               if (pos) {
                 if (state.tokens[borrow.asset]) {
                   const tokenObj = state.tokens[borrow.asset]
-
+                  const tokenObj2 = state.tokens[pos.token0]
 
                   pos.leverageAsset = tokenObj
                   pos.isBorrowed = true
                   pos.borrowed = borrow.borrowed / Math.pow(10, tokenObj.decimals)
                   pos.collateral = borrow.collateral / Math.pow(10, tokenObj.decimals)
                   pos.leverage = borrow.leverage
-                  pos.liquidation_price = borrow.liquidation_price
+                  if (pos.leverage) {
+                    pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals) * pos.leverage
+                  } else {
+                    pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
+                  }
                   pos.apr = borrow.apr
                 }
               }
