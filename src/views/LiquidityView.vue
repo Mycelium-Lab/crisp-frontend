@@ -310,9 +310,6 @@
                                         <span class="table-heading">Leverage info (this position is borrowed)</span>
                                     </div>
                                     <div class="section-block-wrapper">
-                                        <span class="section-block-title">
-                                            Current liquidity
-                                        </span>
                                         <div class="section-block">
                                             <div class="block-row">
                                                 <div class="block-row-left">
