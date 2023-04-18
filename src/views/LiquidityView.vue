@@ -237,7 +237,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="pos-table_data">
+                            <div class="pos-table_data" v-bind:class="{posTableBorderRadius: !pos.borrowed}">
                                 <div class="pos-table_data-cell">
                                     <div v-if="$store.state.tokens" class="pos-table-tokens">
                                         <img class="cell-icon" :src="$store.state.tokens[pos.token0].icon">
@@ -302,14 +302,11 @@
                                     <img @click="expandPos(pos)" src="../assets/icons/expand.svg">
                                 </div>
                             </div>
-                        </div>
-                        <div v-if="pos.expanded" class="pos-table pos-table-expanded">
-                            <template v-if="tokensLoaded">
-                                <div v-if="pos.isBorrowed" class="table-leverage">
+                            <div v-if="pos.isBorrowed" class="table-leverage">
                                     <div class="table-header">
                                         <span class="table-heading">Leverage info (this position is borrowed)</span>
                                     </div>
-                                    <div class="section-block-wrapper">
+                                    <div class="section-block-wrapper borderRadiusBottomLeftRight">
                                         <div class="section-block">
                                             <div class="block-row">
                                                 <div class="block-row-left">
@@ -348,6 +345,9 @@
                                         </div>
                                     </div>
                                 </div>
+                        </div>
+                        <div v-if="pos.expanded" class="pos-table pos-table-expanded">
+                            <template v-if="tokensLoaded">
                                 <div class="table-liquidity-change">
                                     <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
                                         <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
@@ -2307,7 +2307,7 @@ export default {
 }
 
 .table-liquidity-change {
-    border-top: $border;
+    // border-top: $border;
     min-height: 300px;
     display: flex;
     flex-direction: row;
@@ -2334,6 +2334,15 @@ export default {
 
 .table-leverage .table-header {
     padding-top: 16px;
+    background-color: #d9d9d9;
+    border-top: $border;
+    border-bottom: $border;
+}
+
+.table-leverage .section-block-wrapper {
+    background-color: #f5f6fb;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 
 .pos-table_header {
@@ -2428,6 +2437,9 @@ export default {
     justify-content: center;
     align-items: center;
     background-color: #fff;
+}
+
+.posTableBorderRadius {
     border-bottom-left-radius: $borderRadius;
     border-bottom-right-radius: $borderRadius;
 }
