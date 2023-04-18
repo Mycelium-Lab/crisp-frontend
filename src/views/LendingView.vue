@@ -46,8 +46,9 @@
                         <span class="heading">Deposited assets</span>
                         <div class="deposit">
                             <div class="deposit-unit"></div>
-                            <div class="deposit-unit">Asset</div>
-                            <div class="deposit-unit">Amount</div>
+                            <div class="deposit-unit" style="margin-left: 6px;">Asset</div>
+                            <div class="deposit-unit" style="margin-left: -14px;">Amount</div>
+                            <div class="deposit-unit" style="margin-left: -18px;">APR</div>
                             <div class="deposit-unit"></div>
                         </div>
                         <div v-for="token in $store.state.userDepositsByToken" :key="token.id" class="deposit-token-wrapper">
@@ -61,6 +62,9 @@
                                     </div>
                                     <div class="deposit-unit">
                                         {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
+                                    </div>
+                                    <div class="deposit-unit">
+                                        {{ deposit.apr }}
                                     </div>
                                     <div class="deposit-unit">
                                         <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
@@ -84,6 +88,9 @@
                                 </div>
                                 <div class="deposit-unit">
                                     {{ token.totalAmount / Math.pow(10, $store.state.tokens[token.asset].decimals) }}
+                                </div>
+                                <div class="deposit-unit">
+                                    {{ token.apr }}
                                 </div>
                                 <div class="deposit-unit">
                                     <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">

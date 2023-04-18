@@ -362,13 +362,16 @@ export default createStore({
           const depositsArray = Object.entries(res)
           const userDeposits = []
           for (let i = 0; i < depositsArray.length; i++) {
+            console.log(depositsArray[i])
             const asset = depositsArray[i][1].asset
             const amount = depositsArray[i][1].amount
+            const apr = depositsArray[i][1].apr
             const id = depositsArray[i][0]
          
             userDeposits.push({
               asset: asset,
               amount: amount,
+              apr: apr,
               id: id
             })
           }
@@ -383,6 +386,7 @@ export default createStore({
             } else {
               depositedUserTokens.push({
                 asset: userDeposits[i].asset,
+                apr: userDeposits[i].apr,
                 deposits: [userDeposits[i]]
               })
             }
