@@ -109,7 +109,7 @@
                         <span class="input-title">Leverage</span>
                         <div class="input-wrapper-element">
                             <div class="input-wrapper-row">
-                                <input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">
+                                <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
                                 <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
                             </div>
                             <div v-if="leverageSupplyPosAfterOpening" class="input-wrapper-row">
@@ -134,7 +134,7 @@
                             <span class="input-title"><span>Leverage</span></span>
                             <div class="input-wrapper-element">
                                 <div class="input-wrapper-row">
-                                    <input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">
+                                    <!--<input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">-->
                                     <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
                                 </div>
                                 <div v-if="useLeverageInBorrow" class="input-wrapper-row">
@@ -313,8 +313,10 @@
                                                     <span class="block-row_symbol">Borrowed</span>
                                                 </div>
                                                 <div class="block-row-right">
-                                                    <span class="block-row_liquidity">{{pos.borrowed}}</span>
-                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
+                                                    <span class="block-row_liquidity">{{pos.borrowed0}}</span>
+                                                    <img class="small-icon small-icon-right" style="margin-right: 12px" :src="pos.leverageAsset.icon">
+                                                    <span class="block-row_liquidity">{{pos.borrowed1}}</span>
+                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset2.icon">
                                                 </div>
                                             </div>
                                             <div class="block-row">
@@ -336,10 +338,11 @@
                                             </div>
                                             <div class="block-row">
                                                 <div class="block-row-left">
-                                                    <span class="block-row_fee-title">Liquidation price</span>
+                                                    <span class="block-row_fee-title">Liquidation prices</span>
                                                 </div>
                                                 <div class="block-row-right">
-                                                    <span class="block-row_fee-amount">{{pos.liquidation_price}}</span>
+                                                    <span class="block-row_fee-amount">{{pos.liquidation_price0}}</span>
+                                                    <span class="block-row_fee-amount" style="margin-left: 12px;">{{pos.liquidation_price1}}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -963,10 +966,10 @@ export default {
             }],
             loading: false,
 
-            useLeverageInBorrow: false,
+            useLeverageInBorrow: true,
             expectedBorrowAmount: null,
             leverageAmount: 2,
-            leverageSupplyPosAfterOpening: false,
+            leverageSupplyPosAfterOpening: true,
             liquidation_price_preview: null
 
         }
@@ -1071,7 +1074,7 @@ export default {
             this.newPositionModalActive = false
             this.leverageAmount = null
             this.supplyPosAfterOpening = false
-            this.leverageSupplyPosAfterOpening = false
+            // this.leverageSupplyPosAfterOpening = false
         },
         openBorrowModal: function (pos) {
             this.modalActive = true
@@ -1082,7 +1085,7 @@ export default {
         closeBorrowModal: function () {
             this.modalActive = false
             this.expectedBorrowAmount = null
-            this.useLeverageInBorrow = false
+            // this.useLeverageInBorrow = false
             this.leverageAmount = 2
             this.borrowModalActive = false
         },
@@ -1097,17 +1100,18 @@ export default {
             } else {
                 this.expectedBorrowAmount = res
             }
+            console.log(this.useLeverageInBorrow)
         },
         confirmBorrowModal: async function () {
-            if (this.useLeverageInBorrow === false) {
-                const contract = this.$store.state.crispContract
+            const contract = this.$store.state.crispContract
 
-                if (contract) {
-                    try {
-                        await contract.supply_collateral_and_borrow_simple(
+            if (contract) {
+                try {
+                    await contract.supply_collateral_and_borrow(
                             { 
                                 pool_id: Number(this.positionToBorrow.poolId),
-                                position_id: Number(this.positionToBorrow.id)
+                                position_id: Number(this.positionToBorrow.id),
+                                leverage: Number(this.leverageAmount)
                             }
                         ).then(data => {
                             console.log(data)
@@ -1115,50 +1119,18 @@ export default {
                                 title: 'Success',
                                 type: 'success',
                                 // text: response
-                                text: 'Supply_collateral_and_borrow_simple() is successful'
+                                text: 'Supply_collateral_and_borrow() is successful'
                             })
                             this.$store.dispatch('reload', store.state)
                         })
                     }
-                    catch (err) {
-                        console.log(err)
-                        this.$store.commit('pushNotification', {
-                            title: 'Error',
-                            type: 'error',
-                            text: err
-                        })
-                    }
-                }
-            } else {
-                const contract = this.$store.state.crispContract
-
-                if (contract) {
-                    try {
-                        await contract.supply_collateral_and_borrow_leveraged(
-                                { 
-                                    pool_id: Number(this.positionToBorrow.poolId),
-                                    position_id: Number(this.positionToBorrow.id),
-                                    leverage: Number(this.leverageAmount)
-                                }
-                            ).then(data => {
-                                console.log(data)
-                                this.$store.commit('pushNotification', {
-                                    title: 'Success',
-                                    type: 'success',
-                                    // text: response
-                                    text: 'Supply_collateral_and_borrow_leveraged() is successful'
-                                })
-                                this.$store.dispatch('reload', store.state)
-                            })
-                        }
-                    catch (err) {
-                        console.log(err)
-                        this.$store.commit('pushNotification', {
-                            title: 'Error',
-                            type: 'error',
-                            text: err
-                        })
-                    }
+                catch (err) {
+                    console.log(err)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: err
+                    })
                 }
             }
         },
@@ -1233,6 +1205,14 @@ export default {
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
             if (this.t0_liq && this.t1_liq) {
+                let leverage
+                if (this.useLeverageInBorrow) {
+                    leverage = this.leverageAmount
+                } else {
+                    leverage = 1
+                }
+                console.log(this.useLeverageInBorrow, leverage)
+    
                 await this.$store.state.walletConnection.account().viewFunction(
                     {
                         contractId: CONTRACT_ID,
@@ -1241,15 +1221,18 @@ export default {
                             pool_id: Number(this.poolId),
                             token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
-                            upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                            upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                            borrowed0: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage,
+                            borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
                         }
                     }
                 ).then((res) => {
-                    if (this.useLeverageInBorrow) {
-                        this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals) * this.leverageAmount
-                    } else {
-                        this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
-                    }
+                    // if (this.useLeverageInBorrow) {
+                    //     this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals) * this.leverageAmount
+                    // } else {
+                    //     this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+                    // }
+                    this.liquidation_price_preview = res
                     console.log(this.liquidation_price_preview)
                 }) 
             }
@@ -1520,7 +1503,6 @@ export default {
                     console.log(Number(this.upperPrice))
                     console.log(tokenObj2)
 
-                    /// 
                     if (this.supplyPosAfterOpening) {
                         const { transactions } = nearAPI
 
@@ -1531,55 +1513,28 @@ export default {
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
 
-                        const argsSupplySimple = {
-                            pool_id: Number(this.poolId),
-                            position_id: Number(newId)
-                        }
-
                         const argsSupplyLeveraged = {
                             pool_id: Number(this.poolId),
                             position_id: Number(newId),
                             leverage: Number(this.leverageAmount)
                         }
+                        await this.$store.state.walletConnection.account().signAndSendTransaction({
+                            receiverId: CONTRACT_ID,
+                            actions: [
+                                transactions.functionCall(
+                                    "open_position",
+                                    Buffer.from(JSON.stringify(argsOpenPos)),
+                                    150000000000000,
+                                ),
+                                transactions.functionCall(
+                                    'supply_collateral_and_borrow',
+                                    Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                    150000000000000,
+                                    1
+                                )
+                            ]
+                        })
 
-                        // const argsSupplySimple = ...
-                        // or const argsSupplyLeveraged = ...
-
-                        if (this.leverageSupplyPosAfterOpening) {
-                            await this.$store.state.walletConnection.account().signAndSendTransaction({
-                                receiverId: CONTRACT_ID,
-                                actions: [
-                                    transactions.functionCall(
-                                        "open_position",
-                                        Buffer.from(JSON.stringify(argsOpenPos)),
-                                        150000000000000,
-                                    ),
-                                    transactions.functionCall(
-                                        'supply_collateral_and_borrow_leveraged',
-                                        Buffer.from(JSON.stringify(argsSupplyLeveraged)),
-                                        150000000000000,
-                                        1
-                                    )
-                                ]
-                            })
-                        } else {
-                            await this.$store.state.walletConnection.account().signAndSendTransaction({
-                                receiverId: CONTRACT_ID,
-                                actions: [
-                                    transactions.functionCall(
-                                        "open_position",
-                                        Buffer.from(JSON.stringify(argsOpenPos)),
-                                        150000000000000,
-                                    ),
-                                    transactions.functionCall(
-                                        'supply_collateral_and_borrow_simple',
-                                        Buffer.from(JSON.stringify(argsSupplySimple)),
-                                        150000000000000,
-                                        1
-                                    )
-                                ]
-                            })
-                        }
                     } else {
                         await contract.open_position(
                             {

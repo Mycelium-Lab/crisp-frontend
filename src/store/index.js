@@ -272,7 +272,7 @@ export default createStore({
           CONTRACT_ID,
           {
             viewMethods: ['get_pools', 'get_balance', 'positions_opened'],
-            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow_simple', 'supply_collateral_and_borrow_leveraged', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account', 'get_liquidation_price']
+            changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account', 'get_liquidation_price']
           }
         )
       } else {
@@ -427,20 +427,21 @@ export default createStore({
               const borrow = res[i]
               const pos = state.userPositions.find((element) => Number(element.id) === Number(borrow.position_id) && Number(element.poolId) == Number(borrow.pool_id))
               if (pos) {
-                if (state.tokens[borrow.asset]) {
-                  const tokenObj = state.tokens[borrow.asset]
-                  const tokenObj2 = state.tokens[pos.token0]
+                if (state.tokens[borrow.asset0]) {
+                  const tokenObj = state.tokens[borrow.asset0]
+                  const tokenObj2 = state.tokens[borrow.asset1]
 
                   pos.leverageAsset = tokenObj
+                  pos.leverageAsset2 = tokenObj2
                   pos.isBorrowed = true
-                  pos.borrowed = borrow.borrowed / Math.pow(10, tokenObj.decimals)
+                  pos.borrowed0 = borrow.borrowed0 / Math.pow(10, tokenObj.decimals)
+                  pos.borrowed1 = borrow.borrowed1 / Math.pow(10, tokenObj2.decimals)
                   pos.collateral = borrow.collateral / Math.pow(10, tokenObj.decimals)
                   pos.leverage = borrow.leverage
-                  if (pos.leverage) {
-                    pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals) * pos.leverage
-                  } else {
-                    pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
-                  }
+                  // pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals) * pos.leverage
+                  pos.liquidation_price0 = borrow.liquidation_price[0] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
+                  pos.liquidation_price1 = borrow.liquidation_price[1] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
+
                   pos.apr = borrow.apr
                 }
               }
