@@ -64,7 +64,8 @@
                                         {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
                                     </div>
                                     <div class="deposit-unit">
-                                        {{ deposit.apr }}
+                                        10%
+                                        <!--{{ deposit.apr }}-->
                                     </div>
                                     <div class="deposit-unit">
                                         <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
@@ -90,7 +91,8 @@
                                     {{ token.totalAmount / Math.pow(10, $store.state.tokens[token.asset].decimals) }}
                                 </div>
                                 <div class="deposit-unit">
-                                    {{ token.apr }}
+                                    10%
+                                    <!--{{ token.apr }}-->
                                 </div>
                                 <div class="deposit-unit">
                                     <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
