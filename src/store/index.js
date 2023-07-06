@@ -283,17 +283,12 @@ export default createStore({
         contractId: CONTRACT_ID,
         methodNames: METHOD_NAMES
       });
-      // console.log('xd')
-      // this.modal.show();
-      // console.log(state, METHOD_NAMES)
 
       // connect to NEAR
       state.nearConnection = await connect(CONFIG)
-      // // create wallet connection
+      // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
-// 
-      // console.log(await state.walletConnection.isSignedInAsync())
-      // if (await state.walletConnection.isSignedInAsync()) {
+
       const wallet = await state.selector.wallet("near-wallet")
       const accounts = await wallet.getAccounts()
       if (state.selector.isSignedIn()) {
@@ -327,9 +322,6 @@ export default createStore({
               },
             }
           )
-          // await state.crispContract.get_balance_all_tokens(
-          //   { account_id: state.walletConnection.getAccountId() }
-          // )
           .then(async (resolve) => {
             console.log(resolve)
             // We have a string instead of array of objects. So, first we split it by using : and , symbols as separators
