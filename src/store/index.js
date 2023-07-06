@@ -3,8 +3,15 @@ import * as nearAPI from "near-api-js"
 import { CONTRACT_ID, METHOD_NAMES } from '../constants/index.js'
 import { CONFIG } from '../utils/index.js'
 import router from '../router'
+
+import { setupWalletSelector } from "@near-wallet-selector/core";
+import { setupModal } from "@near-wallet-selector/modal-ui-js";
+import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+
 export default createStore({
   state: {
+    selector: null,
+    modal: null,
     nearConnection: null,
     walletConnection: null,
     crispContract: null,
@@ -101,14 +108,19 @@ export default createStore({
       await dispatch('fetchBorrows', state)
     },
     async signIn ({state}) {
-      await state.walletConnection.requestSignIn({
-        contractId: CONTRACT_ID,
-        methodNames: METHOD_NAMES
-      }).then(() => {
-        // ..
-      })
+      // state.modal.show();
+      const wallet = await state.selector.wallet("near-wallet");
+      state.accounts = await wallet.signIn({ contractId: CONTRACT_ID });
+      // await state.walletConnection.requestSignIn({
+      //   contractId: CONTRACT_ID,
+      //   methodNames: METHOD_NAMES
+      // }).then(() => {
+      //   // ..
+      // })
     },
     async signOut ({state}) {
+      const wallet = await state.selector.wallet("near-wallet");
+      await wallet.signOut();
       state.walletConnection.signOut()
       location.reload()
     },
@@ -255,18 +267,41 @@ export default createStore({
       state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
+      console.log(nearAPI)
       const { connect, WalletConnection, Contract } = nearAPI
+      // const { Contract } = nearAPI
       console.log(CONFIG.keyStore)
+
+      state.selector = await setupWalletSelector({
+        network: "testnet",
+        modules: [setupNearWallet()],
+      });
+      
+      console.log(state.selector)
+
+      state.modal = setupModal(state.selector, {
+        contractId: CONTRACT_ID,
+        methodNames: METHOD_NAMES
+      });
+      // console.log('xd')
+      // this.modal.show();
+      // console.log(state, METHOD_NAMES)
 
       // connect to NEAR
       state.nearConnection = await connect(CONFIG)
-      // create wallet connection
+      // // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
+// 
+      // console.log(await state.walletConnection.isSignedInAsync())
+      // if (await state.walletConnection.isSignedInAsync()) {
+      const wallet = await state.selector.wallet("near-wallet")
+      const accounts = await wallet.getAccounts()
+      if (state.selector.isSignedIn()) {
+        console.log(accounts)
+        state.account = accounts[0]
 
-      console.log(await state.walletConnection.isSignedInAsync())
-      if (await state.walletConnection.isSignedInAsync()) {
         state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
-  
+
         state.crispContract = await new Contract(
           state.account,
           CONTRACT_ID,
@@ -284,9 +319,17 @@ export default createStore({
       if (state.crispContract && state.walletConnection.isSignedIn()) {
         console.log('fetching balances for account ' + state.walletConnection.getAccountId())
         try {
-          await state.crispContract.get_balance_all_tokens(
-            { account_id: state.walletConnection.getAccountId() }
+          await state.walletConnection.account().viewFunction(
+            {
+              contractId: CONTRACT_ID,
+              methodName: 'get_balance_all_tokens',
+              args: { account_id: state.walletConnection.getAccountId()
+              },
+            }
           )
+          // await state.crispContract.get_balance_all_tokens(
+          //   { account_id: state.walletConnection.getAccountId() }
+          // )
           .then(async (resolve) => {
             console.log(resolve)
             // We have a string instead of array of objects. So, first we split it by using : and , symbols as separators
@@ -342,6 +385,7 @@ export default createStore({
           })
         } catch (error) {
           console.log(error)
+          console.log(dispatch)
           await dispatch('signOut', state)
         }
       }
@@ -438,6 +482,9 @@ export default createStore({
                   pos.borrowed1 = borrow.borrowed1 / Math.pow(10, tokenObj2.decimals)
                   pos.collateral = borrow.collateral / Math.pow(10, tokenObj.decimals)
                   pos.leverage = borrow.leverage
+
+                  console.log(borrow)
+
                   // pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals) * pos.leverage
                   pos.liquidation_price0 = borrow.liquidation_price[0] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
                   pos.liquidation_price1 = borrow.liquidation_price[1] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)

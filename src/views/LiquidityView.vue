@@ -40,7 +40,18 @@
             <div v-if="newPositionModalActive" class="modal">
                 <div class="modal-header">
                     <span class="modal-title">Create new position</span>
-                    <img @click="closeNewPositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                    <div class="modal-header-right">
+                        <div class="toggler-wrapper">
+                            Near
+                            <div class="toggler" @click="swapDepositSource()">
+                                <div class="toggle" :class="{toggleActive: depositSource === 'inner'}">
+
+                                </div>
+                            </div>
+                            Crisp
+                        </div>
+                        <img @click="closeNewPositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div class="modal-body_row">
@@ -900,6 +911,8 @@ import apexcharts from "vue3-apexcharts"
 import {
     defaultOptions
 } from '../constants/charts'
+import { addDecimals } from '@/utils/format'
+import { sqrt_price_to_tick, tick_to_sqrt_price } from '@/utils/tick'
 import { CONTRACT_ID } from '@/constants'
 import * as nearAPI from "near-api-js"
 
@@ -937,6 +950,8 @@ export default {
             t1_liq: null,
             supplyPosAfterOpening: false,
 
+            depositSource: 'outer',
+
             edit_t0_liq: null,
             edit_t1_liq: null,
             editAddLiqErrorMsg: '',
@@ -971,7 +986,6 @@ export default {
             leverageAmount: 2,
             leverageSupplyPosAfterOpening: true,
             liquidation_price_preview: null
-
         }
     },
     async created () {
@@ -1037,6 +1051,17 @@ export default {
                 pos.activeTab = 'out'
             } else if (pos.activeTab === 'out') {
                 pos.activeTab = 'in'
+            }
+        },
+        swapDepositSource: function() {
+            if (this.depositSource === 'outer') {
+                // ...
+
+                this.depositSource = 'inner'
+            } else {
+                // ...
+
+                this.depositSource = 'outer'
             }
         },
         confirmNewPoolModal: async function () {
@@ -1319,12 +1344,17 @@ export default {
                 const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
-                sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                const sa_tick = sqrt_price_to_tick(sa)
+                const sb_tick = sqrt_price_to_tick(sb)
+
+                const sa_sqrt = tick_to_sqrt_price(sa_tick)
+                const sb_sqrt = tick_to_sqrt_price(sb_tick)
+
+                const liquidity = (x * sp * sb_sqrt) / (sb_sqrt - sp)
+                sp = Math.max(Math.min(sp, sb_sqrt), sa_sqrt)
+                const res = liquidity * (sp - sa_sqrt) / Math.pow(10, tokenObj2.decimals)
 
                 this.t1_liq = toFixed(res)
-                // this.total = res
             }
 
             this.tryToCalculateLiquidationPrice()
@@ -1342,9 +1372,15 @@ export default {
                 const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = x / (sp - sa)// amount of 1st token
-                sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
+                const sa_tick = sqrt_price_to_tick(sa)
+                const sb_tick = sqrt_price_to_tick(sb)
+
+                const sa_sqrt = tick_to_sqrt_price(sa_tick)
+                const sb_sqrt = tick_to_sqrt_price(sb_tick)
+
+                const liquidity = x / (sb - sa_sqrt)// amount of 1st token
+                sp = Math.max(Math.min(sp, sb_sqrt), sa_sqrt) // ?
+                const res = liquidity * (sb_sqrt - sp) / (sp * sb_sqrt) / Math.pow(10, tokenObj.decimals)//  // ?
 
                 this.t0_liq = toFixed(res)
                 // this.total = res
@@ -1493,7 +1529,7 @@ export default {
             )
 
 
-            if (contract && this.t0_liq && this.t1_liq && t0_balance >= this.t0_liq && t1_balance >= this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+            if (contract && tokenObj && tokenObj2 && this.t0_liq && this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
                     console.log(Number(this.poolId))
@@ -1502,60 +1538,230 @@ export default {
                     console.log(Number(this.lowerPrice))
                     console.log(Number(this.upperPrice))
                     console.log(tokenObj2)
-
-                    if (this.supplyPosAfterOpening) {
-                        const { transactions } = nearAPI
-
+                    console.log(this.depositSource)
+                    if (this.depositSource === 'outer') {
+                        const t0amount = Math.ceil(Number(addDecimals(Number(this.t0_liq), tokenObj))).toString()
+                        const t1amount = Math.ceil(Number(addDecimals(Number(this.t1_liq), tokenObj2))).toString()
+                        const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                        const argsTransferT0 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t0amount,
+                            msg: ``
+                            // msg: `{"actions":[{"Open_position":{"pool_id":${this.poolId},"token0_liquidity":${t0amount},"lower_bound_price":${lbp},"upper_bound_price":${ubp},"request_id":${request_id}}}]}`
+                        }
+                        const argsTransferT1 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t1amount,
+                            msg: ``
+                        }
                         const argsOpenPos = {
                             pool_id: Number(this.poolId),
                             token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
 
-                        const argsSupplyLeveraged = {
-                            pool_id: Number(this.poolId),
-                            position_id: Number(newId),
-                            leverage: Number(this.leverageAmount)
+                        if (this.supplyPosAfterOpening) {
+                            const argsSupplyLeveraged = {
+                                pool_id: Number(this.poolId),
+                                position_id: Number(newId),
+                                leverage: Number(this.leverageAmount)
+                            }
+                            await wallet.signAndSendTransactions({
+                                transactions: [
+                                    {
+                                        receiverId: tokenObj.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: tokenObj2.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "open_position",
+                                                    args: Buffer.from(JSON.stringify(argsOpenPos)),
+                                                    gas: 150000000000000
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "supply_collateral_and_borrow",
+                                                    args: Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                                    gas: 150000000000000
+                                                }
+                                            }
+                                        ]
+                                    }                                    
+                                ]
+                            })
                         }
-                        await this.$store.state.walletConnection.account().signAndSendTransaction({
-                            receiverId: CONTRACT_ID,
-                            actions: [
-                                transactions.functionCall(
-                                    "open_position",
-                                    Buffer.from(JSON.stringify(argsOpenPos)),
-                                    150000000000000,
-                                ),
-                                transactions.functionCall(
-                                    'supply_collateral_and_borrow',
-                                    Buffer.from(JSON.stringify(argsSupplyLeveraged)),
-                                    150000000000000,
-                                    1
-                                )
-                            ]
-                        })
+                        else {
+                            await wallet.signAndSendTransactions({
+                                transactions: [
+                                    {
+                                        receiverId: tokenObj.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: tokenObj2.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "open_position",
+                                                    args: Buffer.from(JSON.stringify(argsOpenPos)),
+                                                    gas: 150000000000000
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                        }
+                    } else if (t0_balance >= this.t0_liq && t1_balance >= this.t1_liq) {
+                        console.log('weird')
+                        if (this.supplyPosAfterOpening) {
+                            const { transactions } = nearAPI
 
-                    } else {
-                        await contract.open_position(
-                            {
+                            const argsOpenPos = {
                                 pool_id: Number(this.poolId),
                                 token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
                                 lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                                 upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                             }
-                        ).then(async (response) => {
-                            console.log(response)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Position successfully opened'
+
+                            const argsSupplyLeveraged = {
+                                pool_id: Number(this.poolId),
+                                position_id: Number(newId),
+                                leverage: Number(this.leverageAmount)
+                            }
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    transactions.functionCall(
+                                        "open_position",
+                                        Buffer.from(JSON.stringify(argsOpenPos)),
+                                        150000000000000,
+                                    ),
+                                    transactions.functionCall(
+                                        'supply_collateral_and_borrow',
+                                        Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
                             })
-                            this.txPending = false
-                            this.closeNewPositionModal()
-                            await this.$store.dispatch('reload', store.state)
-                            this.calculateInit()
-                        })
+                        } else {
+                            await contract.open_position(
+                                {
+                                    pool_id: Number(this.poolId),
+                                    token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                                    lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                                    upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                                }
+                            ).then(async (response) => {
+                                console.log(response)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    // text: response
+                                    text: 'Position successfully opened'
+                                })
+                                this.txPending = false
+                                this.closeNewPositionModal()
+                                await this.$store.dispatch('reload', store.state)
+                                this.calculateInit()
+                            })
+                        }
+                    } else {
+                        throw('Insufficient balance on Crisp')
                     }
                 } catch (error) {
                     console.log(error)
@@ -1932,6 +2138,22 @@ export default {
     font-weight: 500;
     color: $textHoverColor;
 }
+
+.toggler-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    margin-right: 18px;
+}
+
+.toggler {
+    @extend %toggler;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
 .modal-wrapper {
     position: fixed;
     left: 0;
@@ -1946,6 +2168,11 @@ export default {
     background-color: rgb(59, 60, 63, 0.8);
     z-index: 600;
 
+}
+
+.modal-header-right {
+    display: flex;
+    flex-direction: row;
 }
 
 @keyframes appear {

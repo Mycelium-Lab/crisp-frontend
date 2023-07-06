@@ -98,6 +98,7 @@ export default {
 
 <style lang="scss">
 @import "~@/assets/scss/main.scss";
+@import "@near-wallet-selector/modal-ui-js/styles.css";
 
 html {
   scroll-behavior: smooth;
