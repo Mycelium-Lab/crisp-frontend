@@ -70,14 +70,16 @@
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" ref="t0_liq" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
-                                <span class="input-balance" v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-if="t0_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-else-if="t0_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{ t0_near_balance }}</span>
                                 <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" ref="t1_liq" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
-                                <span class="input-balance" v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-if="t1_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
+                                <span class="input-balance" v-else-if="t1_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{ t1_near_balance }}</span>
                                 <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
                         </template>
@@ -960,6 +962,8 @@ export default {
             upperPrice: null,      // e.g. 110
             t0_balance: null,
             t1_balance: null,
+            t0_near_balance: null,
+            t1_near_balance: null,
             // total: null,
             txPending: false,
             currentPrice: null,
@@ -1054,13 +1058,12 @@ export default {
             }
         },
         swapDepositSource: function() {
+            this.calculateInit()
             if (this.depositSource === 'outer') {
                 // ...
-
                 this.depositSource = 'inner'
             } else {
                 // ...
-
                 this.depositSource = 'outer'
             }
         },
@@ -1200,7 +1203,7 @@ export default {
                 }
             }
         },
-        calculateInit: function () {
+        calculateInit: async function () {
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
@@ -1214,6 +1217,35 @@ export default {
             this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
+            
+            await this.$store.state.walletConnection.account().viewFunction(
+                {
+                    contractId: tokenObj.token,
+                    methodName: 'ft_balance_of',
+                    args: {
+                        account_id: this.$store.state.account.accountId
+                    }
+                }
+            ).then((res) => {
+                console.log(tokenObj)
+                console.log(res)
+                this.t0_near_balance = res / Math.pow(10, Number(tokenObj.decimals))
+            })
+
+            await this.$store.state.walletConnection.account().viewFunction(
+                {
+                    contractId: tokenObj2.token,
+                    methodName: 'ft_balance_of',
+                    args: {
+                        account_id: this.$store.state.account.accountId
+                    }
+                }
+            ).then((res) => {
+                console.log(tokenObj)
+                console.log(res)
+                this.t1_near_balance = res / Math.pow(10, Number(tokenObj2.decimals))
+            })
+            
             this.t0_balance = balance0?.amount || 0
             this.t1_balance = balance1?.amount || 0
 

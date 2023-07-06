@@ -108,9 +108,9 @@ export default createStore({
       await dispatch('fetchBorrows', state)
     },
     async signIn ({state}) {
-      // state.modal.show();
-      const wallet = await state.selector.wallet("near-wallet");
-      state.accounts = await wallet.signIn({ contractId: CONTRACT_ID });
+      state.modal.show();
+      // const wallet = await state.selector.wallet("near-wallet");
+      // state.accounts = await wallet.signIn({ contractId: CONTRACT_ID });
       // await state.walletConnection.requestSignIn({
       //   contractId: CONTRACT_ID,
       //   methodNames: METHOD_NAMES
