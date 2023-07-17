@@ -86,7 +86,7 @@
                         <span v-else>Please wait while we load pools. . .</span>
                     </div>
                     <div class="modal-body_row" v-if="graphSeries[0].data[0]">
-                        <apexcharts style="max-width: 380px" type="area" width="380" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                        <apexcharts style="max-width: 380px" type="area" width="380" @selection="handleSelection" :series="graphSeries" :options="defaultOptions"></apexcharts>
                     </div>
                     <div class="modal-body_row-placeholder" v-else>
 
@@ -1012,6 +1012,13 @@ export default {
         }
     },
     methods: {
+        handleSelection: async function (chartContext, {xaxis, yaxis}) {
+            console.log(chartContext)
+            console.log(xaxis, yaxis)
+            this.lowerPrice = xaxis.min
+            this.upperPrice = xaxis.max
+            this.drawAnnotations(xaxis.min, xaxis.max, this.currentPrice)
+        },
         isNumber,
         depositToken (token) {
             console.log(token)
@@ -1166,6 +1173,16 @@ export default {
             console.log(lp, up, cp)
             this.defaultOptions = {
                 ...this.defaultOptions,
+                chart: {
+                    ...this.defaultOptions.chart,
+                    selection: {
+                        ...this.defaultOptions.chart.selection,
+                        xaxis: {
+                            min: undefined,
+                            max: undefined
+                        }
+                    }
+                },
                 annotations: {
                     position: 'front',
                     xaxis: [
