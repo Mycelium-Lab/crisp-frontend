@@ -1287,6 +1287,9 @@ export default {
                 }
                 console.log(this.useLeverageInBorrow, leverage)
     
+                console.log(Number(this.poolId), Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }), Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)), Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)), Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage, Number(this.t1_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage)
+                console.log(this.currentPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+
                 await this.$store.state.walletConnection.account().viewFunction(
                     {
                         contractId: CONTRACT_ID,
@@ -1306,7 +1309,11 @@ export default {
                     // } else {
                     //     this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
                     // }
+                    
+                    
                     this.liquidation_price_preview = res
+                    // this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
+                    
                     console.log(this.liquidation_price_preview)
                 }) 
             }
@@ -1930,6 +1937,7 @@ export default {
         },
         closePositionPrompt: function (pos) {
             console.log('1')
+            console.log(pos)
             this.positionChosenForClosing = pos
             this.modalActive = true
             this.deletePositionModalActive = true
@@ -1948,7 +1956,7 @@ export default {
                     await contract.close_position(
                         {
                             pool_id: Number(pos.poolId),
-                            id: Number(pos.id)
+                            position_id: Number(pos.id)
                         }
                     ).then((response) => {
                         console.log(response)

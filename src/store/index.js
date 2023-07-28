@@ -295,7 +295,7 @@ export default createStore({
         console.log(accounts)
         state.account = accounts[0]
 
-        state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
+        // state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
 
         state.crispContract = await new Contract(
           state.account,
@@ -311,14 +311,15 @@ export default createStore({
     },
     async fetchBalances ({state, dispatch}) {
       state.tokensBeingLoaded = true
-      if (state.crispContract && state.walletConnection.isSignedIn()) {
-        console.log('fetching balances for account ' + state.walletConnection.getAccountId())
+      if (state.crispContract && state.selector.isSignedIn() /*state.walletConnection.isSignedIn()*/) {
+        // console.log('fetching balances for account ' + state.walletConnection.getAccountId())
+        console.log('fetching balances for account ' + state.account.accountId)
         try {
           await state.walletConnection.account().viewFunction(
             {
               contractId: CONTRACT_ID,
               methodName: 'get_balance_all_tokens',
-              args: { account_id: state.walletConnection.getAccountId()
+              args: { account_id: state.account.accountId
               },
             }
           )
