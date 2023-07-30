@@ -16,6 +16,9 @@ export default createStore({
     walletConnection: null,
     crispContract: null,
     account: null,
+
+    accountId: null,
+    
     tokenBalances: [],
     tokensBeingLoaded: false,
     pools: [],
@@ -27,6 +30,7 @@ export default createStore({
     tokens: null,
     notifications: [],
     tokenForDeposit: null,
+
     loaded: {
       balances: false,
       pools: false,
@@ -289,14 +293,23 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
-      const wallet = await state.selector.wallet("near-wallet")
-      const accounts = await wallet.getAccounts()
+      // const wallet = await state.selector.wallet("near-wallet")
+      // const accounts = await wallet.getAccounts()
+      // console.log(state.selector.isSignedIn())
       if (state.selector.isSignedIn()) {
-        console.log(accounts)
-        state.account = accounts[0]
+        // console.log(accounts)
+        // state.account = accounts[0]
 
-        // state.account = await state.nearConnection.account(state.walletConnection.getAccountId())
+        // console.log(state.nearConnection)
+        const wallet = await state.selector.wallet("near-wallet")
+        const accounts = await wallet.getAccounts()
+        const account_id = accounts[0].accountId
+        // console.log(state.walletConnection.getAccountId())
+        // console.log(account_id)
 
+        state.account = await state.nearConnection.account(account_id)
+        console.log(state.account)
+        
         state.crispContract = await new Contract(
           state.account,
           CONTRACT_ID,
@@ -312,14 +325,16 @@ export default createStore({
     async fetchBalances ({state, dispatch}) {
       state.tokensBeingLoaded = true
       if (state.crispContract && state.selector.isSignedIn() /*state.walletConnection.isSignedIn()*/) {
-        // console.log('fetching balances for account ' + state.walletConnection.getAccountId())
-        console.log('fetching balances for account ' + state.account.accountId)
+        console.log('fetching balances for account ' + state.walletConnection.getAccountId())
+        const account_id = state.account.accountId
+        console.log('fetching balances for account ' + account_id)
+
         try {
           await state.walletConnection.account().viewFunction(
             {
               contractId: CONTRACT_ID,
               methodName: 'get_balance_all_tokens',
-              args: { account_id: state.account.accountId
+              args: { account_id: account_id
               },
             }
           )
@@ -342,10 +357,10 @@ export default createStore({
                 contractId: formatedArr[i],
                 methodName: 'ft_metadata',
                 args: {
-                  account_id: state.account.accountId
+                  account_id: account_id
                 },
               },
-              state.account.accountId
+              account_id
               ).then((res) => {
                 if (formatedArr[i] !== 'wrap.testnet') {
                   balanceObjects.push({
@@ -385,7 +400,8 @@ export default createStore({
       state.tokensBeingLoaded = false
     },
     async fetchDeposits ({state}) {
-      if (state.crispContract && state.walletConnection.isSignedIn()) {
+      if (state.crispContract && state.selector.isSignedIn()) {
+        console.log('11')
         await state.walletConnection.account().viewFunction(
           {
             contractId: CONTRACT_ID,
@@ -447,7 +463,7 @@ export default createStore({
       }
     },
     async fetchBorrows ({state}) {
-      if (state.crispContract && state.walletConnection.isSignedIn()) {
+      if (state.crispContract && state.selector.isSignedIn()) {
         await state.walletConnection.account().viewFunction(
           {
             contractId: CONTRACT_ID,
@@ -479,8 +495,8 @@ export default createStore({
                   console.log(borrow)
 
                   // pos.liquidation_price = borrow.liquidation_price * Math.pow(10, tokenObj2.decimals - tokenObj.decimals) * pos.leverage
-                  pos.liquidation_price0 = borrow.liquidation_price[0] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
-                  pos.liquidation_price1 = borrow.liquidation_price[1] * Math.pow(10, tokenObj2.decimals - tokenObj.decimals)
+                  pos.liquidation_price0 = borrow.liquidation_price[0] * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
+                  pos.liquidation_price1 = borrow.liquidation_price[1] * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
 
                   pos.apr = borrow.apr
                 }
