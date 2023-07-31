@@ -213,6 +213,8 @@ export default {
                 const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                 const argsTransfer = { receiver_id: CONTRACT_ID, amount: addDecimals(this.amount, tokenObj), msg: "" }
 
+                const wallet = await this.$store.state.selector.wallet("near-wallet")
+
                 // const allowedStorage = await this.$store.state.walletConnection.account().viewFunction(
                 //         {
                 //             contractId: this.token,
@@ -223,21 +225,31 @@ export default {
                 //         }
                 // )
 
-                await this.$store.state.walletConnection.account().signAndSendTransaction({
-                    receiverId: this.token,
-                    actions: [
-                        transactions.functionCall(
-                            "storage_deposit",
-                            Buffer.from(JSON.stringify(argsDeposit)),
-                            150000000000000,
-                            utils.format.parseNearAmount("1")
-                        ),
-                        transactions.functionCall(
-                            'ft_transfer_call',
-                            Buffer.from(JSON.stringify(argsTransfer)),
-                            150000000000000,
-                            1
-                        )
+                await wallet.signAndSendTransactions({
+                    transactions: [
+                        {
+                            receiverId: this.token,
+                            actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransfer)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                            ]
+                        }
                     ]
                 })
             } catch (error) {

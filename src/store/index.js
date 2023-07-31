@@ -293,19 +293,10 @@ export default createStore({
       // create wallet connection
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
-      // const wallet = await state.selector.wallet("near-wallet")
-      // const accounts = await wallet.getAccounts()
-      // console.log(state.selector.isSignedIn())
       if (state.selector.isSignedIn()) {
-        // console.log(accounts)
-        // state.account = accounts[0]
-
-        // console.log(state.nearConnection)
         const wallet = await state.selector.wallet("near-wallet")
         const accounts = await wallet.getAccounts()
         const account_id = accounts[0].accountId
-        // console.log(state.walletConnection.getAccountId())
-        // console.log(account_id)
 
         state.account = await state.nearConnection.account(account_id)
         console.log(state.account)
@@ -401,7 +392,6 @@ export default createStore({
     },
     async fetchDeposits ({state}) {
       if (state.crispContract && state.selector.isSignedIn()) {
-        console.log('11')
         await state.walletConnection.account().viewFunction(
           {
             contractId: CONTRACT_ID,
