@@ -143,7 +143,7 @@ import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
 import { addDecimals } from '@/utils/format'
-import * as nearAPI from "near-api-js"
+// import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
     store,
@@ -551,7 +551,7 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract && this.token_in.token && this.token_out.token && this.token_in.token !== this.token_out.token && Number(this.token_in_amnt)) {
-                const { utils, transactions } = nearAPI
+                // const { utils, transactions } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
                 //     // swap_in
@@ -583,21 +583,33 @@ export default {
                                     msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
                                 }
 
-                                await this.$store.state.walletConnection.account().signAndSendTransaction({
-                                    receiverId: this.token_in.token,
-                                    actions: [
-                                        transactions.functionCall(
-                                            "storage_deposit",
-                                            Buffer.from(JSON.stringify(argsDeposit)),
-                                            150000000000000,
-                                            utils.format.parseNearAmount("1")
-                                        ),
-                                        transactions.functionCall(
-                                            'ft_transfer_call',
-                                            Buffer.from(JSON.stringify(argsTransfer)),
-                                            150000000000000,
-                                            1
-                                        )
+                                const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                                await wallet.signAndSendTransactions({
+                                    transactions: [
+                                        {
+                                            receiverId: this.token_in.token,
+                                            actions: [
+                                                {
+                                                    type: "FunctionCall",
+                                                    params: {
+                                                        methodName: "storage_deposit",
+                                                        args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                        gas: 150000000000000,
+                                                        deposit: 1
+                                                    }
+                                                },
+                                                {
+                                                    type: "FunctionCall",
+                                                    params: {
+                                                        methodName: "ft_transfer_call",
+                                                        args: Buffer.from(JSON.stringify(argsTransfer)),
+                                                        gas: 150000000000000,
+                                                        deposit: 1
+                                                    }
+                                                }
+                                            ]
+                                        }
                                     ]
                                 })
                             })
