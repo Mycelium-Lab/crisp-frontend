@@ -47,8 +47,8 @@
                         <div class="deposit">
                             <div class="deposit-unit"></div>
                             <div class="deposit-unit" style="margin-left: 6px;">Asset</div>
-                            <div class="deposit-unit" style="margin-left: -14px;">Amount</div>
-                            <div class="deposit-unit" style="margin-left: -18px;">APR</div>
+                            <div class="deposit-unit" style="margin-left: 2px;">Amount</div>
+                            <div class="deposit-unit" style="margin-left: 2px;">APR</div>
                             <div class="deposit-unit"></div>
                         </div>
                         <div v-for="token in $store.state.userDepositsByToken" :key="token.id" class="deposit-token-wrapper">
@@ -100,12 +100,12 @@
                                         <button @click="close_deposit_by_token(token)" class="close-pos">
                                             X
                                         </button>
-                                        <button v-if="token.deposits.length > 1" @click="token.expanded = true" class="expand-pos">
+                                        <!--<button v-if="token.deposits.length > 1" @click="token.expanded = true" class="expand-pos">
                                             V
                                         </button>
                                         <button v-else class="expand-pos expand-pos-disabled" disabled>
                                             V
-                                        </button>
+                                        </button>-->
                                     </template>
                                 </div>
                             </div>
