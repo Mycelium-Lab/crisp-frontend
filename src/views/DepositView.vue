@@ -236,7 +236,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("1")
                                                 }
                                             },
                                             {

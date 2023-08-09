@@ -108,29 +108,29 @@
                 </div>
                 <div class="modal-footer split-footer">
                     <div class="footer-toggler">
-                        <span>Supply position as collateral after opening?</span>
+                        <!--<span>Supply position as collateral after opening?</span>
                         <div class="footer-toggler-row">
                             <button v-bind:class="{responseActive: supplyPosAfterOpening}" @click="supplyPosAfterOpening = true" class="toggler-response-btn">Yes</button>
                             <button v-bind:class="{responseActive: !supplyPosAfterOpening}" @click="supplyPosAfterOpening = false" class="toggler-response-btn">No</button>
-                        </div>
+                        </div>-->
                     </div>
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
-                <div v-if="liquidation_price_preview || supplyPosAfterOpening" class="modal-footer modal-footer-extra">
-                    <div v-if="supplyPosAfterOpening" class="input-wrapper input-wrapper-margin-right">
+                <div class="modal-footer modal-footer-extra">
+                    <div class="input-wrapper input-wrapper-margin-right">
                         <span class="input-title">Leverage</span>
                         <div class="input-wrapper-element">
                             <div class="input-wrapper-row">
                                 <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
-                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
+                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" max="5" step="0.1">
                             </div>
-                            <div v-if="leverageSupplyPosAfterOpening" class="input-wrapper-row">
+                            <div class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
                             </div>
                         </div>
                     </div>
-                    <div v-if="liquidation_price_preview" class="input-wrapper">
+                    <div v-if="liquidation_price_preview && leverageAmount > 1.0" class="input-wrapper">
                         <span class="input-title">Expected liquidation price</span>
                         <span class="modal-body_row-input input-flex-center">{{ liquidation_price_preview }}</span>
                     </div>
