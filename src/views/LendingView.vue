@@ -51,44 +51,16 @@
                             <div class="deposit-unit" style="margin-left: 2px;">APR</div>
                             <div class="deposit-unit"></div>
                         </div>
-                        <div v-for="token in $store.state.userDepositsByToken" :key="token.id" class="deposit-token-wrapper">
-                            <template v-if="token.expanded === true">
-                                <div v-for="deposit in token.deposits" :key="deposit.id" class="deposit">
-                                    <div class="deposit-unit">
-                                        <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
-                                    </div>
-                                    <div class="deposit-unit">
-                                        {{ $store.state.tokens[deposit.asset].symbol }}
-                                    </div>
-                                    <div class="deposit-unit">
-                                        {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
-                                    </div>
-                                    <div class="deposit-unit">
-                                        10%
-                                        <!--{{ deposit.apr }}-->
-                                    </div>
-                                    <div class="deposit-unit">
-                                        <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
-                                        <template v-else>
-                                            <button @click="close_deposit(deposit.id)" class="close-pos">
-                                                X
-                                            </button>
-                                            <button @click="token.expanded = false" class="expand-pos expand-pos-reverse">
-                                                V
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-                            <div v-else class="deposit">
+                        <div v-for="deposit in $store.state.userDeposits" :key="deposit.id" class="deposit-token-wrapper">
+                            <div class="deposit">
                                 <div class="deposit-unit">
-                                    <img class="icon" :src="$store.state.tokens[token.asset].icon">
+                                    <img class="icon" :src="$store.state.tokens[deposit.asset].icon">
                                 </div>
                                 <div class="deposit-unit">
-                                    {{ $store.state.tokens[token.asset].symbol }}
+                                    {{ $store.state.tokens[deposit.asset].symbol }}
                                 </div>
                                 <div class="deposit-unit">
-                                    {{ token.totalAmount / Math.pow(10, $store.state.tokens[token.asset].decimals) }}
+                                    {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
                                 </div>
                                 <div class="deposit-unit">
                                     10%
@@ -97,7 +69,7 @@
                                 <div class="deposit-unit">
                                     <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
                                     <template v-else>
-                                        <button @click="close_deposit_by_token(token)" class="close-pos">
+                                        <button @click="close_deposit_by_token(deposit)" class="close-pos">
                                             X
                                         </button>
                                         <!--<button v-if="token.deposits.length > 1" @click="token.expanded = true" class="expand-pos">
@@ -262,7 +234,7 @@ import { SWAP_TOKENS } from '@/constants'
 import { isNumber } from '../utils/number'
 import { addDecimals } from '@/utils/format'
 import store from '../store'
-import * as nearAPI from "near-api-js"
+// import * as nearAPI from "near-api-js"
 
 export default {
     name: 'LendingView',
@@ -457,28 +429,47 @@ export default {
                 }
             }
         },
-        close_deposit_by_token: async function (token) {
+        close_deposit_by_token: async function (deposit) {
             this.txPending = true
-            const { transactions } = nearAPI
-            if (token.deposits) {
+            // const { transactions } = nearAPI
 
-                for (let i = 0; i < token.deposits.length; i++) {
-                    const args = {
-                        deposit_id: Number(token.deposits[i].id)
-                    }
+            console.log(deposit)
 
-                    await this.$store.state.walletConnection.account().signAndSendTransaction({
+            const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+            const args = {
+                asset: deposit.asset,
+                amount: Number(deposit.amount).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+            }
+
+            await wallet.signAndSendTransactions({
+                transactions: [
+                    {
                         receiverId: CONTRACT_ID,
                         actions: [
-                            transactions.functionCall(
-                                "close_deposit",
-                                Buffer.from(JSON.stringify(args)),
-                                150000000000000,
-                            ),
+                            {
+                                type: "FunctionCall",
+                                params: {
+                                    methodName: "close_deposit",
+                                    args: Buffer.from(JSON.stringify(args)),
+                                    gas: 150000000000000
+                                }
+                            }
                         ]
-                    })
-                }
-            }
+                    }
+                ]
+            })
+
+            // await this.$store.state.walletConnection.account().signAndSendTransaction({
+            //     receiverId: CONTRACT_ID,
+            //     actions: [
+            //         transactions.functionCall(
+            //             "close_deposit",
+            //             Buffer.from(JSON.stringify(args)),
+            //             150000000000000,
+            //         ),
+            //     ]
+            // })
             this.$store.commit('pushNotification', {
                 title: 'Success',
                 type: 'success',
