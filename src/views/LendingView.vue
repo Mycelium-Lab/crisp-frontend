@@ -9,9 +9,20 @@
                 </div>
                 <div class="modal-body modal-body-deletepos">
                     <div class="input-wrapper">
+                        <span class="input-title">Deposit source</span>
+                        <div class="toggler-wrapper">
+                            Near
+                            <div class="toggler" @click="swapDepositSource()">
+                                <div class="toggle" :class="{toggleActive: depositSource === 'inner'}">
+
+                                </div>
+                            </div>
+                            Crisp
+                        </div>
                         <span class="input-title">Amount</span>
                         <input type="text" @keypress="isNumber" placeholder="0" v-model="create_deposit_amount" id="depositAmount" class="input-inputbox"/>
-                        <span v-if="this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol)" class="input-balance">Available balance on Crisp: {{this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol).amount.toFixed(4)}}</span>
+                        <span v-if="this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol) && depositSource === 'inner'" class="input-balance">Available balance on Crisp: {{this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol).amount.toFixed(4)}}</span>
+                        <span v-else-if="tokenForDepositNearBalance && depositSource === 'outer'" class="input-balance">Available balance on Near: {{ tokenForDepositNearBalance }}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -246,6 +257,9 @@ export default {
             addDecimals: addDecimals,
             modalActive: false,
             depositModalActive: false,
+
+            depositSource: 'inner',
+            tokenForDepositNearBalance: null,
             /**
              * create_reserve()
              */
@@ -312,16 +326,42 @@ export default {
     methods: {
         isNumber,
         openDepositModal: async function (token) {
+            const tokenObj = this.$store.state.tokens[token.token]
+
             this.modalActive = true
             this.depositModalActive = true
             this.tokenForDeposit = token
             this.create_deposit_asset = token.token
             this.create_deposit_amount = 0
+
+            await this.$store.state.walletConnection.account().viewFunction(
+                {
+                    contractId: tokenObj.token,
+                    methodName: 'ft_balance_of',
+                    args: {
+                        account_id: this.$store.state.account.accountId
+                    }
+                }
+            ).then((res) => {
+                console.log(tokenObj)
+                console.log(res)
+                this.tokenForDepositNearBalance = res / Math.pow(10, Number(tokenObj.decimals))
+            })
         },
         closeDepositModal: async function () {
             this.modalActive = false
             this.depositModalActive = false
             this.tokenForDeposit = null
+            this.tokenForDepositNearBalance = null
+        },
+        swapDepositSource: function() {
+            if (this.depositSource === 'outer') {
+                // ...
+                this.depositSource = 'inner'
+            } else {
+                // ...
+                this.depositSource = 'outer'
+            }
         },
         create_reserve: async function () {
             const contract = this.$store.state.crispContract
@@ -363,26 +403,82 @@ export default {
                     if (this.$store.state.tokens[this.create_deposit_asset]) {
                         tokenObj = this.$store.state.tokens[this.create_deposit_asset]
                     }
-
                     const amount = addDecimals(this.create_deposit_amount, tokenObj)
 
-                    await contract.create_deposit(
-                        { 
+                    if (this.depositSource === 'inner') {
+                        await contract.create_deposit(
+                            { 
+                                asset: this.create_deposit_asset,
+                                amount: amount
+                            }
+                        ).then(data => {
+                            this.txPending = false
+                            console.log(data)
+                            this.closeDepositModal()
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Create_deposit() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    } else {
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                        const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                        const argsTransfer = {
+                            receiver_id: CONTRACT_ID,
+                            amount: amount,
+                            msg: ``
+                        }
+                        const argsCreateDeposit = {
                             asset: this.create_deposit_asset,
                             amount: amount
                         }
-                    ).then(data => {
-                        this.txPending = false
-                        console.log(data)
-                        this.closeDepositModal()
-                        this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Create_deposit() is successful'
+
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: tokenObj.token,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "storage_deposit",
+                                                args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        },
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "ft_transfer_call",
+                                                args: Buffer.from(JSON.stringify(argsTransfer)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "create_deposit",
+                                                args: Buffer.from(JSON.stringify(argsCreateDeposit)),
+                                                gas: 150000000000000
+                                                // deposit: 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
                         })
-                        this.$store.dispatch('reload', store.state)
-                    })
+                    }
                 }
                 catch (err) {
                     this.txPending = false
@@ -752,6 +848,22 @@ export default {
 
 <style lang="scss" scoped>
 @import "~@/assets/scss/main.scss";
+
+.toggler-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    margin-top: 16px;
+    margin-bottom: 24px;
+}
+
+.toggler {
+    @extend %toggler;
+    margin-left: 6px;
+    margin-right: 6px;
+}
 
 .heading {
     display: flex;
