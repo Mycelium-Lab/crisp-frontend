@@ -30,6 +30,34 @@
                     <button v-if="!txPending" @click="create_deposit()" class="confirm-btn confirm-btn-deletepos">Yes</button>
                 </div>
             </div>
+            <div v-if="withdrawModalActive" class="modal">
+                <div class="modal-header">
+                    <div></div>
+                    <span class="modal-title">Withdraw {{ depositForWithdraw.symbol }}</span>
+                    <img @click="closeWithdrawModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="modal-body modal-body-deletepos">
+                    <div class="input-wrapper">
+                        <span class="input-title">Withdraw to</span>
+                        <div class="toggler-wrapper">
+                            Near
+                            <div class="toggler" @click="swapWithdrawTarget()">
+                                <div class="toggle" :class="{toggleActive: withdrawTarget === 'inner'}">
+
+                                </div>
+                            </div>
+                            Crisp
+                        </div>
+                        <span class="input-title">Amount</span>
+                        <input type="text" @keypress="isNumber" placeholder="0" v-model="close_deposit_amount" id="withdrawAmount" class="input-inputbox"/>
+                        <span class="input-balance">Total amount deposited: {{ depositForWithdraw.amount / Math.pow(10, $store.state.tokens[depositForWithdraw.asset].decimals) }}</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-if="!txPending" @click="close_deposit_by_token(depositForWithdraw)" class="confirm-btn confirm-btn-deletepos">Yes</button>
+                </div>
+            </div>
         </div>
         <template v-if="$store.state.account">
             <template v-if="tokensSupportedForDeposit && $store.state.tokens">
@@ -80,7 +108,7 @@
                                 <div class="deposit-unit">
                                     <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">
                                     <template v-else>
-                                        <button @click="close_deposit_by_token(deposit)" class="close-pos">
+                                        <button @click="openWithdrawModal(deposit)" class="close-pos">
                                             X
                                         </button>
                                         <!--<button v-if="token.deposits.length > 1" @click="token.expanded = true" class="expand-pos">
@@ -257,8 +285,10 @@ export default {
             addDecimals: addDecimals,
             modalActive: false,
             depositModalActive: false,
+            withdrawModalActive: false,
 
             depositSource: 'inner',
+            withdrawTarget: 'inner',
             tokenForDepositNearBalance: null,
             /**
              * create_reserve()
@@ -275,6 +305,8 @@ export default {
              * close_deposit()
              */
             // close_deposit_deposit_id: '',
+
+            close_deposit_amount: '',
 
             /**
              * refresh_deposits_growth()
@@ -348,6 +380,17 @@ export default {
                 this.tokenForDepositNearBalance = res / Math.pow(10, Number(tokenObj.decimals))
             })
         },
+        openWithdrawModal: async function (deposit) {
+            this.depositForWithdraw = deposit
+            this.modalActive = true
+            this.withdrawModalActive = true
+        },
+        closeWithdrawModal: async function () {
+            this.modalActive = false
+            this.withdrawModalActive = false
+            this.depositForWithdraw = null
+            this.close_deposit_amount = null
+        },
         closeDepositModal: async function () {
             this.modalActive = false
             this.depositModalActive = false
@@ -361,6 +404,15 @@ export default {
             } else {
                 // ...
                 this.depositSource = 'outer'
+            }
+        },
+        swapWithdrawTarget: function() {
+            if (this.withdrawTarget === 'outer') {
+                // ...
+                this.withdrawTarget = 'inner'
+            } else {
+                // ...
+                this.withdrawTarget = 'outer'
             }
         },
         create_reserve: async function () {
@@ -529,43 +581,72 @@ export default {
             this.txPending = true
             // const { transactions } = nearAPI
 
+            const tokenObj = this.$store.state.tokens[deposit.asset]
+
             console.log(deposit)
 
             const wallet = await this.$store.state.selector.wallet("near-wallet")
+            const amount = this.close_deposit_amount * Math.pow(10, tokenObj.decimals)
 
-            const args = {
-                asset: deposit.asset,
-                amount: Number(deposit.amount).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
-            }
+            if (this.withdrawTarget === 'inner') {
+                const args = {
+                    asset: deposit.asset,
+                    amount: Number(amount).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                }
 
-            await wallet.signAndSendTransactions({
-                transactions: [
-                    {
-                        receiverId: CONTRACT_ID,
-                        actions: [
-                            {
-                                type: "FunctionCall",
-                                params: {
-                                    methodName: "close_deposit",
-                                    args: Buffer.from(JSON.stringify(args)),
-                                    gas: 150000000000000
+                await wallet.signAndSendTransactions({
+                    transactions: [
+                        {
+                            receiverId: CONTRACT_ID,
+                            actions: [
+                                {
+                                    type: "FunctionCall",
+                                    params: {
+                                        methodName: "close_deposit",
+                                        args: Buffer.from(JSON.stringify(args)),
+                                        gas: 150000000000000
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                ]
-            })
+                            ]
+                        }
+                    ]
+                })
+            } else {
+                const argsCloseDeposit = {
+                    asset: deposit.asset,
+                    amount: Number(amount).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                }
+                const argsWithdraw = {
+                    token: deposit.asset,
+                    amount: Number(amount).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                }
 
-            // await this.$store.state.walletConnection.account().signAndSendTransaction({
-            //     receiverId: CONTRACT_ID,
-            //     actions: [
-            //         transactions.functionCall(
-            //             "close_deposit",
-            //             Buffer.from(JSON.stringify(args)),
-            //             150000000000000,
-            //         ),
-            //     ]
-            // })
+                await wallet.signAndSendTransactions({
+                    transactions: [
+                        {
+                            receiverId: CONTRACT_ID,
+                            actions: [
+                                {
+                                    type: "FunctionCall",
+                                    params: {
+                                        methodName: "close_deposit",
+                                        args: Buffer.from(JSON.stringify(argsCloseDeposit)),
+                                        gas: 150000000000000
+                                    }
+                                },
+                                {
+                                    type: "FunctionCall",
+                                    params: {
+                                        methodName: "withdraw",
+                                        args: Buffer.from(JSON.stringify(argsWithdraw)),
+                                        gas: 150000000000000
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                })
+            }
             this.$store.commit('pushNotification', {
                 title: 'Success',
                 type: 'success',
@@ -995,7 +1076,6 @@ export default {
     // border-bottom: $brightBorder;
     padding-bottom: 26px;
     padding-left: 18px;
-    padding-right: 18px;
 }
 
 .modal-title {
