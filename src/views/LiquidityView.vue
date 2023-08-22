@@ -127,7 +127,6 @@
                             </div>
                             <div class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
-                                {{supplyPosAfterOpening}}
                             </div>
                         </div>
                     </div>
