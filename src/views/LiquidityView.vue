@@ -127,6 +127,7 @@
                             </div>
                             <div class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
+                                {{supplyPosAfterOpening}}
                             </div>
                         </div>
                     </div>
@@ -1276,6 +1277,11 @@ export default {
             this.tryToCalculateLiquidationPrice()
         },
         tryToCalculateLiquidationPrice: async function () {
+            if (this.leverageAmount == 1.0) {
+                this.supplyPosAfterOpening = false
+            } else {
+                this.supplyPosAfterOpening = true
+            }
             this.liquidation_price_preview = null
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
@@ -1624,23 +1630,11 @@ export default {
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
-
-                        // console.log(ethers.add.from(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
-
-                        // console.log(ethers)
-                        // console.log(ethers.BigNumber.from(5))
-
-                        // console.log(tokenObj.decimals - tokenObj2.decimals)
-
-                        console.log(ethers.parseUnits(this.lowerPrice.toString(), tokenObj.decimals - tokenObj2.decimals))
-
-                        // console.log(Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
-
                         console.log(t0amount, t1amount)
-                        console.log(argsOpenPos)
+
                         const wallet = await this.$store.state.selector.wallet("near-wallet")
 
-                        if (this.supplyPosAfterOpening) {
+                        if (this.supplyPosAfterOpening || this.leverageAmount > 1.0) {
                             const argsSupplyLeveraged = {
                                 pool_id: Number(this.poolId),
                                 position_id: Number(newId),
