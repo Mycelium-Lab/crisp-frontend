@@ -917,6 +917,8 @@ import { addDecimals } from '@/utils/format'
 import { sqrt_price_to_tick, tick_to_sqrt_price } from '@/utils/tick'
 import { CONTRACT_ID } from '@/constants'
 import * as nearAPI from "near-api-js"
+import { ethers } from "ethers"
+// import { BigNumber } from "bignumber.js"
 
 export default {
     name: 'LiquidityView',
@@ -1596,26 +1598,46 @@ export default {
                     console.log(tokenObj2)
                     console.log(this.depositSource)
                     if (this.depositSource === 'outer') {
-                        const t0amount = Math.ceil(Number(addDecimals(Number(this.t0_liq), tokenObj))).toString()
-                        const t1amount = Math.ceil(Number(addDecimals(Number(this.t1_liq), tokenObj2))).toString()
+                        // const t0amount = Math.ceil(Number(addDecimals(Number(this.t0_liq), tokenObj))).toString()
+                        // const t1amount = Math.ceil(Number(addDecimals(Number(this.t1_liq), tokenObj2))).toString()
+                        
+                        console.log(addDecimals)
+                        console.log(ethers)
+                        const t0amount = ethers.parseUnits(Math.ceil(this.t0_liq).toString(), tokenObj.decimals)
+                        const t1amount = ethers.parseUnits(Math.ceil(this.t1_liq).toString(), tokenObj2.decimals)
+
                         const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                         const argsTransferT0 = {
                             receiver_id: CONTRACT_ID,
-                            amount: t0amount,
+                            amount: t0amount.toString(),
                             msg: ``
                             // msg: `{"actions":[{"Open_position":{"pool_id":${this.poolId},"token0_liquidity":${t0amount},"lower_bound_price":${lbp},"upper_bound_price":${ubp},"request_id":${request_id}}}]}`
                         }
                         const argsTransferT1 = {
                             receiver_id: CONTRACT_ID,
-                            amount: t1amount,
+                            amount: t1amount.toString(),
                             msg: ``
                         }
                         const argsOpenPos = {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            token0_liquidity: ethers.parseUnits(this.t0_liq.toString(), tokenObj.decimals).toString(),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
+
+                        // console.log(ethers.add.from(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+
+                        // console.log(ethers)
+                        // console.log(ethers.BigNumber.from(5))
+
+                        // console.log(tokenObj.decimals - tokenObj2.decimals)
+
+                        console.log(ethers.parseUnits(this.lowerPrice.toString(), tokenObj.decimals - tokenObj2.decimals))
+
+                        // console.log(Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+
+                        console.log(t0amount, t1amount)
+                        console.log(argsOpenPos)
                         const wallet = await this.$store.state.selector.wallet("near-wallet")
 
                         if (this.supplyPosAfterOpening) {
