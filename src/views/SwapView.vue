@@ -19,8 +19,13 @@
                     </div>
                     <div class="picker_list">
                         <div @click="selectToken(token)" v-bind:class="{listItemActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in tokens" :key="token.symbol" class="picker_list_item">
-                            <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
-                            <span class="list_item_token">{{token.symbol}}</span>
+                            <div class="list_item_left">
+                                <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
+                                <span class="list_item_token">{{token.symbol}}</span>
+                            </div>
+                            <div class="list_item_right">
+                                <span class="list_item_token">{{tokenBalances.find(e => e.token === token.token).amount}}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -188,6 +193,9 @@ export default {
                 return false
             }
         },
+        tokenBalances: function () {
+            return this.$store.state.tokenBalances
+        },
         searchPromptResult: function () {
             if (this.searchPrompt) {
                 let tokens = this.tokens
@@ -222,6 +230,7 @@ export default {
         },
         openTokenPicker: function (token) {
             console.log(this.tokens)
+            console.log(this.$store.state.tokenBalances)
             console.log(this.searchPromptResult)
             console.log(this.$store.state.tokens)
             console.log(this.$store.state.tokens)
@@ -804,7 +813,7 @@ export default {
 .picker_list_item {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     height: 40px;
     margin-top: 4px;
@@ -813,6 +822,20 @@ export default {
     padding-right: 15px;
     box-sizing: border-box;
     cursor: pointer;
+}
+
+.list_item_left {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.list_item_right {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
 }
 
 .picker_list_item:hover, .listItemActive {
