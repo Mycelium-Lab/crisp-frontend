@@ -234,7 +234,9 @@
                                         <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
                                     </div>
                                     <div class="header-cell-unit">
-                                        <button @click="openBorrowModal(pos)" class="block-RA-suggestion">Leverage</button>
+                                        <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">    
+                                        <button v-else-if="pos.isBorrowed" @click="returnBorrow(pos)" class="block-RA-suggestion">Unleverage</button>
+                                        <button v-else @click="openBorrowModal(pos)" class="block-RA-suggestion">Leverage</button>
                                     </div>
                                 </div>
                                 <div class="pos-table_header-cell">
@@ -1126,6 +1128,41 @@ export default {
             this.leverageAmount = 2
             this.borrowModalActive = false
         },
+        returnBorrow: async function (pos) {
+            console.log(pos)
+            this.txPending = true
+
+            const contract = this.$store.state.crispContract
+
+            if (contract) {
+                try {
+                    await contract.return_collateral_and_repay(
+                            { 
+                                borrow_id: Number(pos.borrowId)
+                            }
+                        ).then(data => {
+                            console.log(data)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Return_collateral_and_repay() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
+                            this.txPending = false
+                        })
+                    }
+                catch (err) {
+                    console.log(err)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: err
+                    })
+                    this.txPending = false
+                }
+            }
+        },
         calculateBorrowAmount: function () {
             const pos = this.positionToBorrow
             const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
@@ -1307,7 +1344,7 @@ export default {
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             borrowed0: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage,
-                            borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
+                            borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj2.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
                         }
                     }
                 ).then((res) => {
@@ -1965,7 +2002,71 @@ export default {
         closePosition: async function (pos) {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
+            console.log(pos)
+
+            if (pos.isBorrowed && contract) {
+                this.txPending = true
+
+                try {
+                    const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                    const argsReturnCollateral = {
+                        borrow_id: Number(pos.borrowId)
+                    }
+
+                    const argsClosePos = {
+                        pool_id: Number(pos.poolId),
+                        position_id: Number(pos.id)
+                    }
+
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "return_collateral_and_repay",
+                                            args: Buffer.from(JSON.stringify(argsReturnCollateral)),
+                                            gas: 150000000000000
+                                        }
+                                    },
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "close_position",
+                                            args: Buffer.from(JSON.stringify(argsClosePos)),
+                                            gas: 150000000000000
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then((response) => {
+                        console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully closed'
+                        })
+                        this.txPending = false
+                        this.modalActive = false
+                        this.deletePositionModalActive = false
+                        this.positionChosenForClosing = null
+                        this.$store.dispatch('reload', store.state)
+                    })
+                } catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
+            } else if (contract) {
                 this.txPending = true
                 try {
                     await contract.close_position(

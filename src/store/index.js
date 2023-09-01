@@ -478,6 +478,7 @@ export default createStore({
                   pos.borrowed1 = borrow.borrowed1 / Math.pow(10, tokenObj2.decimals)
                   pos.collateral = borrow.collateral / Math.pow(10, tokenObj.decimals)
                   pos.leverage = borrow.leverage
+                  pos.borrowId = borrow.id
 
                   console.log(borrow)
 

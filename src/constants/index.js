@@ -1,4 +1,4 @@
-export const CONTRACT_ID = "dev-1683910026097-93163630562595"
+export const CONTRACT_ID = "dev-1693247528539-46168444154402"
 export const METHOD_NAMES = ['get_pools', 'get_balance', 'get_balance_all_tokens', 'open_position', 'close_position', 'swap', 'add_liquidity', 'remove_liquidity', /* 'swap_in', 'swap_out',*/'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'positions_opened', 'get_borrows_by_account', 'get_liquidation_price']
 
 export const DEFAULT_SWAP_PAIR = {
