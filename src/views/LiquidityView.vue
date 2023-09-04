@@ -117,13 +117,13 @@
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
-                <div class="modal-footer modal-footer-extra">
+                <div v-if="pricesSet" class="modal-footer modal-footer-extra">
                     <div class="input-wrapper input-wrapper-margin-right">
                         <span class="input-title">Leverage</span>
                         <div class="input-wrapper-element">
                             <div class="input-wrapper-row">
                                 <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
-                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" max="5" step="0.1">
+                                <input v-if="maxLeverage" @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
                             </div>
                             <div class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
@@ -991,7 +991,9 @@ export default {
 
             useLeverageInBorrow: true,
             expectedBorrowAmount: null,
-            leverageAmount: 2,
+
+            maxLeverage: 1,
+            leverageAmount: null,
             leverageSupplyPosAfterOpening: true,
             liquidation_price_preview: null
         }
@@ -1002,6 +1004,11 @@ export default {
         this.loading = false
     },
     computed: {
+        pricesSet: function () {
+            const res = this.lowerPrice && this.upperPrice ? true : false
+            if (res) { this.getMaxLeverage() }
+            return res
+        },
         noLogin() {
             return this.$store.state.account === null ? true : false
         },
@@ -1016,6 +1023,29 @@ export default {
         }
     },
     methods: {
+        getMaxLeverage: async function () {
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+
+            const contract = this.$store.state.crispContract
+
+            console.log(this.lowerPrice, this.upperPrice, tokenObj, tokenObj2)
+
+            if (contract) {
+                await contract.get_max_leverage(
+                    {
+                        pool_id: Number(this.poolId),
+                        lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                        upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                    }
+                ).then(data => {
+                    this.maxLeverage = data
+                    if (this.leverageAmount && this.leverageAmount > this.maxLeverage || !this.leverageAmount) {
+                        this.leverageAmount = this.maxLeverage.toFixed(4)
+                    }
+                })
+            }
+        },
         handleSelection: async function (chartContext, {xaxis, yaxis}) {
             console.log(chartContext)
             console.log(xaxis, yaxis)

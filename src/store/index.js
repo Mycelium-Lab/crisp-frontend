@@ -305,7 +305,7 @@ export default createStore({
           state.account,
           CONTRACT_ID,
           {
-            viewMethods: ['get_pools', 'get_balance', 'positions_opened'],
+            viewMethods: ['get_pools', 'get_balance', 'positions_opened', 'get_max_leverage'],
             changeMethods: ['open_position', 'close_position', 'add_liquidity', 'remove_liquidity', 'swap',/*'swap_in', 'swap_out',*/ 'get_balance_all_tokens', 'storage_deposit', 'ft_transfer_call', 'withdraw', 'get_return', 'get_expense', 'create_reserve', 'create_deposit', 'close_deposit', 'refresh_deposits_growth', 'take_deposit_growth', 'get_account_deposits', 'supply_collateral_and_borrow', 'return_collateral_and_repay', 'get_liquidation_list', 'get_borrow_health_factor', 'liquidate', 'get_borrows_by_account', 'get_liquidation_price']
           }
         )
