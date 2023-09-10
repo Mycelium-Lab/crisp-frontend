@@ -131,8 +131,12 @@
                         </div>
                     </div>
                     <div v-if="liquidation_price_preview && leverageAmount > 1.0" class="input-wrapper">
-                        <span class="input-title">Expected liquidation price</span>
-                        <span class="modal-body_row-input input-flex-center">{{ liquidation_price_preview }}</span>
+                        <span class="input-title">Expected liquidation prices</span>
+                        <span class="modal-body_row-input input-flex-center">
+                            {{ liquidation_price_preview[0] }}
+                            <br>
+                            {{ liquidation_price_preview[1] }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -1385,8 +1389,8 @@ export default {
                     // }
                     
                     
-                    this.liquidation_price_preview = res
-                    // this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
+                    // this.liquidation_price_preview = res
+                    this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
                     
                     console.log(this.liquidation_price_preview)
                 }) 
