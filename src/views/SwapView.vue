@@ -166,9 +166,7 @@ export default {
 
             txPending: false,
             token_in_balance: null,
-            // token_in_near_balance: null,
-            token_out_near_balance: null,
-            // token_out_balance: null,
+            token_out_balance: null,
             // animation for footerBtn
             footerBtnActive: false,
             swapError: '',
@@ -268,12 +266,6 @@ export default {
             this.token_in = tin
             this.token_out = tout
             this.findPool()
-            
-            // if (this.manual_input === 'in' && this.token_in_amnt) {
-            //     this.getReturn()
-            // } else if (this.manual_input === 'out' && this.token_out_amnt) {
-            //     this.getExpense()
-            // }
         },
         swapDepositSource: async function () {
             this.findPool()
@@ -291,32 +283,6 @@ export default {
             if (this.token_in && this.token_out && this.$store.state.tokens) {
                 console.log(this.token_in)
                 console.log(this.token_out)
-                // const tokenInObj = this.$store.state.tokens[this.token_in.token]
-                // const tokenOutObj = this.$store.state.tokens[this.token_out.token]
-                // await this.$store.state.walletConnection.account().viewFunction(
-                //     {
-                //         contractId: this.token_in.token,
-                //         methodName: 'ft_balance_of',
-                //         args: {
-                //             account_id: this.$store.state.account.accountId
-                //         }
-                //     }
-                // ).then((res) => {
-                //     console.log(this.token_in)
-                //     console.log(res)
-                //     this.token_in_near_balance = res / Math.pow(10, Number(tokenInObj.decimals))
-                // })
-                // await this.$store.state.walletConnection.account().viewFunction(
-                //     {
-                //         contractId: this.token_out.token,
-                //         methodName: 'ft_balance_of',
-                //         args: {
-                //             account_id: this.$store.state.account.accountId
-                //         }
-                //     }
-                // ).then((res) => {
-                //     this.token_out_near_balance = res / Math.pow(10, Number(tokenOutObj.decimals))
-                // })
                 setStorageItem('swap_pair', {
                     token_in: this.token_in,
                     token_out: this.token_out
