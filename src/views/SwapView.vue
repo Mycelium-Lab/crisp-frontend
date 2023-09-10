@@ -84,9 +84,9 @@
                     </span>
                     <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
                 </span>
-                <span v-else-if="depositSource === 'outer' && token_in_balance && token_in_near_balance" class="token-balance">
+                <span v-else-if="depositSource === 'outer' && token_in_balance" class="token-balance">
                     <span>
-                        {{token_in_balance.symbol}} balance: {{token_in_near_balance}}
+                        {{token_in_balance.symbol}} balance: {{token_in_balance.nearBalance}}
                     </span>
                 </span>
                 <span v-else class="token-balance">
@@ -113,9 +113,9 @@
                     </span>
                     <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
                 </span>
-                <span v-else-if="depositSource === 'outer' && token_out_balance && token_out_near_balance" class="token-balance">
+                <span v-else-if="depositSource === 'outer' && token_out_balance" class="token-balance">
                     <span>
-                        {{token_out_balance.symbol}} balance: {{token_out_near_balance}}
+                        {{token_out_balance.symbol}} balance: {{token_out_balance.nearBalance}}
                     </span>
                 </span>
                 <span v-else class="token-balance">
@@ -166,9 +166,9 @@ export default {
 
             txPending: false,
             token_in_balance: null,
-            token_in_near_balance: null,
+            // token_in_near_balance: null,
             token_out_near_balance: null,
-            token_out_balance: null,
+            // token_out_balance: null,
             // animation for footerBtn
             footerBtnActive: false,
             swapError: '',
@@ -244,8 +244,20 @@ export default {
         selectToken: function (token) {
             if (this.tokenForSelection === 'in') {
                 this.token_in = token
+                const balanceObj = this.tokenBalances.find(e => e.token === token.token)
+                this.token_in_balance = {
+                    symbol: balanceObj.symbol,
+                    amount: balanceObj.amount,
+                    nearBalance: balanceObj.nearBalance
+                }
             } else {
                 this.token_out = token
+                const balanceObj = this.tokenBalances.find(e => e.token === token.token)
+                this.token_out_balance = {
+                    symbol: balanceObj.symbol,
+                    amount: balanceObj.amount,
+                    nearBalance: balanceObj.nearBalance
+                }
             }
             this.closeTokenPicker()
             this.findPool()
@@ -253,18 +265,15 @@ export default {
         swapPositions: async function () {
             const tin = this.token_out
             const tout = this.token_in
-            const inbalance = this.token_out_balance
-            const outbalance = this.token_in_balance
             this.token_in = tin
             this.token_out = tout
-            this.token_in_balance = inbalance
-            this.token_out_balance = outbalance
+            this.findPool()
             
-            if (this.manual_input === 'in' && this.token_in_amnt) {
-                this.getReturn()
-            } else if (this.manual_input === 'out' && this.token_out_amnt) {
-                this.getExpense()
-            }
+            // if (this.manual_input === 'in' && this.token_in_amnt) {
+            //     this.getReturn()
+            // } else if (this.manual_input === 'out' && this.token_out_amnt) {
+            //     this.getExpense()
+            // }
         },
         swapDepositSource: async function () {
             this.findPool()
@@ -280,32 +289,34 @@ export default {
         },
         findPool: async function () {
             if (this.token_in && this.token_out && this.$store.state.tokens) {
-                const tokenInObj = this.$store.state.tokens[this.token_in.token]
-                const tokenOutObj = this.$store.state.tokens[this.token_out.token]
-                await this.$store.state.walletConnection.account().viewFunction(
-                    {
-                        contractId: this.token_in.token,
-                        methodName: 'ft_balance_of',
-                        args: {
-                            account_id: this.$store.state.account.accountId
-                        }
-                    }
-                ).then((res) => {
-                    console.log(this.token_in)
-                    console.log(res)
-                    this.token_in_near_balance = res / Math.pow(10, Number(tokenInObj.decimals))
-                })
-                await this.$store.state.walletConnection.account().viewFunction(
-                    {
-                        contractId: this.token_out.token,
-                        methodName: 'ft_balance_of',
-                        args: {
-                            account_id: this.$store.state.account.accountId
-                        }
-                    }
-                ).then((res) => {
-                    this.token_out_near_balance = res / Math.pow(10, Number(tokenOutObj.decimals))
-                })
+                console.log(this.token_in)
+                console.log(this.token_out)
+                // const tokenInObj = this.$store.state.tokens[this.token_in.token]
+                // const tokenOutObj = this.$store.state.tokens[this.token_out.token]
+                // await this.$store.state.walletConnection.account().viewFunction(
+                //     {
+                //         contractId: this.token_in.token,
+                //         methodName: 'ft_balance_of',
+                //         args: {
+                //             account_id: this.$store.state.account.accountId
+                //         }
+                //     }
+                // ).then((res) => {
+                //     console.log(this.token_in)
+                //     console.log(res)
+                //     this.token_in_near_balance = res / Math.pow(10, Number(tokenInObj.decimals))
+                // })
+                // await this.$store.state.walletConnection.account().viewFunction(
+                //     {
+                //         contractId: this.token_out.token,
+                //         methodName: 'ft_balance_of',
+                //         args: {
+                //             account_id: this.$store.state.account.accountId
+                //         }
+                //     }
+                // ).then((res) => {
+                //     this.token_out_near_balance = res / Math.pow(10, Number(tokenOutObj.decimals))
+                // })
                 setStorageItem('swap_pair', {
                     token_in: this.token_in,
                     token_out: this.token_out
@@ -332,13 +343,15 @@ export default {
                         console.log('1')
                         this.token_in_balance = {
                             symbol: balanceObj.symbol,
-                            amount: balanceObj.amount
+                            amount: balanceObj.amount,
+                            nearBalance: balanceObj.nearBalance
                         }
                     } else {
                         console.log('h')
                         this.token_in_balance = {
                             symbol: this.tokens.find((t) => t.token === this.token_in.token)?.symbol || 'Token',
-                            amount: 0
+                            amount: 0,
+                            nearBalance: 0
                         }
                     }
                     console.log(this.token_in_balance)
@@ -348,12 +361,14 @@ export default {
                     if (balanceObj) {
                         this.token_out_balance = {
                             symbol: balanceObj.symbol,
-                            amount: balanceObj.amount
+                            amount: balanceObj.amount,
+                            nearBalance: balanceObj.nearBalance
                         }
                     } else {
                         this.token_out_balance = {
                             symbol: this.tokens.find((t) => t.token === this.token_out.token)?.symbol || 'Token',
-                            amount: 0
+                            amount: 0,
+                            nearBalance: 0
                         }
                     }
                 }

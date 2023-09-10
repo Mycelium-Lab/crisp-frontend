@@ -379,6 +379,20 @@ export default createStore({
               i++
             }
             console.log(balanceObjects)
+            for (let i = 0; i < balanceObjects.length; i++) {
+              await state.walletConnection.account().viewFunction(
+                {
+                    contractId: balanceObjects[i].token,
+                    methodName: 'ft_balance_of',
+                    args: {
+                        account_id: state.account.accountId
+                    }
+                }
+              ).then((res) => {
+                balanceObjects[i].nearBalance = res / Math.pow(10, balanceObjects[i].decimals)
+              })
+            }
+            console.log(balanceObjects)
             state.tokenBalances = balanceObjects
             state.loaded.balances = true
           })
