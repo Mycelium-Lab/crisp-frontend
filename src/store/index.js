@@ -1,6 +1,6 @@
 import { createStore } from 'vuex'
 import * as nearAPI from "near-api-js"
-import { CONTRACT_ID, METHOD_NAMES, SWAP_TOKENS } from '../constants/index.js'
+import { CONTRACT_ID, METHOD_NAMES } from '../constants/index.js'
 import { CONFIG } from '../utils/index.js'
 import router from '../router'
 
@@ -379,43 +379,27 @@ export default createStore({
               i++
             }
             console.log(balanceObjects)
-            if (!balanceObjects[0]) {
-              const emptyBalanceObjects = SWAP_TOKENS.map((e) => {
-                e = {
-                  ...e,
-                  amount: 0,
-                  nearBalance: 0
-                }
-                return e
-              })
-
-              console.log(emptyBalanceObjects)
-
-              state.tokenBalances = emptyBalanceObjects
-              state.loaded.balances = true
-            } else {
-              for (let i = 0; i < balanceObjects.length; i++) {
-                try {
-                  await state.walletConnection.account().viewFunction(
-                    {
-                        contractId: balanceObjects[i].token,
-                        methodName: 'ft_balance_of',
-                        args: {
-                            account_id: state.account.accountId
-                        }
-                    }
-                  ).then((res) => {
-                    balanceObjects[i].nearBalance = res / Math.pow(10, balanceObjects[i].decimals)
-                  })
-                } catch (e) {
-                  console.log(e)
-                  await dispatch('signOut', state)
-                }
+            for (let i = 0; i < balanceObjects.length; i++) {
+              try {
+                await state.walletConnection.account().viewFunction(
+                  {
+                      contractId: balanceObjects[i].token,
+                      methodName: 'ft_balance_of',
+                      args: {
+                          account_id: state.account.accountId
+                      }
+                  }
+                ).then((res) => {
+                  balanceObjects[i].nearBalance = res / Math.pow(10, balanceObjects[i].decimals)
+                })
+              } catch (e) {
+                console.log(e)
+                await dispatch('signOut', state)
               }
-              console.log(balanceObjects)
-              state.tokenBalances = balanceObjects
-              state.loaded.balances = true
             }
+            console.log(balanceObjects)
+            state.tokenBalances = balanceObjects
+            state.loaded.balances = true
           })
         } catch (error) {
           console.log(error)
