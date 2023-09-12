@@ -243,18 +243,35 @@ export default {
             if (this.tokenForSelection === 'in') {
                 this.token_in = token
                 const balanceObj = this.tokenBalances.find(e => e.token === token.token)
-                this.token_in_balance = {
-                    symbol: balanceObj.symbol,
-                    amount: balanceObj.amount,
-                    nearBalance: balanceObj.nearBalance
+                if (balanceObj)
+                    this.token_in_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount,
+                        nearBalance: balanceObj.nearBalance
+                }
+                else {
+                    this.token_in_balance = {
+                        symbol: token.token,
+                        amount: 0,
+                        nearBalance: 'Cant get near balance of token'
+                    }
                 }
             } else {
                 this.token_out = token
                 const balanceObj = this.tokenBalances.find(e => e.token === token.token)
-                this.token_out_balance = {
-                    symbol: balanceObj.symbol,
-                    amount: balanceObj.amount,
-                    nearBalance: balanceObj.nearBalance
+                if (balanceObj) {
+                    this.token_out_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount,
+                        nearBalance: balanceObj.nearBalance
+                    }
+                }
+                else {
+                    this.token_out_balance = {
+                        symbol: token.token,
+                        amount: 0,
+                        nearBalance: 'Cant get near balance of token'
+                    }
                 }
             }
             this.closeTokenPicker()
