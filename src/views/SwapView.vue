@@ -23,8 +23,11 @@
                                 <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
                                 <span class="list_item_token">{{token.symbol}}</span>
                             </div>
-                            <div v-if="tokenBalances.find(e => e.token === token.token)" class="list_item_right">
+                            <div v-if="depositSource === 'inner' && tokenBalances.find(e => e.token === token.token)" class="list_item_right">
                                 <span class="list_item_token">{{tokenBalances.find(e => e.token === token.token).amount}}</span>
+                            </div>
+                            <div v-else-if="depositSource === 'outer' && tokenBalances.find(e => e.token === token.token)" class="list_item_right">
+                                <span class="list_item_token">{{tokenBalances.find(e => e.token === token.token).nearBalance}}</span>
                             </div>
                         </div>
                     </div>
