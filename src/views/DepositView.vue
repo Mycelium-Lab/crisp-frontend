@@ -32,7 +32,7 @@
                         <!--{{tokenObject.token}} -->{{tokenObject.symbol}}
                     </span>
                     <span v-if="tokenObject.amount !== 0" class="list-pool_unit">
-                        {{ tokenObject.amount.toFixed(24) }}
+                        {{ tokenObject.amount }}
                     </span>
                     <span v-else class="list-pool_unit">
                         {{ tokenObject.amount }}
