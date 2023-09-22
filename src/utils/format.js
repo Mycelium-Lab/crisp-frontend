@@ -23,3 +23,8 @@ export function removeDecimals(amount, tokenObj) {
     console.log(tokenObj.symbol, resolve)
     return resolve.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
 }
+
+// export function addDecimalsToPrice(amount, decimals) {
+//     const resolve = ethers.formatUnits(amount.toString(), decimals)
+//     return resolve
+// }

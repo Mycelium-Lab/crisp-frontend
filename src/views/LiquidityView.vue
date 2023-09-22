@@ -338,7 +338,7 @@
                                                     <img class="small-icon small-icon-right" :src="pos.leverageAsset2.icon">
                                                 </div>
                                             </div>
-                                            <div class="block-row">
+                                            <!--<div class="block-row">
                                                 <div class="block-row-left">
                                                     <span class="block-row_symbol">Collateral</span>
                                                 </div>
@@ -346,7 +346,7 @@
                                                     <span class="block-row_liquidity">{{pos.collateral}}</span>
                                                     <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
                                                 </div>
-                                            </div>
+                                            </div>-->
                                             <div v-if="pos.leverage" class="block-row">
                                                 <div class="block-row-left">
                                                     <span class="block-row_fee-title">Leverage</span>
@@ -919,7 +919,7 @@ import apexcharts from "vue3-apexcharts"
 import {
     defaultOptions
 } from '../constants/charts'
-import { addDecimals } from '@/utils/format'
+import { addDecimals/*, addDecimalsToPrice */} from '@/utils/format'
 import { sqrt_price_to_tick, tick_to_sqrt_price } from '@/utils/tick'
 import { CONTRACT_ID } from '@/constants'
 import * as nearAPI from "near-api-js"
@@ -1363,10 +1363,15 @@ export default {
                 } else {
                     leverage = 1
                 }
-                console.log(this.useLeverageInBorrow, leverage)
-    
-                console.log(Number(this.poolId), Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }), Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)), Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)), Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage, Number(this.t1_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage)
-                console.log(this.currentPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                console.log(leverage)
+
+                console.log('poolId: ', this.poolId)
+                console.log('token0_liquidity: ', addDecimals(this.t0_liq, tokenObj))
+                console.log('lower_bound_price: ', Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                console.log('upper_bound_price: ', Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                console.log('borrowed0: ', addDecimals(this.t0_liq, tokenObj) * (leverage - 1))
+                console.log('borrowed1: ', addDecimals(this.t1_liq, tokenObj2) * (leverage - 1))
+
 
                 await this.$store.state.walletConnection.account().viewFunction(
                     {
@@ -1374,11 +1379,16 @@ export default {
                         methodName: 'get_liquidation_price',
                         args: {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            token0_liquidity: addDecimals(this.t0_liq, tokenObj),
+                            // token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            // lower_bound_price: addDecimalsToPrice(this.lowerPrice, tokenObj.decimals - tokenObj2.decimals),
+                            // upper_bound_price: addDecimalsToPrice(this.upperPrice, tokenObj.decimals - tokenObj2.decimals),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
-                            borrowed0: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage,
-                            borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj2.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
+                            borrowed0: addDecimals(this.t0_liq, tokenObj) * (leverage - 1),
+                            borrowed1: addDecimals(this.t1_liq, tokenObj2) * (leverage - 1)
+                            // borrowed0: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage,
+                            // borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj2.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
                         }
                     }
                 ).then((res) => {
