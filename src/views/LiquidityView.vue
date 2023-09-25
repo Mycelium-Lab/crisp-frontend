@@ -1035,7 +1035,7 @@ export default {
 
             console.log(this.lowerPrice, this.upperPrice, tokenObj, tokenObj2)
 
-            if (contract) {
+            if (contract && this.lowerPrice < this.upperPrice) {
                 await contract.get_max_leverage(
                     {
                         pool_id: Number(this.poolId),
