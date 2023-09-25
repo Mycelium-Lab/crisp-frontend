@@ -1367,15 +1367,6 @@ export default {
                 } else {
                     leverage = 1
                 }
-                console.log(leverage)
-
-                console.log('poolId: ', this.poolId)
-                console.log('token0_liquidity: ', addDecimals(this.t0_liq, tokenObj))
-                console.log('lower_bound_price: ', Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
-                console.log('upper_bound_price: ', Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
-                console.log('borrowed0: ', addDecimals(this.t0_liq, tokenObj) * (leverage - 1))
-                console.log('borrowed1: ', addDecimals(this.t1_liq, tokenObj2) * (leverage - 1))
-
 
                 await this.$store.state.walletConnection.account().viewFunction(
                     {
