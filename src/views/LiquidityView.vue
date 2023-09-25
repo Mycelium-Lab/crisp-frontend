@@ -431,7 +431,7 @@
                                                         </div>
                                                         <div class="block-row-right">
                                                             <div class="row-balance">
-                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)}}
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount}}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -454,7 +454,7 @@
                                                         </div>
                                                         <div class="block-row-right">
                                                             <div class="row-balance">
-                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)}}
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount}}
                                                             </div>
                                                         </div>
                                                     </div>
