@@ -7,6 +7,7 @@ import router from '../router'
 import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui-js";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+import { toFixed } from '@/utils/number.js'
 import { removeDecimals } from '@/utils/format.js'
 
 export default createStore({
@@ -459,8 +460,9 @@ export default createStore({
           const userDeposits = []
           for (let i = 0; i < depositsArray.length; i++) {
             console.log(depositsArray[i])
+            // console.log(toFixed(depositsArray[i][1].amount))
             const asset = depositsArray[i][1].asset
-            const amount = depositsArray[i][1].amount
+            const amount = toFixed(depositsArray[i][1].amount)
             const apr = depositsArray[i][1].apr
             const id = depositsArray[i][0]
          
@@ -496,6 +498,7 @@ export default createStore({
           // console.log(userDeposits)
           // console.log(depositedUserTokens)
 
+          console.log(userDeposits)
           state.userDeposits = userDeposits
           // state.userDepositsByToken = depositedUserTokens
           state.loaded.deposits = true

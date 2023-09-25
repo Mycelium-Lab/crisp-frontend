@@ -9,7 +9,7 @@ export function isNumber(evt) {
 }
 
 export function toFixed(x) {
-  if(!x.toString().includes('e-')) return x
+  if(!x.toString().includes('e')) return x
   if (Math.abs(x) < 1.0) {
     let e = parseInt(x.toString().split('e-')[1]);
     if (e) {
