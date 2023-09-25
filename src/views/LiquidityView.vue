@@ -1550,8 +1550,8 @@ export default {
 
                 this.edit_t1_liq = toFixed(res)
 
-                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount
+                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount
 
                 if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
                     this.editAddLiqErrorMsg = 'Not enough balance'
@@ -1932,8 +1932,8 @@ export default {
         editAddLiq: async function (pos) {
             this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
-            const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-            const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+            const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount
+            const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount
             if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
                 this.txPending = true
                 try {
