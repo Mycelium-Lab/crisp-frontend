@@ -21,7 +21,7 @@
                         </div>
                         <span class="input-title">Amount</span>
                         <input type="text" @keypress="isNumber" placeholder="0" v-model="create_deposit_amount" id="depositAmount" class="input-inputbox"/>
-                        <span v-if="this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol) && depositSource === 'inner'" class="input-balance">Available balance on Crisp: {{this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol).amount.toFixed(4)}}</span>
+                        <span v-if="this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol) && depositSource === 'inner'" class="input-balance">Available balance on Crisp: {{this.$store.state.tokenBalances.find(item => item.symbol === tokenForDeposit.symbol).amount}}</span>
                         <span v-else-if="tokenForDepositNearBalance && depositSource === 'outer'" class="input-balance">Available balance on Near: {{ tokenForDepositNearBalance }}</span>
                     </div>
                 </div>

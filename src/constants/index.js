@@ -18,7 +18,7 @@ export const SWAP_TOKENS = [
     //     token: 'usdt.fakes.testnet'
     // },
     {
-        symbol: 'USDC',
+        symbol: 'USDC.e',
         token: 'usdc.fakes.testnet'
     },
     {
