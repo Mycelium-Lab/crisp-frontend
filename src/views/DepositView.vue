@@ -161,43 +161,51 @@ export default {
   },
   methods: {
     getTokenWalletBalance: async function () {
-        if (this.$store.state.walletConnection.account())
-        this.txPending = true
-        try {
-            await this.$store.state.walletConnection.account().viewFunction(
-                {
-                    contractId: this.token,
-                    methodName: 'ft_balance_of',
-                    args: {
-                        account_id: this.$store.state.account.accountId
-                    }
-                }
-            ).then(async (res) => {
-                if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
-                    await this.$store.state.walletConnection.account().viewFunction(
-                        {
-                            contractId: this.token,
-                            methodName: 'ft_metadata',
-                            args: {
-                                account_id: this.$store.state.account.accountId
-                            }
-                        }
-                    ).then((res2) => {
-                        console.log(res2)
-                        this.walletAmount = res2.symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, res2.decimals)).toFixed(4)
-                        this.txPending = false
-                    })
-                } else {
-                    console.log(res)
-                    this.walletAmount = this.$store.state.tokens[this.token].symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, this.$store.state.tokens[this.token].decimals)).toFixed(4)
-                    this.txPending = false
-                }
-            })
-        } catch (error) {
-            console.log(error)
-            this.walletAmount = null
-            this.txPending = false
+        // if (this.$store.state.walletConnection.account())
+        // this.txPending = true
+        this.walletAmount = ''
+
+        if (this.$store.state.tokenBalances && this.$store.state.tokenBalances[0]) {
+            const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token)
+            if (balanceObj) {
+                this.walletAmount = balanceObj.symbol + ' balance on NEAR wallet:  ' + balanceObj.nearBalance
+            }
         }
+        // try {
+        //     await this.$store.state.walletConnection.account().viewFunction(
+        //         {
+        //             contractId: this.token,
+        //             methodName: 'ft_balance_of',
+        //             args: {
+        //                 account_id: this.$store.state.account.accountId
+        //             }
+        //         }
+        //     ).then(async (res) => {
+        //         if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
+        //             await this.$store.state.walletConnection.account().viewFunction(
+        //                 {
+        //                     contractId: this.token,
+        //                     methodName: 'ft_metadata',
+        //                     args: {
+        //                         account_id: this.$store.state.account.accountId
+        //                     }
+        //                 }
+        //             ).then((res2) => {
+        //                 console.log(res2)
+        //                 this.walletAmount = res2.symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, res2.decimals)).toFixed(4)
+        //                 this.txPending = false
+        //             })
+        //         } else {
+        //             console.log(res)
+        //             this.walletAmount = this.$store.state.tokens[this.token].symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, this.$store.state.tokens[this.token].decimals)).toFixed(4)
+        //             this.txPending = false
+        //         }
+        //     })
+        // } catch (error) {
+        //     console.log(error)
+        //     this.walletAmount = null
+        //     this.txPending = false
+        // }
     },
     deposit: async function () {
         if (this.$store.state.account) {
