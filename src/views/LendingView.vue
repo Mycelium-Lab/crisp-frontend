@@ -99,7 +99,7 @@
                                     {{ $store.state.tokens[deposit.asset].symbol }}
                                 </div>
                                 <div class="deposit-unit">
-                                    {{ deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals) }}
+                                    {{ (deposit.amount / Math.pow(10, $store.state.tokens[deposit.asset].decimals)).toFixed(4) }}
                                 </div>
                                 <div class="deposit-unit">
                                     10%
