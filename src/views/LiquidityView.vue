@@ -410,8 +410,19 @@
                                                 </div>
                                             </div>
                                             <div class="section-block-wrapper">
-                                                <div class="section-block-title">
-                                                    Add more liquidity
+                                                <div class="block-row">
+                                                    <div class="section-block-title">
+                                                        Add more liquidity
+                                                    </div>
+                                                    <div class="toggler-wrapper nomarginright">
+                                                        Near
+                                                        <div class="toggler" @click="swapEditLiquiditySource(pos)">
+                                                            <div class="toggle" :class="{toggleActive: editLiquiditySource === 'inner'}">
+
+                                                            </div>
+                                                        </div>
+                                                        Crisp
+                                                    </div>
                                                 </div>
                                                 <div class="section-block">
                                                     <div class="block-row">
@@ -430,8 +441,11 @@
                                                             <!-- TODO: liquidity in $USD -->
                                                         </div>
                                                         <div class="block-row-right">
-                                                            <div class="row-balance">
+                                                            <div v-if="editLiquiditySource === 'inner'" class="row-balance">
                                                                 Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount}}
+                                                            </div>
+                                                            <div v-else-if="editLiquiditySource === 'outer'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).nearBalance}}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -453,8 +467,11 @@
                                                             <!-- TODO: liquidity in $USD -->
                                                         </div>
                                                         <div class="block-row-right">
-                                                            <div class="row-balance">
+                                                            <div v-if="editLiquiditySource === 'inner'" class="row-balance">
                                                                 Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount}}
+                                                            </div>
+                                                            <div v-else-if="editLiquiditySource === 'outer'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).nearBalance}}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -961,6 +978,7 @@ export default {
             supplyPosAfterOpening: false,
 
             depositSource: 'outer',
+            editLiquiditySource: 'outer',
 
             edit_t0_liq: null,
             edit_t1_liq: null,
@@ -1111,6 +1129,14 @@ export default {
                 // ...
                 this.depositSource = 'outer'
             }
+        },
+        swapEditLiquiditySource: function (pos) {
+            if (this.editLiquiditySource === 'outer') {
+                this.editLiquiditySource = 'inner'
+            } else {
+                this.editLiquiditySource = 'outer'
+            }
+            this.calcEditDefault(pos)
         },
         confirmNewPoolModal: async function () {
             const contract = this.$store.state.crispContract
@@ -1550,10 +1576,14 @@ export default {
 
                 this.edit_t1_liq = toFixed(res)
 
-                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount
-                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount
+                const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+                const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
+                const t0_balance = t0BalanceObj.amount
+                const t1_balance = t1BalanceObj.amount
+                const t0_near_balance = t0BalanceObj.nearBalance
+                const t1_near_balance = t1BalanceObj.nearBalance
 
-                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                if (((Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) && this.editLiquiditySource === 'inner') || ((Number(this.edit_t0_liq) > Number(t0_near_balance) || Number(this.edit_t1_liq) > Number(t1_near_balance)) && this.editLiquiditySource === 'outer')) {
                     this.editAddLiqErrorMsg = 'Not enough balance'
                 }
             }
@@ -1578,10 +1608,14 @@ export default {
 
                 this.edit_t0_liq = toFixed(res)
                 // this.total = res
-                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+                const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+                const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
+                const t0_balance = t0BalanceObj.amount
+                const t1_balance = t1BalanceObj.amount
+                const t0_near_balance = t0BalanceObj.nearBalance
+                const t1_near_balance = t1BalanceObj.nearBalance
 
-                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                if (((Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) && this.editLiquiditySource === 'inner') || ((Number(this.edit_t0_liq) > Number(t0_near_balance) || Number(this.edit_t1_liq) > Number(t1_near_balance)) && this.editLiquiditySource === 'outer')) {
                     this.editAddLiqErrorMsg = 'Not enough balance'
                 }
             }
@@ -1932,32 +1966,172 @@ export default {
         editAddLiq: async function (pos) {
             this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
-            const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount
-            const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount
-            if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
-                this.txPending = true
-                try {
-                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
-                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
-                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+            const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+            const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
 
-                    await contract.add_liquidity(
-                        {
-                            pool_id: Number(pos.poolId),
-                            position_id: Number(pos.id),
-                            token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
-                        }
-                    ).then((response) => {
-                        console.log(response)
+            const t0_balance = t0BalanceObj.amount
+            const t1_balance = t1BalanceObj.amount
+            const t0_near_balance = t0BalanceObj.nearBalance
+            const t1_near_balance = t1BalanceObj.nearBalance
+
+            if (this.editLiquiditySource === 'inner') {
+                if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
+                    this.txPending = true
+                    try {
+                        let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                        console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
+                        // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                        await contract.add_liquidity(
+                            {
+                                pool_id: Number(pos.poolId),
+                                position_id: Number(pos.id),
+                                token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    } catch (error) {
+                        console.log(error)
                         this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully changed'
+                            title: 'Error',
+                            type: 'error',
+                            text: error
                         })
                         this.txPending = false
-                        this.$store.dispatch('reload', store.state)
+                    }
+                } else if (!contract) {
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: 'Error: No contract!'
                     })
+                } else if (!this.edit_t0_liq) {
+                    this.editAddLiqErrorMsg = 'Wrong amount'
+                } else if (Number(this.edit_t0_liq) > Number(t0_balance)) {
+                    const ref = 'edit_t0' + pos.id
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                    this.$refs[ref][0].focus()
+                } else if (Number(this.edit_t1_liq) > Number(t1_balance)) {
+                    const ref = 'edit_t1' + pos.id
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                    this.$refs[ref][0].focus()
+                }
+            } else {
+                try {
+                    if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_near_balance) && Number(this.edit_t1_liq) < Number(t1_near_balance)) {
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                        const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                        const t0amount = addDecimals(this.edit_t0_liq, tokenObj)
+                        const t1amount = addDecimals(this.edit_t1_liq, tokenObj2)
+
+                        const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                        const argsTransferT0 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t0amount,
+                            msg: ``
+                        }
+                        const argsTransferT1 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t1amount,
+                            msg: ``
+                        }
+                        const argsAddLiquidity = {
+                            pool_id: Number(pos.poolId),
+                            position_id: Number(pos.id),
+                            token0_liquidity: t0amount
+                        }
+
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: tokenObj.token,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "storage_deposit",
+                                                args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        },
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "ft_transfer_call",
+                                                args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    receiverId: tokenObj2.token,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "storage_deposit",
+                                                args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        },
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "ft_transfer_call",
+                                                args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "add_liquidity",
+                                                args: Buffer.from(JSON.stringify(argsAddLiquidity)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        })
+                    } else if (!contract) {
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: 'Error: No contract!'
+                        })
+                    } else if (!this.edit_t0_liq) {
+                        this.editAddLiqErrorMsg = 'Wrong amount'
+                    } else if (Number(this.edit_t0_liq) > Number(t0_near_balance)) {
+                        const ref = 'edit_t0' + pos.id
+                        this.editAddLiqErrorMsg = 'Not enough balance'
+                        this.$refs[ref][0].focus()
+                    } else if (Number(this.edit_t1_liq) > Number(t1_near_balance)) {
+                        const ref = 'edit_t1' + pos.id
+                        this.editAddLiqErrorMsg = 'Not enough balance'
+                        this.$refs[ref][0].focus()
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
@@ -1965,24 +2139,7 @@ export default {
                         type: 'error',
                         text: error
                     })
-                    this.txPending = false
                 }
-            } else if (!contract) {
-                this.$store.commit('pushNotification', {
-                    title: 'Error',
-                    type: 'error',
-                    text: 'Error: No contract!'
-                })
-            } else if (!this.edit_t0_liq) {
-                this.editAddLiqErrorMsg = 'Wrong amount'
-            } else if (Number(this.edit_t0_liq) > Number(t0_balance)) {
-                const ref = 'edit_t0' + pos.id
-                this.editAddLiqErrorMsg = 'Not enough balance'
-                this.$refs[ref][0].focus()
-            } else if (Number(this.edit_t1_liq) > Number(t1_balance)) {
-                const ref = 'edit_t1' + pos.id
-                this.editAddLiqErrorMsg = 'Not enough balance'
-                this.$refs[ref][0].focus()
             }
         },
         editRemoveLiq: async function (pos) {
@@ -2358,6 +2515,10 @@ export default {
     align-items: center;
     font-weight: 500;
     margin-right: 18px;
+}
+
+.nomarginright {
+    margin-right: 0;
 }
 
 .toggler {
