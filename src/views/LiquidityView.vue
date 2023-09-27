@@ -496,9 +496,20 @@
                                                 <span class="table-heading">Remove liquidity</span>
                                             </div>
                                             <div class="section-block-wrapper">
-                                                <span class="section-block-title">
-                                                    Amount to remove
-                                                </span>
+                                                <div class="block-row">
+                                                    <span class="section-block-title">
+                                                        Amount to remove
+                                                    </span>
+                                                    <div class="toggler-wrapper nomarginright">
+                                                        Near
+                                                        <div class="toggler" @click="swapEditLiquiditySource(pos)">
+                                                            <div class="toggle" :class="{toggleActive: editLiquiditySource === 'inner'}">
+
+                                                            </div>
+                                                        </div>
+                                                        Crisp
+                                                    </div>
+                                                </div>
                                                 <div class="section-block">
                                                     <div class="block-row">
                                                         <div class="block-row-left">
@@ -2147,31 +2158,97 @@ export default {
             if (contract && this.removeAmount > 0) {
                 this.txPending = true
                 try {
-                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
-                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
-                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+                    const tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                    const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+                    console.log(pos)
 
                     const currentT0liquidity = pos.token0_real_liquidity
+                    const currentT1liquidity = pos.token1_real_liquidity
 
-                    const desiredLiquidityForRemoval = currentT0liquidity / 100 * this.removeAmount
+                    const desiredLiquidityForRemoval = addDecimals(currentT0liquidity / 100 * this.removeAmount, tokenObj)
+                    const desiredLiquidity1ForRemoval = addDecimals(currentT1liquidity / 100 * this.removeAmount, tokenObj2)
 
-                    await contract.remove_liquidity(
-                        {
+                    if (this.editLiquiditySource === 'inner') {
+                        await contract.remove_liquidity(
+                            {
+                                pool_id: Number(pos.poolId),
+                                position_id: Number(pos.id),
+                                token0_liquidity: desiredLiquidityForRemoval
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    } else {
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        
+                        const argsRemoveLiquidity = {
                             pool_id: Number(pos.poolId),
                             position_id: Number(pos.id),
-                            token0_liquidity: Number(desiredLiquidityForRemoval * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                            token0_liquidity: desiredLiquidityForRemoval
                         }
-                    ).then((response) => {
-                        console.log(response)
-                        this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully changed'
+
+                        const argsWithdraw = {
+                            token: this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0].token,
+                            amount: desiredLiquidityForRemoval
+                        }
+
+                        const argsWithdraw1 = {
+                            token: this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1].token,
+                            amount: desiredLiquidity1ForRemoval
+                        }
+
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "remove_liquidity",
+                                                args: Buffer.from(JSON.stringify(argsRemoveLiquidity)),
+                                                gas: 150000000000000
+                                            }
+                                        },
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "withdraw",
+                                                args: Buffer.from(JSON.stringify(argsWithdraw)),
+                                                gas: 150000000000000
+                                            }
+                                        },
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "withdraw",
+                                                args: Buffer.from(JSON.stringify(argsWithdraw1)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
                         })
-                        this.txPending = false
-                        this.$store.dispatch('reload', store.state)
-                    })
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
