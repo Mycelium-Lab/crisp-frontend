@@ -117,13 +117,13 @@
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
-                <div v-if="pricesSet" class="modal-footer modal-footer-extra">
+                <div v-if="pricesSet && maxLeverage > 1" class="modal-footer modal-footer-extra">
                     <div class="input-wrapper input-wrapper-margin-right">
                         <span class="input-title">Leverage</span>
                         <div class="input-wrapper-element">
                             <div class="input-wrapper-row">
                                 <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
-                                <input v-if="maxLeverage" @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
+                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
                             </div>
                             <div class="input-wrapper-row">
                                 Selected leverage amount: {{ leverageAmount }}
@@ -1076,6 +1076,7 @@ export default {
                     if (this.leverageAmount && this.leverageAmount > this.maxLeverage || !this.leverageAmount) {
                         this.leverageAmount = this.maxLeverage.toFixed(4)
                     }
+                    console.log(this.leverageAmount)
                 })
             }
         },
