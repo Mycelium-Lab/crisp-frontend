@@ -386,12 +386,16 @@ export default createStore({
               }
             }
             console.log(balanceObjects)
-            if (!balanceObjects[0]) {
-              for (let i = 0; i < SWAP_TOKENS.length; i++) {
+            // if (!balanceObjects[0]) {
+            for (let i = 0; i < SWAP_TOKENS.length; i++) {
+              const existingBalanceOfThisToken = balanceObjects.find((item) => item.token === SWAP_TOKENS[i].token)
+              if (!existingBalanceOfThisToken) {
                 balanceObjects.push(SWAP_TOKENS[i])
               }
-              console.log(balanceObjects)
-              for (let i = 0; i < balanceObjects.length; i++) {
+            }
+            console.log(balanceObjects)
+            for (let i = 0; i < balanceObjects.length; i++) {
+              if (('amount' in balanceObjects[i]) === false) {
                 await state.walletConnection.account().viewFunction(
                   {
                     contractId: balanceObjects[i].token,
@@ -414,6 +418,7 @@ export default createStore({
                 })
               }
             }
+            // }
             for (let i = 0; i < balanceObjects.length; i++) {
               try {
                 await state.walletConnection.account().viewFunction(
