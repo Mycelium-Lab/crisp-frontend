@@ -72,7 +72,7 @@
                                 <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" ref="t0_liq" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
                                 <span class="input-balance" v-if="t0_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance}}</span>
                                 <span class="input-balance" v-else-if="t0_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{ t0_near_balance }}</span>
-                                <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
+                                <button v-else-if="t0_balance === 0 && depositSource ==='inner'" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
@@ -80,7 +80,7 @@
                                 <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" ref="t1_liq" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
                                 <span class="input-balance" v-if="t1_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance}}</span>
                                 <span class="input-balance" v-else-if="t1_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{ t1_near_balance }}</span>
-                                <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
+                                <button v-else-if="t1_balance === 0 && depositSource ==='inner'" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
                         </template>
                         <span v-else>Please wait while we load pools. . .</span>
