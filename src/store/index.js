@@ -450,64 +450,43 @@ export default createStore({
       state.tokensBeingLoaded = false
     },
     async fetchDeposits ({state}) {
+      console.log(state.account.accountId)
       if (state.crispContract && state.selector.isSignedIn()) {
-        await state.walletConnection.account().viewFunction(
-          {
-            contractId: CONTRACT_ID,
-            methodName: 'get_account_deposits',
-            args: {
-              account_id: state.account.accountId
-            },
-          }
-        ).then((res) => {
-          console.log(res)
-          const depositsArray = Object.entries(res)
-          const userDeposits = []
-          for (let i = 0; i < depositsArray.length; i++) {
-            console.log(depositsArray[i])
-            // console.log(toFixed(depositsArray[i][1].amount))
-            const asset = depositsArray[i][1].asset
-            const amount = toFixed(depositsArray[i][1].amount)
-            const apr = depositsArray[i][1].apr
-            const id = depositsArray[i][0]
-         
-            userDeposits.push({
-              asset: asset,
-              amount: amount,
-              apr: apr,
-              id: id
-            })
-          }
-
-          // const depositedUserTokens = []
-          // for (let i = 0; i < userDeposits.length; i++) {
-          //   const token = depositedUserTokens.findIndex(item => item.asset === userDeposits[i].asset)
-          //   if (token !== -1) {
-          //     depositedUserTokens[token].deposits.push(userDeposits[i])
-          //   } else {
-          //     depositedUserTokens.push({
-          //       asset: userDeposits[i].asset,
-          //       apr: userDeposits[i].apr,
-          //       deposits: [userDeposits[i]]
-          //     })
-          //   }
-          // }
-          // for (let i = 0; i < depositedUserTokens.length; i++) {
-          //   depositedUserTokens[i].totalAmount = 0
-          //   depositedUserTokens[i].ids = []
-          //   for (let j = 0; j < depositedUserTokens[i].deposits.length; j++) {
-          //     depositedUserTokens[i].totalAmount += depositedUserTokens[i].deposits[j].amount
-          //     depositedUserTokens[i].ids.push(depositedUserTokens[i].deposits[j].id)
-          //   }
-          // }
-          // console.log(userDeposits)
-          // console.log(depositedUserTokens)
-
-          console.log(userDeposits)
-          state.userDeposits = userDeposits
-          // state.userDepositsByToken = depositedUserTokens
-          state.loaded.deposits = true
-        })
+        try {
+          await state.walletConnection.account().viewFunction(
+            {
+              contractId: CONTRACT_ID,
+              methodName: 'get_account_deposits',
+              args: {
+                account_id: state.account.accountId
+              },
+            }
+          ).then((res) => {
+            console.log(res)
+            const depositsArray = Object.entries(res)
+            const userDeposits = []
+            for (let i = 0; i < depositsArray.length; i++) {
+              console.log(depositsArray[i])
+              // console.log(toFixed(depositsArray[i][1].amount))
+              const asset = depositsArray[i][1].asset
+              const amount = toFixed(depositsArray[i][1].amount)
+              const apr = depositsArray[i][1].apr
+              const id = depositsArray[i][0]
+          
+              userDeposits.push({
+                asset: asset,
+                amount: amount,
+                apr: apr,
+                id: id
+              })
+            }
+            console.log(userDeposits)
+            state.userDeposits = userDeposits
+          })
+        } catch (e) {
+          console.log(e)
+        }
+        state.loaded.deposits = true
       }
     },
     async fetchBorrows ({state}) {

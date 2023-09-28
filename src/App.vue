@@ -83,6 +83,7 @@ export default {
             await this.$store.commit('emitLoading', 'positions')
           }
           if (this.$store.state.pools[0]) {
+            console.log('fetching deposits and borrows')
             await this.$store.dispatch('fetchDeposits', store.state)
             await this.$store.dispatch('fetchBorrows', store.state)  
           }
