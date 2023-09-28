@@ -1332,6 +1332,9 @@ export default {
             }
         },
         calculateInit: async function () {
+            this.t0_liq = null
+            this.t1_liq = null
+            
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
