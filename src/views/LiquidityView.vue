@@ -147,21 +147,24 @@
                 </div>
                 <div class="modal-body">
                     <div class="modal-body_row">
-                        <div class="input-wrapper">
+                        <div class="input-wrapper fixedwidth360">
                             <span class="input-title"><span>Leverage</span></span>
-                            <div class="input-wrapper-element">
+                            <div v-if="maxLeverage > 1" class="input-wrapper-element alignedleverageboxelements">
                                 <div class="input-wrapper-row">
                                     <!--<input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">-->
-                                    <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1.2" max="5" step="0.1">
+                                    <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
                                 </div>
                                 <div v-if="useLeverageInBorrow" class="input-wrapper-row">
                                     Selected leverage amount: {{ leverageAmount }}
                                 </div>
                             </div>
                         </div>
-                        <div class="input-wrapper">
-                            <span class="input-title">Expected borrow amount</span>
-                            <span class="input-balance">{{ expectedBorrowAmount }}</span>
+                        <div v-if="expectedBorrowAmount && expectedBorrowAmount[0]" class="input-wrapper fixedwidth360">
+                            <span class="input-title">You will borrow:</span>
+                            <div class="input-wrapper-element alignedleverageboxelements">
+                                <span class="input-balance" style="padding-left:0">{{ expectedBorrowAmount[0] }}</span>
+                                <span class="input-balance" style="padding-left:0">{{ expectedBorrowAmount[1] }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1080,6 +1083,30 @@ export default {
                 })
             }
         },
+        getMaxLeverageForExistingPosition: async function (pos) {
+            console.log(pos)
+
+            // const tokenObj = this.$store.state.tokens[pos.token0]
+            // const tokenObj2 = this.$store.state.tokens[pos.token1]
+            const contract = this.$store.state.crispContract
+
+            const lowerPrice = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price
+            const upperPrice = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price
+
+            if (contract) {
+                await contract.get_max_leverage(
+                    {
+                        pool_id: Number(pos.poolId),
+                        lower_bound_price: lowerPrice,
+                        upper_bound_price: upperPrice
+                    }
+                ).then(data => {
+                    this.maxLeverage = data
+                    this.leverageAmount = this.maxLeverage.toFixed(4)
+                    console.log(data)
+                })
+            }
+        },
         handleSelection: async function (chartContext, {xaxis, yaxis}) {
             console.log(chartContext)
             console.log(xaxis, yaxis)
@@ -1187,10 +1214,11 @@ export default {
             this.supplyPosAfterOpening = false
             // this.leverageSupplyPosAfterOpening = false
         },
-        openBorrowModal: function (pos) {
+        openBorrowModal: async function (pos) {
             this.modalActive = true
             this.borrowModalActive = true
             this.positionToBorrow = pos
+            await this.getMaxLeverageForExistingPosition(pos)
             this.calculateBorrowAmount()
         },
         closeBorrowModal: function () {
@@ -1237,21 +1265,30 @@ export default {
         },
         calculateBorrowAmount: function () {
             const pos = this.positionToBorrow
-            const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
-            const x = Number(pos.token0_real_liquidity)
-            const y = Number(pos.token1_real_liquidity)
-            const res = p * x + y
-            if (this.useLeverageInBorrow) {
-                this.expectedBorrowAmount = res * this.leverageAmount
-            } else {
-                this.expectedBorrowAmount = res
+            console.log(pos)
+            if (this.leverageAmount) {
+                this.expectedBorrowAmount = null
+                // const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
+                // const x = Number(pos.token0_real_liquidity)
+                // const y = Number(pos.token1_real_liquidity)
+                // const res = p * x + y
+                // if (this.useLeverageInBorrow) {
+                //     this.expectedBorrowAmount = res * this.leverageAmount
+                // } else {
+                //     this.expectedBorrowAmount = res
+                // }
+                const xValue = Number(pos.token0_real_liquidity) * (this.leverageAmount - 1)
+                const yValue = Number(pos.token1_real_liquidity) * (this.leverageAmount - 1)
+                const xMsg = xValue + ' of token ' + this.$store.state.tokens[pos.token0].symbol
+                const yMsg = yValue + ' of token ' + this.$store.state.tokens[pos.token1].symbol
+                this.expectedBorrowAmount = [xMsg, yMsg]
+                console.log(this.useLeverageInBorrow)
             }
-            console.log(this.useLeverageInBorrow)
         },
         confirmBorrowModal: async function () {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
+            if (contract && this.leverageAmount > 1) {
                 try {
                     await contract.supply_collateral_and_borrow(
                             { 
@@ -2749,6 +2786,12 @@ export default {
     margin-right: 30px;
 }
 
+.fixedwidth360 {
+    width: 360px !important;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
 .input-wrapper-element {
     border: 0;
     background-color: $elementBgColor;
@@ -2765,6 +2808,12 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+.alignedleverageboxelements {
+    width: 100%;
+    height: 92px;
+    align-items: flex-start;
 }
 
 .input-wrapper-row {
