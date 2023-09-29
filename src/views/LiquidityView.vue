@@ -117,10 +117,10 @@
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
                 </div>
-                <div v-if="pricesSet && maxLeverage > 1" class="modal-footer modal-footer-extra">
-                    <div class="input-wrapper input-wrapper-margin-right">
+                <div v-if="pricesSet && maxLeverage > 1 && t0_liq && t1_liq" class="modal-body_row" style="margin-top: 26px">
+                    <div class="input-wrapper">
                         <span class="input-title">Leverage</span>
-                        <div class="input-wrapper-element">
+                        <div class="modal-body_row-input input-wrapper-element">
                             <div class="input-wrapper-row">
                                 <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
                                 <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
@@ -136,6 +136,14 @@
                             {{ liquidation_price_preview[0] }}
                             <br>
                             {{ liquidation_price_preview[1] }}
+                        </span>
+                    </div>
+                    <div v-if="expectedBorrowAmount && leverageAmount > 1.0" class="input-wrapper">
+                        <span class="input-title">You will borrow:</span>
+                        <span class="modal-body_row-input input-flex-center tinytextsize">
+                            {{ expectedBorrowAmount[0] }}
+                            <br>
+                            {{ expectedBorrowAmount[1] }}
                         </span>
                     </div>
                 </div>
@@ -1211,6 +1219,9 @@ export default {
             this.modalActive = false
             this.newPositionModalActive = false
             this.leverageAmount = null
+            this.expectedBorrowAmount = null
+            this.t0_liq = null
+            this.t1_liq = null
             this.supplyPosAfterOpening = false
             // this.leverageSupplyPosAfterOpening = false
         },
@@ -1435,6 +1446,7 @@ export default {
                 this.supplyPosAfterOpening = true
             }
             this.liquidation_price_preview = null
+            this.expectedBorrowAmount = null
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
@@ -1453,28 +1465,23 @@ export default {
                         args: {
                             pool_id: Number(this.poolId),
                             token0_liquidity: addDecimals(this.t0_liq, tokenObj),
-                            // token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
-                            // lower_bound_price: addDecimalsToPrice(this.lowerPrice, tokenObj.decimals - tokenObj2.decimals),
-                            // upper_bound_price: addDecimalsToPrice(this.upperPrice, tokenObj.decimals - tokenObj2.decimals),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             borrowed0: addDecimals(this.t0_liq, tokenObj) * (leverage - 1),
                             borrowed1: addDecimals(this.t1_liq, tokenObj2) * (leverage - 1)
-                            // borrowed0: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage,
-                            // borrowed1: Number(this.t1_liq * Math.pow(10, tokenObj2.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }) * leverage
                         }
                     }
                 ).then((res) => {
-                    // if (this.useLeverageInBorrow) {
-                    //     this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals) * this.leverageAmount
-                    // } else {
-                    //     this.liquidation_price_preview = res * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
-                    // }
-                    
-                    
-                    // this.liquidation_price_preview = res
                     this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
                     
+                    // borrowed tokens values for display
+                    const xValue = this.t0_liq * (leverage - 1)
+                    const yValue = this.t1_liq * (leverage - 1)
+
+                    const xMsg = xValue + ' of token ' + tokenObj.symbol
+                    const yMsg = yValue + ' of token ' + tokenObj2.symbol
+
+                    this.expectedBorrowAmount = [xMsg, yMsg]
                     console.log(this.liquidation_price_preview)
                 }) 
             }
@@ -2755,12 +2762,15 @@ export default {
     box-sizing: border-box;
 }
 
+.tinytextsize {
+    font-size: $tinyTextSize;
+}
+
 .input-flex-center {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
-    margin-left: 0;
     padding-left: 15px;
 }
 
