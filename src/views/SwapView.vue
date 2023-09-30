@@ -19,8 +19,16 @@
                     </div>
                     <div class="picker_list">
                         <div @click="selectToken(token)" v-bind:class="{listItemActive: (token.symbol === token_in.symbol && tokenForSelection === 'in') || (token.symbol === token_out.symbol && tokenForSelection === 'out')}" v-for="token in tokens" :key="token.symbol" class="picker_list_item">
-                            <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
-                            <span class="list_item_token">{{token.symbol}}</span>
+                            <div class="list_item_left">
+                                <img class="list_item_icon" :src="$store.state.tokens[token.token].icon"/>
+                                <span class="list_item_token">{{token.symbol}}</span>
+                            </div>
+                            <div v-if="depositSource === 'inner' && tokenBalances.find(e => e.token === token.token)" class="list_item_right">
+                                <span class="list_item_token">{{tokenBalances.find(e => e.token === token.token).amount}}</span>
+                            </div>
+                            <div v-else-if="depositSource === 'outer' && tokenBalances.find(e => e.token === token.token)" class="list_item_right">
+                                <span class="list_item_token">{{tokenBalances.find(e => e.token === token.token).nearBalance}}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -46,8 +54,14 @@
                         (please wait, we are loading your tokens)
                     </template>
                 </span>
-                <div>
-                    <!-- ... -->
+                <div class="toggler-wrapper">
+                    Near
+                    <div class="toggler" @click="swapDepositSource()">
+                        <div class="toggle" :class="{toggleActive: depositSource === 'inner'}">
+
+                        </div>
+                    </div>
+                    Crisp
                 </div>
             </div>
             <div class="modal-body">
@@ -67,11 +81,19 @@
                     </div>
                     <input v-else type="text" @change="getReturn()" @keypress="isNumber" placeholder="0" v-model.lazy="token_in_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_in_balance">
+                <span v-if="depositSource === 'inner' && token_in_balance" class="token-balance">
                     <span>
                         {{token_in_balance.symbol}} balance: {{token_in_balance.amount}}
                     </span>
                     <button v-if="token_in_balance.amount === 0" @click="depositToken(token_in)" class="deposit_nav_btn">Deposit {{token_in_balance.symbol}}</button>
+                </span>
+                <span v-else-if="depositSource === 'outer' && token_in_balance" class="token-balance">
+                    <span>
+                        {{token_in_balance.symbol}} balance: {{token_in_balance.nearBalance}}
+                    </span>
+                </span>
+                <span v-else class="token-balance">
+                    
                 </span>
                 <div class="token-wrapper token-out">
                     <!-- v-if="$store.state.tokenBalances[0]" -->
@@ -88,11 +110,19 @@
                     </div>
                     <input v-else type="text" @keypress="isNumber" @change="getExpense()" placeholder="0" v-model.lazy="token_out_amnt" class="token-input"/>
                 </div>
-                <span class="token-balance" v-if="token_out_balance">
+                <span v-if="depositSource === 'inner' && token_out_balance" class="token-balance">
                     <span>
                         {{token_out_balance.symbol}} balance: {{token_out_balance.amount}}
                     </span>
                     <button v-if="token_out_balance.amount === 0" @click="depositToken(token_out)" class="deposit_nav_btn">Deposit {{token_out_balance.symbol}}</button>
+                </span>
+                <span v-else-if="depositSource === 'outer' && token_out_balance" class="token-balance">
+                    <span>
+                        {{token_out_balance.symbol}} balance: {{token_out_balance.nearBalance}}
+                    </span>
+                </span>
+                <span v-else class="token-balance">
+                    
                 </span>
             </div>
             <div v-if="swapError" class="swap-error">
@@ -121,7 +151,7 @@ import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
 import { addDecimals } from '@/utils/format'
-import * as nearAPI from "near-api-js"
+// import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
     store,
@@ -148,7 +178,9 @@ export default {
 
             tokenPickerActive: false,
             tokenForSelection: null,
-            searchPrompt: null
+            searchPrompt: null,
+
+            depositSource: 'outer'
         }
     },
     async created () {
@@ -161,6 +193,9 @@ export default {
             } else {
                 return false
             }
+        },
+        tokenBalances: function () {
+            return this.$store.state.tokenBalances
         },
         searchPromptResult: function () {
             if (this.searchPrompt) {
@@ -183,7 +218,10 @@ export default {
     watch: {
         '$store.state.tokenBalances': function () {
             this.findPool()
-        }
+        },
+        '$store.state.tokens': function () {
+            this.findPool()
+        },
     },
     methods: {
         isNumber,
@@ -193,6 +231,7 @@ export default {
         },
         openTokenPicker: function (token) {
             console.log(this.tokens)
+            console.log(this.$store.state.tokenBalances)
             console.log(this.searchPromptResult)
             console.log(this.$store.state.tokens)
             console.log(this.$store.state.tokens)
@@ -206,8 +245,37 @@ export default {
         selectToken: function (token) {
             if (this.tokenForSelection === 'in') {
                 this.token_in = token
+                const balanceObj = this.tokenBalances.find(e => e.token === token.token)
+                if (balanceObj)
+                    this.token_in_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount,
+                        nearBalance: balanceObj.nearBalance
+                }
+                else {
+                    this.token_in_balance = {
+                        symbol: token.token,
+                        amount: 0,
+                        nearBalance: 'Cant get near balance of token'
+                    }
+                }
             } else {
                 this.token_out = token
+                const balanceObj = this.tokenBalances.find(e => e.token === token.token)
+                if (balanceObj) {
+                    this.token_out_balance = {
+                        symbol: balanceObj.symbol,
+                        amount: balanceObj.amount,
+                        nearBalance: balanceObj.nearBalance
+                    }
+                }
+                else {
+                    this.token_out_balance = {
+                        symbol: token.token,
+                        amount: 0,
+                        nearBalance: 'Cant get near balance of token'
+                    }
+                }
             }
             this.closeTokenPicker()
             this.findPool()
@@ -215,76 +283,87 @@ export default {
         swapPositions: async function () {
             const tin = this.token_out
             const tout = this.token_in
-            const inbalance = this.token_out_balance
-            const outbalance = this.token_in_balance
             this.token_in = tin
             this.token_out = tout
-            this.token_in_balance = inbalance
-            this.token_out_balance = outbalance
-            
-            if (this.manual_input === 'in' && this.token_in_amnt) {
-                this.getReturn()
-            } else if (this.manual_input === 'out' && this.token_out_amnt) {
-                this.getExpense()
+            this.findPool()
+        },
+        swapDepositSource: async function () {
+            this.findPool()
+            if (this.depositSource === 'outer') {
+                // ...
+
+                this.depositSource = 'inner'
+            } else {
+                // ...
+
+                this.depositSource = 'outer'
             }
         },
         findPool: async function () {
-            setStorageItem('swap_pair', {
-                token_in: this.token_in,
-                token_out: this.token_out
-            })
-            if (this.token_in && this.token_out) {
-                const res = this.$store.state.pools.findIndex(
-                    item => item.token0 === this.token_in.token && item.token1 === this.token_out.token
-                )
-                if (res === -1) {
-                    const res2 = this.$store.state.pools.findIndex(
-                        item => item.token1 === this.token_in.token && item.token0 === this.token_out.token
-                    )
-                    this.pool_id = res2
-                } else {
-                    this.pool_id = res
-                }
-                console.log(this.pool_id)
-            }
-            if (this.token_in) {
+            if (this.token_in && this.token_out && this.$store.state.tokens) {
                 console.log(this.token_in)
-                console.log(this.$store.state.tokenBalances)
-                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_in.token)
-                if (balanceObj) {
-                    console.log('1')
-                    this.token_in_balance = {
-                        symbol: balanceObj.symbol,
-                        amount: balanceObj.amount
+                console.log(this.token_out)
+                setStorageItem('swap_pair', {
+                    token_in: this.token_in,
+                    token_out: this.token_out
+                })
+                if (this.token_in && this.token_out) {
+                    const res = this.$store.state.pools.findIndex(
+                        item => item.token0 === this.token_in.token && item.token1 === this.token_out.token
+                    )
+                    if (res === -1) {
+                        const res2 = this.$store.state.pools.findIndex(
+                            item => item.token1 === this.token_in.token && item.token0 === this.token_out.token
+                        )
+                        this.pool_id = res2
+                    } else {
+                        this.pool_id = res
                     }
-                } else {
-                    console.log('h')
-                    this.token_in_balance = {
-                        symbol: this.tokens.find((t) => t.token === this.token_in.token)?.symbol || 'Token',
-                        amount: 0
+                    console.log(this.pool_id)
+                }
+                if (this.token_in) {
+                    console.log(this.token_in)
+                    console.log(this.$store.state.tokenBalances)
+                    const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_in.token)
+                    if (balanceObj) {
+                        console.log('1')
+                        this.token_in_balance = {
+                            symbol: balanceObj.symbol,
+                            amount: balanceObj.amount,
+                            nearBalance: balanceObj.nearBalance
+                        }
+                    } else {
+                        console.log('h')
+                        this.token_in_balance = {
+                            symbol: this.tokens.find((t) => t.token === this.token_in.token)?.symbol || 'Token',
+                            amount: 0,
+                            nearBalance: 0
+                        }
+                    }
+                    console.log(this.token_in_balance)
+                }
+                if (this.token_out) {
+                    const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_out.token)
+                    if (balanceObj) {
+                        this.token_out_balance = {
+                            symbol: balanceObj.symbol,
+                            amount: balanceObj.amount,
+                            nearBalance: balanceObj.nearBalance
+                        }
+                    } else {
+                        this.token_out_balance = {
+                            symbol: this.tokens.find((t) => t.token === this.token_out.token)?.symbol || 'Token',
+                            amount: 0,
+                            nearBalance: 0
+                        }
                     }
                 }
-                console.log(this.token_in_balance)
-            }
-            if (this.token_out) {
-                const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token_out.token)
-                if (balanceObj) {
-                    this.token_out_balance = {
-                        symbol: balanceObj.symbol,
-                        amount: balanceObj.amount
-                    }
-                } else {
-                    this.token_out_balance = {
-                        symbol: this.tokens.find((t) => t.token === this.token_out.token)?.symbol || 'Token',
-                        amount: 0
-                    }
+                if (this.manual_input === 'in' && this.token_in_amnt !== null) {
+                    this.getReturn()
                 }
-            }
-            if (this.manual_input === 'in' && this.token_in_amnt !== null) {
-                this.getReturn()
-            }
-            if (this.manual_input === 'out' && this.token_out_amnt !== null) {
-                this.getExpense()
+                if (this.manual_input === 'out' && this.token_out_amnt !== null) {
+                    this.getExpense()
+                }
             }
         },
         calculatePriceImpact: async function (pool, t0, t1, t0_liquidity, t1_liquidity) {
@@ -354,7 +433,7 @@ export default {
             this.swapError = ''
             console.log('getReturn()')
             // let decimals
-            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null) {
+            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null && Number(this.token_in_amnt)) {
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_in.token]) {
@@ -393,8 +472,8 @@ export default {
                         })
                     }
                     console.log(error)
-                    this.token_in_amnt = null
-                    this.token_out_amnt = null
+                    // this.token_in_amnt = null
+                    // this.token_out_amnt = null
                     this.tokenAmntLoading = false
                     this.txPending = false
                 }
@@ -413,7 +492,7 @@ export default {
             this.swapError = ''
             console.log('getExpense()')
             // let decimals
-            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null) {
+            if (this.$store.state.crispContract && this.pool_id !== -1 && this.$store.state.tokens !== null && Number(this.token_out_amnt)) {
                 try {
                     let tokenObj
                     if (this.$store.state.tokens[this.token_out.token]) {
@@ -451,8 +530,8 @@ export default {
                             text: error
                         })
                     }
-                    this.token_in_amnt = null
-                    this.token_out_amnt = null
+                    // this.token_in_amnt = null
+                    // this.token_out_amnt = null
                     this.tokenAmntLoading = false
                     this.txPending = false
                 }
@@ -481,8 +560,8 @@ export default {
         confirmSwap: async function () {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
-                const { utils, transactions } = nearAPI
+            if (contract && this.token_in.token && this.token_out.token && this.token_in.token !== this.token_out.token && Number(this.token_in_amnt)) {
+                // const { utils, transactions } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
                 //     // swap_in
@@ -491,52 +570,79 @@ export default {
                         if (this.$store.state.tokens[this.token_in.token]) {
                             tokenObj = this.$store.state.tokens[this.token_in.token]
                         }
+                        if (this.depositSource === 'outer' && tokenObj) {
+                            // Get return, so we know how much we will need to withdraw
+                            await this.$store.state.walletConnection.account().viewFunction(
+                                {
+                                    contractId: CONTRACT_ID,
+                                    methodName: 'get_return',
+                                    args: {
+                                        pool_id: this.pool_id,
+                                        token_in: this.token_in.token,
+                                        amount_in: addDecimals(this.token_in_amnt, tokenObj)
+                                    }
+                                }
+                            ).then(async (res) => {
+                                const withdrawAmount = res
+                                const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
 
-                        // Get return, so we know how much we will need to withdraw
+                                const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                                const argsTransfer = { 
+                                    receiver_id: CONTRACT_ID, 
+                                    amount: depositAmount, 
+                                    msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
+                                }
 
-                        await this.$store.state.walletConnection.account().viewFunction(
-                            {
-                                contractId: CONTRACT_ID,
-                                methodName: 'get_return',
-                                args: {
+                                const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                                await wallet.signAndSendTransactions({
+                                    transactions: [
+                                        {
+                                            receiverId: this.token_in.token,
+                                            actions: [
+                                                {
+                                                    type: "FunctionCall",
+                                                    params: {
+                                                        methodName: "storage_deposit",
+                                                        args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                        gas: 150000000000000,
+                                                        deposit: 1
+                                                    }
+                                                },
+                                                {
+                                                    type: "FunctionCall",
+                                                    params: {
+                                                        methodName: "ft_transfer_call",
+                                                        args: Buffer.from(JSON.stringify(argsTransfer)),
+                                                        gas: 150000000000000,
+                                                        deposit: 1
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                })
+                            })
+                        } else if (tokenObj) {
+                            await contract.swap(
+                                {
                                     pool_id: this.pool_id,
                                     token_in: this.token_in.token,
-                                    amount_in: addDecimals(this.token_in_amnt, tokenObj)
+                                    amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                                    token_out: this.token_out.token
                                 }
-                            }
-                        ).then(async (res) => {
-                            // let tokenOutObj
-                            // if (this.$store.state.tokens[this.token_out.token]) {
-                            //     tokenOutObj = this.$store.state.tokens[this.token_out.token]
-                            // }
-                            const withdrawAmount = res
-                            const depositAmount = addDecimals(this.token_in_amnt, tokenObj)
-
-                            const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
-                            const argsTransfer = { 
-                                receiver_id: CONTRACT_ID, 
-                                amount: depositAmount, 
-                                msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
-                            }
-
-                            await this.$store.state.walletConnection.account().signAndSendTransaction({
-                                receiverId: this.token_in.token,
-                                actions: [
-                                    transactions.functionCall(
-                                        "storage_deposit",
-                                        Buffer.from(JSON.stringify(argsDeposit)),
-                                        150000000000000,
-                                        utils.format.parseNearAmount("1")
-                                    ),
-                                    transactions.functionCall(
-                                        'ft_transfer_call',
-                                        Buffer.from(JSON.stringify(argsTransfer)),
-                                        150000000000000,
-                                        1
-                                    )
-                                ]
+                            ).then((response) => {
+                                console.log(response)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    // text: response
+                                    text: 'Swap is successful'
+                                })
+                                this.txPending = false
+                                this.$store.dispatch('reload', store.state)
                             })
-                        })
+                        }
                     } catch (error) {
                         console.log(error)
                         this.$store.commit('pushNotification', {
@@ -578,6 +684,20 @@ export default {
     flex-direction: column;
     align-items: center;
     padding: 24px;
+}
+
+.toggler-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+}
+
+.toggler {
+    @extend %toggler;
+    margin-left: 6px;
+    margin-right: 6px;
 }
 
 .picker_header {
@@ -694,7 +814,7 @@ export default {
 .picker_list_item {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     height: 40px;
     margin-top: 4px;
@@ -703,6 +823,20 @@ export default {
     padding-right: 15px;
     box-sizing: border-box;
     cursor: pointer;
+}
+
+.list_item_left {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.list_item_right {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
 }
 
 .picker_list_item:hover, .listItemActive {
@@ -735,15 +869,17 @@ export default {
 .modal-header {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     padding-bottom: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .modal-title {
     font-size: $mediumTextSize;
     font-weight: 600;
-    padding-left: 8px;
+    max-width: 400px;
 }
 
 .modal-body {
@@ -762,8 +898,9 @@ export default {
     left: 0;
     right: 0;
     text-align: center;
-    background-image: url('../assets/icons/ArrowsClockwise.svg');
+    background-image: url('../assets/icons/arrow-twin.svg');
     background-size: 100% 100%;
+    transform: rotateZ(90deg);
     background-color: #FDE4A0;
     border: 3px solid #FDE4A0;
     border-radius: $borderRadius/2;

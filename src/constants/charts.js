@@ -21,24 +21,27 @@ export const defaultOptions = {
       zoom: {
         enabled: false
       },
+      brush: {
+        enabled: true
+      },
       selection: {
-          enabled: false,
-          type: 'x',
-          fill: {
-            color: '#e9effb',
-            opacity: 0.4
-          },
-          stroke: {
-            width: 0,
-            dashArray: 3,
-            color: '#24292e',
-            opacity: 0.4
-          },
-          xaxis: {
-              min: undefined,
-              max: undefined
-          }
+        enabled: true,
+        type: 'x',
+        fill: {
+          color: '#e9effb',
+          opacity: 0.4
+        },
+        stroke: {
+          width: 0,
+          dashArray: 3,
+          color: '#24292e',
+          opacity: 0.4
+        },
+        xaxis: {
+            min: undefined,
+            max: undefined
         }
+      }
     },
     colors: ['#000'],
     fill: {

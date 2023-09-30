@@ -63,3 +63,28 @@ $buttonSecondaryColor: #212121;
     background-color: $buttonSecondaryColor;
     color: $buttonPrimaryColor;
 }
+
+%toggler {
+    position: relative;
+    display: flex;
+    width: 64px;
+    height: 24px;
+    background-color: $elementBgColor;
+    border-radius: 24px;
+    cursor: pointer;
+    .toggle {
+        position: absolute;
+        left: 2px;
+        top: 2px;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background-color: $blockBgColor;
+        transition: 0.3s;
+    }
+    .toggleActive {
+        transition: 0.3s;
+        left: 42px !important;
+        background-color: $buttonPrimaryColor;
+    }
+}
