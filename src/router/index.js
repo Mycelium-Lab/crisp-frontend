@@ -32,6 +32,11 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   },
   {
+    path: '/lending',
+    name: 'lending',
+    component: () => import('../views/LendingView.vue')
+  },
+  {
     path: '/:catchAll(.*)', redirect: '/swap'
   }
 ]

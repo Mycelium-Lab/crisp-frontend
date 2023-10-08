@@ -28,11 +28,12 @@
     <div class="header-nav">
         <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png"><span class="desktop-link">Swap</span></router-link>
         <router-link class="header-link desktop-link" to="/pools">Manage Liquidity</router-link>
+        <router-link class="header-link desktop-link" to="/lending">Earn</router-link>
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <!--<router-link v-if="$store.state.account" class="header-link" to="/deposit">Account</router-link>
-      <button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
+      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Balance</router-link>
+      <!--<button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
       <button v-if="$store.state.account" @click="signOut()" class="header-link account"><span>{{ $store.state.account.accountId }}</span><img class="logout-gfx" src="./assets/icons/logout.svg"/></button>
       <button v-else @click="signIn()" class="header-link connect">Connect wallet</button>
     </div>
@@ -67,18 +68,29 @@ export default {
   methods: {
     load: async function () {
       await this.$store.dispatch('fetchCrispContract', store.state)
-      await this.$store.dispatch('fetchPools', store.state)
-      await this.$store.dispatch('fetchBalances', store.state)
-      if (this.$store.state.pools[0]) {
-        await this.$store.dispatch('processTokenMetadata', store.state)
-      } else {
-        await this.$store.commit('emitLoading', 'tokens')
-      }
-      if (this.$store.state.pools[0]) {
-        await this.$store.dispatch('processPositions', store.state)
-      } else {
-        await this.$store.commit('emitLoading', 'positions')
-      }
+      .then(
+        (async () => {
+          await this.$store.dispatch('fetchPools', store.state)
+          await this.$store.dispatch('fetchBalances', store.state)
+          if (this.$store.state.pools[0]) {
+            await this.$store.dispatch('processTokenMetadata', store.state)
+          } else {
+            await this.$store.commit('emitLoading', 'tokens')
+          }
+          if (this.$store.state.pools[0]) {
+            await this.$store.dispatch('processPositions', store.state)
+          } else {
+            await this.$store.commit('emitLoading', 'positions')
+          }
+          if (this.$store.state.pools[0]) {
+            console.log('fetching deposits and borrows')
+            await this.$store.dispatch('fetchDeposits', store.state)
+            await this.$store.dispatch('fetchBorrows', store.state)  
+          }
+          // await this.$store.dispatch('fetchDeposits', store.state)
+          // await this.$store.dispatch('fetchBorrows', store.state)
+        })
+      )
     },
     signIn: async function () {
       await this.$store.dispatch('signIn', store.state)
@@ -95,6 +107,7 @@ export default {
 
 <style lang="scss">
 @import "~@/assets/scss/main.scss";
+@import "@near-wallet-selector/modal-ui-js/styles.css";
 
 html {
   scroll-behavior: smooth;
@@ -458,6 +471,7 @@ header {
   border: 0.5px solid #000000;
   border-radius: 20px;
   padding: 9px 16px;
+  margin-bottom: 12px;
   height: 40px;
   box-sizing: border-box;
   color: #000 !important;

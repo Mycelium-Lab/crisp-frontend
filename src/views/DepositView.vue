@@ -32,7 +32,7 @@
                         <!--{{tokenObject.token}} -->{{tokenObject.symbol}}
                     </span>
                     <span v-if="tokenObject.amount !== 0" class="list-pool_unit">
-                        {{ tokenObject.amount.toFixed(14) }}
+                        {{ tokenObject.amount }}
                     </span>
                     <span v-else class="list-pool_unit">
                         {{ tokenObject.amount }}
@@ -161,43 +161,51 @@ export default {
   },
   methods: {
     getTokenWalletBalance: async function () {
-        if (this.$store.state.walletConnection.account())
-        this.txPending = true
-        try {
-            await this.$store.state.walletConnection.account().viewFunction(
-                {
-                    contractId: this.token,
-                    methodName: 'ft_balance_of',
-                    args: {
-                        account_id: this.$store.state.account.accountId
-                    }
-                }
-            ).then(async (res) => {
-                if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
-                    await this.$store.state.walletConnection.account().viewFunction(
-                        {
-                            contractId: this.token,
-                            methodName: 'ft_metadata',
-                            args: {
-                                account_id: this.$store.state.account.accountId
-                            }
-                        }
-                    ).then((res2) => {
-                        console.log(res2)
-                        this.walletAmount = res2.symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, res2.decimals)).toFixed(4)
-                        this.txPending = false
-                    })
-                } else {
-                    console.log(res)
-                    this.walletAmount = this.$store.state.tokens[this.token].symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, this.$store.state.tokens[this.token].decimals)).toFixed(4)
-                    this.txPending = false
-                }
-            })
-        } catch (error) {
-            console.log(error)
-            this.walletAmount = null
-            this.txPending = false
+        // if (this.$store.state.walletConnection.account())
+        // this.txPending = true
+        this.walletAmount = ''
+
+        if (this.$store.state.tokenBalances && this.$store.state.tokenBalances[0]) {
+            const balanceObj = this.$store.state.tokenBalances.find(item => item.token === this.token)
+            if (balanceObj) {
+                this.walletAmount = balanceObj.symbol + ' balance on NEAR wallet:  ' + balanceObj.nearBalance
+            }
         }
+        // try {
+        //     await this.$store.state.walletConnection.account().viewFunction(
+        //         {
+        //             contractId: this.token,
+        //             methodName: 'ft_balance_of',
+        //             args: {
+        //                 account_id: this.$store.state.account.accountId
+        //             }
+        //         }
+        //     ).then(async (res) => {
+        //         if (this.$store.state.tokens && !this.$store.state.tokens[this.token]) {
+        //             await this.$store.state.walletConnection.account().viewFunction(
+        //                 {
+        //                     contractId: this.token,
+        //                     methodName: 'ft_metadata',
+        //                     args: {
+        //                         account_id: this.$store.state.account.accountId
+        //                     }
+        //                 }
+        //             ).then((res2) => {
+        //                 console.log(res2)
+        //                 this.walletAmount = res2.symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, res2.decimals)).toFixed(4)
+        //                 this.txPending = false
+        //             })
+        //         } else {
+        //             console.log(res)
+        //             this.walletAmount = this.$store.state.tokens[this.token].symbol + ' balance on NEAR wallet: ' + (res / Math.pow(10, this.$store.state.tokens[this.token].decimals)).toFixed(4)
+        //             this.txPending = false
+        //         }
+        //     })
+        // } catch (error) {
+        //     console.log(error)
+        //     this.walletAmount = null
+        //     this.txPending = false
+        // }
     },
     deposit: async function () {
         if (this.$store.state.account) {
@@ -213,6 +221,8 @@ export default {
                 const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                 const argsTransfer = { receiver_id: CONTRACT_ID, amount: addDecimals(this.amount, tokenObj), msg: "" }
 
+                const wallet = await this.$store.state.selector.wallet("near-wallet")
+
                 // const allowedStorage = await this.$store.state.walletConnection.account().viewFunction(
                 //         {
                 //             contractId: this.token,
@@ -223,21 +233,31 @@ export default {
                 //         }
                 // )
 
-                await this.$store.state.walletConnection.account().signAndSendTransaction({
-                    receiverId: this.token,
-                    actions: [
-                        transactions.functionCall(
-                            "storage_deposit",
-                            Buffer.from(JSON.stringify(argsDeposit)),
-                            150000000000000,
-                            utils.format.parseNearAmount("1")
-                        ),
-                        transactions.functionCall(
-                            'ft_transfer_call',
-                            Buffer.from(JSON.stringify(argsTransfer)),
-                            150000000000000,
-                            1
-                        )
+                await wallet.signAndSendTransactions({
+                    transactions: [
+                        {
+                            receiverId: this.token,
+                            actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: utils.format.parseNearAmount("1")
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransfer)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                            ]
+                        }
                     ]
                 })
             } catch (error) {

@@ -40,7 +40,18 @@
             <div v-if="newPositionModalActive" class="modal">
                 <div class="modal-header">
                     <span class="modal-title">Create new position</span>
-                    <img @click="closeNewPositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                    <div class="modal-header-right">
+                        <div class="toggler-wrapper">
+                            Near
+                            <div class="toggler" @click="swapDepositSource()">
+                                <div class="toggle" :class="{toggleActive: depositSource === 'inner'}">
+
+                                </div>
+                            </div>
+                            Crisp
+                        </div>
+                        <img @click="closeNewPositionModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div class="modal-body_row">
@@ -59,21 +70,23 @@
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 0 liquidity</span>
                                 <input type="text" v-model.lazy="t0_liq" @keypress="isNumber" @change="calculateDefault()" ref="t0_liq" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
-                                <span class="input-balance" v-if="t0_balance">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
-                                <button v-else-if="t0_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
+                                <span class="input-balance" v-if="t0_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{t0_balance}}</span>
+                                <span class="input-balance" v-else-if="t0_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token0].symbol}} balance: {{ t0_near_balance }}</span>
+                                <button v-else-if="t0_balance === 0 && depositSource ==='inner'" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token0])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token0].symbol}}</button>
                             </div>
                             <div class="input-wrapper">
                                 <span v-if="poolId !== null && tokensLoaded" class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} liquidity</span></span>
                                 <span v-else class="input-title">Token 1 liquidity</span>
                                 <input type="text" v-model.lazy="t1_liq" @keypress="isNumber" @change="calculateAlternative()" ref="t1_liq" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
-                                <span class="input-balance" v-if="t1_balance">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
-                                <button v-else-if="t1_balance === 0" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
+                                <span class="input-balance" v-if="t1_balance && depositSource==='inner'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{t1_balance}}</span>
+                                <span class="input-balance" v-else-if="t1_near_balance && depositSource==='outer'">{{$store.state.tokens[$store.state.pools[poolId].token1].symbol}} balance: {{ t1_near_balance }}</span>
+                                <button v-else-if="t1_balance === 0 && depositSource ==='inner'" @click="depositToken($store.state.tokens[$store.state.pools[poolId].token1])" class="deposit_nav_btn">Deposit {{$store.state.tokens[$store.state.pools[poolId].token1].symbol}}</button>
                             </div>
                         </template>
                         <span v-else>Please wait while we load pools. . .</span>
                     </div>
                     <div class="modal-body_row" v-if="graphSeries[0].data[0]">
-                        <apexcharts style="max-width: 380px" type="area" width="380" :series="graphSeries" :options="defaultOptions"></apexcharts>
+                        <apexcharts style="max-width: 380px" type="area" width="380" @selection="handleSelection" :series="graphSeries" :options="defaultOptions"></apexcharts>
                     </div>
                     <div class="modal-body_row-placeholder" v-else>
 
@@ -93,9 +106,79 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer split-footer">
+                    <div class="footer-toggler">
+                        <!--<span>Supply position as collateral after opening?</span>
+                        <div class="footer-toggler-row">
+                            <button v-bind:class="{responseActive: supplyPosAfterOpening}" @click="supplyPosAfterOpening = true" class="toggler-response-btn">Yes</button>
+                            <button v-bind:class="{responseActive: !supplyPosAfterOpening}" @click="supplyPosAfterOpening = false" class="toggler-response-btn">No</button>
+                        </div>-->
+                    </div>
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
+                </div>
+                <div v-if="pricesSet && maxLeverage > 1 && t0_liq && t1_liq" class="modal-body_row" style="margin-top: 26px">
+                    <div class="input-wrapper">
+                        <span class="input-title">Leverage</span>
+                        <div class="modal-body_row-input input-wrapper-element">
+                            <div class="input-wrapper-row">
+                                <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
+                                <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
+                            </div>
+                            <div class="input-wrapper-row">
+                                Selected leverage amount: {{ leverageAmount }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="liquidation_price_preview && leverageAmount > 1.0" class="input-wrapper">
+                        <span class="input-title">Expected liquidation prices</span>
+                        <span class="modal-body_row-input input-flex-center">
+                            {{ liquidation_price_preview[0] }}
+                            <br>
+                            {{ liquidation_price_preview[1] }}
+                        </span>
+                    </div>
+                    <div v-if="expectedBorrowAmount && leverageAmount > 1.0" class="input-wrapper">
+                        <span class="input-title">You will borrow:</span>
+                        <span class="modal-body_row-input input-flex-center tinytextsize">
+                            {{ expectedBorrowAmount[0] }}
+                            <br>
+                            {{ expectedBorrowAmount[1] }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div v-if="borrowModalActive" class="modal">
+                <div class="modal-header">
+                    <span class="modal-title">Supply your position as collateral</span>
+                    <img @click="closeBorrowModal()" class="x-icon" src="../assets/icons/x.svg"/>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-body_row">
+                        <div class="input-wrapper fixedwidth360">
+                            <span class="input-title"><span>Leverage</span></span>
+                            <div v-if="maxLeverage > 1" class="input-wrapper-element alignedleverageboxelements">
+                                <div class="input-wrapper-row">
+                                    <!--<input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">-->
+                                    <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
+                                </div>
+                                <div v-if="useLeverageInBorrow" class="input-wrapper-row">
+                                    Selected leverage amount: {{ leverageAmount }}
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="expectedBorrowAmount && expectedBorrowAmount[0]" class="input-wrapper fixedwidth360">
+                            <span class="input-title">You will borrow:</span>
+                            <div class="input-wrapper-element alignedleverageboxelements">
+                                <span class="input-balance" style="padding-left:0">{{ expectedBorrowAmount[0] }}</span>
+                                <span class="input-balance" style="padding-left:0">{{ expectedBorrowAmount[1] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                    <button v-else @click="confirmBorrowModal()" class="confirm-btn">Confirm</button>
                 </div>
             </div>
             <div v-if="deletePositionModalActive" class="modal">
@@ -161,8 +244,15 @@
                         <div class="pos-table">
                             <div class="pos-table_header">
                                 <div class="pos-table_header-cell">
-                                    <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
-                                    <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                                    <div class="header-cell-unit">
+                                        <template v-if="pos.isActive"><img src="../assets/icons/isActive/active.svg"><span class="status-caption status-caption-active">In range</span></template>
+                                        <template v-else><img src="../assets/icons/isActive/error.svg"><span class="status-caption status-caption-error">Out of range</span></template>
+                                    </div>
+                                    <div class="header-cell-unit">
+                                        <img v-if="txPending" class="cell-loader-icon" src="../assets/icons/loader.gif">    
+                                        <button v-else-if="pos.isBorrowed" @click="returnBorrow(pos)" class="block-RA-suggestion">Unleverage</button>
+                                        <button v-else @click="openBorrowModal(pos)" class="block-RA-suggestion">Leverage</button>
+                                    </div>
                                 </div>
                                 <div class="pos-table_header-cell">
                                     Liquidity
@@ -177,7 +267,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="pos-table_data">
+                            <div class="pos-table_data" v-bind:class="{posTableBorderRadius: !pos.borrowed}">
                                 <div class="pos-table_data-cell">
                                     <div v-if="$store.state.tokens" class="pos-table-tokens">
                                         <img class="cell-icon" :src="$store.state.tokens[pos.token0].icon">
@@ -242,222 +332,279 @@
                                     <img @click="expandPos(pos)" src="../assets/icons/expand.svg">
                                 </div>
                             </div>
+                            <div v-if="pos.isBorrowed" class="table-leverage">
+                                    <div class="table-header">
+                                        <span class="table-heading">Leverage info (this position is borrowed)</span>
+                                    </div>
+                                    <div class="section-block-wrapper borderRadiusBottomLeftRight">
+                                        <div class="section-block">
+                                            <div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_symbol">Borrowed</span>
+                                                </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_liquidity">{{pos.borrowed0}}</span>
+                                                    <img class="small-icon small-icon-right" style="margin-right: 12px" :src="pos.leverageAsset.icon">
+                                                    <span class="block-row_liquidity">{{pos.borrowed1}}</span>
+                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset2.icon">
+                                                </div>
+                                            </div>
+                                            <!--<div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_symbol">Collateral</span>
+                                                </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_liquidity">{{pos.collateral}}</span>
+                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
+                                                </div>
+                                            </div>-->
+                                            <div v-if="pos.leverage" class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_fee-title">Leverage</span>
+                                                </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_fee-amount">{{pos.leverage}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-row">
+                                                <div class="block-row-left">
+                                                    <span class="block-row_fee-title">Liquidation prices</span>
+                                                </div>
+                                                <div class="block-row-right">
+                                                    <span class="block-row_fee-amount">{{pos.liquidation_price0}}</span>
+                                                    <span class="block-row_fee-amount" style="margin-left: 12px;">{{pos.liquidation_price1}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                         </div>
                         <div v-if="pos.expanded" class="pos-table pos-table-expanded">
                             <template v-if="tokensLoaded">
-                                <!--<img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                <button v-else @click="editAddLiq(pos)" class="edit-btn">
-                                    Add liquidity
-                                </button>
-                                <div class="input-wrapper">
-                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} liquidity</span></span>
-                                    <input type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" id="t0_liq" class="modal-body_row-input" :disabled="upperSmallerThanCurrent"/>
-                                    <span v-if="t0_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} balance: {{t0_balance.toFixed(4)}}</span>
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-title"><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon"/><span>{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} liquidity</span></span>
-                                    <input type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" id="t1_liq" class="modal-body_row-input" :disabled="lowerGreaterThanCurrent" />
-                                    <span v-if="t1_balance">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} balance: {{t1_balance.toFixed(4)}}</span>
-                                </div>
-                                <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                <button v-else @click="editRemoveLiq(pos)" class="edit-btn">
-                                    Remove liquidity
-                                </button>-->
+                                <div class="table-liquidity-change">
+                                    <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
+                                        <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
+                                            <div class="table-header">
+                                                <span class="table-heading">Add liquidity</span>
+                                            </div>
+                                            <div class="section-block-wrapper">
+                                                <span class="section-block-title">
+                                                    Current liquidity
+                                                </span>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.token0_real_liquidity).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.token1_real_liquidity).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <span class="block-row_fee-title">Fee tier</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_fee-amount">{{$store.state.pools[pos.poolId].protocol_fee}} %</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="section-block-wrapper">
+                                                <div class="block-row">
+                                                    <div class="section-block-title">
+                                                        Add more liquidity
+                                                    </div>
+                                                    <div class="toggler-wrapper nomarginright">
+                                                        Near
+                                                        <div class="toggler" @click="swapEditLiquiditySource(pos)">
+                                                            <div class="toggle" :class="{toggleActive: editLiquiditySource === 'inner'}">
 
-                                <div class="table-section" @click="pos.activeTab === 'out' ? toggleTab(pos) : 0">
-                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'out'}">
-                                        <div class="table-header">
-                                            <span class="table-heading">Add liquidity</span>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <span class="section-block-title">
-                                                Current liquidity
-                                            </span>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.token0_real_liquidity).toFixed(6)}}</span>
+                                                            </div>
+                                                        </div>
+                                                        Crisp
                                                     </div>
                                                 </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <input :ref="'edit_t0' + pos.id" id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="block-row_token-wrapper">
+                                                                <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                                <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.token1_real_liquidity).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <span class="block-row_fee-title">Fee tier</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_fee-amount">{{$store.state.pools[pos.poolId].protocol_fee}} %</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <div class="section-block-title">
-                                                Add more liquidity
-                                            </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <input :ref="'edit_t0' + pos.id" id="edit_t0" type="text" v-model.lazy="edit_t0_liq" @keypress="isNumber" @change="calcEditDefault(pos)" class="block-input" :disabled="upperSmallerThanCurrent"/>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="block-row_token-wrapper">
-                                                            <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                            <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <!-- TODO: liquidity in $USD -->
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div v-if="editLiquiditySource === 'inner'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount}}
+                                                            </div>
+                                                            <div v-else-if="editLiquiditySource === 'outer'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).nearBalance}}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <!-- TODO: liquidity in $USD -->
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="row-balance">
-                                                            Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)}}
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <input :ref="'edit_t1' + pos.id" id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <div class="block-row_token-wrapper">
+                                                                <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                                <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <input :ref="'edit_t1' + pos.id" id="edit_t1" type="text" v-model.lazy="edit_t1_liq" @keypress="isNumber" @change="calcEditAlternative(pos)" class="block-input" :disabled="lowerGreaterThanCurrent"/>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="block-row_token-wrapper">
-                                                            <img class="big-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                            <span class="big-symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <!-- TODO: liquidity in $USD -->
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <!-- TODO: liquidity in $USD -->
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <div class="row-balance">
-                                                            Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)}}
+                                                        <div class="block-row-right">
+                                                            <div v-if="editLiquiditySource === 'inner'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount}}
+                                                            </div>
+                                                            <div v-else-if="editLiquiditySource === 'outer'" class="row-balance">
+                                                                Balance: {{this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).nearBalance}}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="section-bottom">
-                                        <span v-if="editAddLiqErrorMsg" class="error-msg">{{ editAddLiqErrorMsg }}</span>
-                                        <span v-else class="error-msg-disabled"></span>
-                                        <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
-                                            Confirm
-                                        </button>
-                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
-                                            Add liquidity
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
-                                    <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
-                                        <div class="table-header">
-                                            <span class="table-heading">Remove liquidity</span>
-                                        </div>
-                                        <div class="section-block-wrapper">
-                                            <span class="section-block-title">
-                                                Amount to remove
-                                            </span>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        <span class="remove-amount">
-                                                            {{removeAmount}} %
-                                                        </span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <button @click="setRemoveAmount(pos, 25)" class="block-RA-suggestion">25%</button>
-                                                        <button @click="setRemoveAmount(pos, 50)" class="block-RA-suggestion">50%</button>
-                                                        <button @click="setRemoveAmount(pos, 75)" class="block-RA-suggestion">75%</button>
-                                                        <button @click="setRemoveAmount(pos, 100)" class="block-RA-suggestion">Max</button>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left" style="padding-left: 8px;">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity0ForRemoval).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left" style="padding-left: 8px;">
-                                                        <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                        <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-row_liquidity">{{(pos.desiredLiquidity1ForRemoval).toFixed(6)}}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="block-row" style="display: flex;flex-direction: row;justify-content: flex-end;">
-                                                    <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount(pos)" type="range" min="0.01" max="100" step="0.01">
-                                                </div>
-                                            </div>
-                                            <div class="section-block">
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.token0_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.token1_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                    </div>
-                                                </div>
-                                                <div class="block-row" style="margin-top: 32px;">
-                                                    <div class="block-row-left">
-                                                        {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} Fees Earned:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.fees0).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
-                                                    </div>
-                                                </div>
-                                                <div class="block-row">
-                                                    <div class="block-row-left">
-                                                        {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} Fees Earned:
-                                                    </div>
-                                                    <div class="block-row-right">
-                                                        <span class="block-parameter">{{(pos.fees1).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div class="section-bottom">
+                                            <span v-if="editAddLiqErrorMsg" class="error-msg">{{ editAddLiqErrorMsg }}</span>
+                                            <span v-else class="error-msg-disabled"></span>
+                                            <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                            <button v-else-if="pos.activeTab === 'in'" @click="editAddLiq(pos)" class="edit-btn">
+                                                Confirm
+                                            </button>
+                                            <button v-else @click="toggleTab(pos)" class="edit-btn">
+                                                Add liquidity
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="section-bottom">
-                                        <span class="error-msg-disabled"></span>
-                                        <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
-                                        <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
-                                            Confirm
-                                        </button>
-                                        <button v-else @click="toggleTab(pos)" class="edit-btn">
-                                            Remove liquidity
-                                        </button>
+                                    <div class="table-section" @click="pos.activeTab === 'in' ? toggleTab(pos) : 0">
+                                        <div class="section-top" v-bind:class="{blurred: pos.activeTab === 'in'}">
+                                            <div class="table-header">
+                                                <span class="table-heading">Remove liquidity</span>
+                                            </div>
+                                            <div class="section-block-wrapper">
+                                                <div class="block-row">
+                                                    <span class="section-block-title">
+                                                        Amount to remove
+                                                    </span>
+                                                    <div class="toggler-wrapper nomarginright">
+                                                        Near
+                                                        <div class="toggler" @click="swapEditLiquiditySource(pos)">
+                                                            <div class="toggle" :class="{toggleActive: editLiquiditySource === 'inner'}">
+
+                                                            </div>
+                                                        </div>
+                                                        Crisp
+                                                    </div>
+                                                </div>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <span class="remove-amount">
+                                                                {{removeAmount}} %
+                                                            </span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <button @click="setRemoveAmount(pos, 25)" class="block-RA-suggestion">25%</button>
+                                                            <button @click="setRemoveAmount(pos, 50)" class="block-RA-suggestion">50%</button>
+                                                            <button @click="setRemoveAmount(pos, 75)" class="block-RA-suggestion">75%</button>
+                                                            <button @click="setRemoveAmount(pos, 100)" class="block-RA-suggestion">Max</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left" style="padding-left: 8px;">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.desiredLiquidity0ForRemoval).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left" style="padding-left: 8px;">
+                                                            <img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                            <span class="block-row_symbol">{{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_liquidity">{{(pos.desiredLiquidity1ForRemoval).toFixed(6)}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row" style="display: flex;flex-direction: row;justify-content: flex-end;">
+                                                        <input class="block-rangeinput" v-model="removeAmount" @change="changeRemoveAmount(pos)" type="range" min="0.01" max="100" step="0.01">
+                                                    </div>
+                                                </div>
+                                                <div class="section-block">
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}}:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.token0_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            Pooled {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}}:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.token1_real_liquidity).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row" style="margin-top: 32px;">
+                                                        <div class="block-row-left">
+                                                            {{$store.state.tokens[$store.state.pools[pos.poolId].token0].symbol}} Fees Earned:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.fees0).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token0].icon">
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            {{$store.state.tokens[$store.state.pools[pos.poolId].token1].symbol}} Fees Earned:
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-parameter">{{(pos.fees1).toFixed(6)}}</span><img class="small-icon" :src="$store.state.tokens[$store.state.pools[pos.poolId].token1].icon">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="section-bottom">
+                                            <span class="error-msg-disabled"></span>
+                                            <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
+                                            <button v-else-if="pos.activeTab === 'out'" @click="editRemoveLiq(pos)" class="edit-btn">
+                                                Confirm
+                                            </button>
+                                            <button v-else @click="toggleTab(pos)" class="edit-btn">
+                                                Remove liquidity
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                </div>        
                             </template>
                         </div>
                     </div>
@@ -811,6 +958,12 @@ import apexcharts from "vue3-apexcharts"
 import {
     defaultOptions
 } from '../constants/charts'
+import { addDecimals/*, addDecimalsToPrice */} from '@/utils/format'
+import { sqrt_price_to_tick, tick_to_sqrt_price } from '@/utils/tick'
+import { CONTRACT_ID } from '@/constants'
+import * as nearAPI from "near-api-js"
+import { ethers } from "ethers"
+// import { BigNumber } from "bignumber.js"
 
 export default {
     name: 'LiquidityView',
@@ -827,6 +980,7 @@ export default {
             newPoolModalActive: false,
             newPositionModalActive: false,
             deletePositionModalActive: false,
+            borrowModalActive: false,
             
             /**
              * create_pool()
@@ -843,6 +997,10 @@ export default {
             poolId: null,          // e.g. 0
             t0_liq: null,          // e.g. 100000
             t1_liq: null,
+            supplyPosAfterOpening: false,
+
+            depositSource: 'outer',
+            editLiquiditySource: 'outer',
 
             edit_t0_liq: null,
             edit_t1_liq: null,
@@ -852,6 +1010,8 @@ export default {
             upperPrice: null,      // e.g. 110
             t0_balance: null,
             t1_balance: null,
+            t0_near_balance: null,
+            t1_near_balance: null,
             // total: null,
             txPending: false,
             currentPrice: null,
@@ -872,6 +1032,14 @@ export default {
                 data: []
             }],
             loading: false,
+
+            useLeverageInBorrow: true,
+            expectedBorrowAmount: null,
+
+            maxLeverage: 1,
+            leverageAmount: null,
+            leverageSupplyPosAfterOpening: true,
+            liquidation_price_preview: null
         }
     },
     async created () {
@@ -880,6 +1048,11 @@ export default {
         this.loading = false
     },
     computed: {
+        pricesSet: function () {
+            const res = this.lowerPrice && this.upperPrice ? true : false
+            if (res) { this.getMaxLeverage() }
+            return res
+        },
         noLogin() {
             return this.$store.state.account === null ? true : false
         },
@@ -894,10 +1067,77 @@ export default {
         }
     },
     methods: {
+        getMaxLeverage: async function () {
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+
+            const contract = this.$store.state.crispContract
+
+            console.log(this.lowerPrice, this.upperPrice, tokenObj, tokenObj2)
+
+            if (contract && this.lowerPrice < this.upperPrice) {
+                await contract.get_max_leverage(
+                    {
+                        pool_id: Number(this.poolId),
+                        lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                        upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                    }
+                ).then(data => {
+                    this.maxLeverage = data
+                    if (this.leverageAmount && this.leverageAmount > this.maxLeverage || !this.leverageAmount) {
+                        this.leverageAmount = this.maxLeverage.toFixed(4)
+                    }
+                    console.log(this.leverageAmount)
+                })
+            }
+        },
+        getMaxLeverageForExistingPosition: async function (pos) {
+            console.log(pos)
+
+            // const tokenObj = this.$store.state.tokens[pos.token0]
+            // const tokenObj2 = this.$store.state.tokens[pos.token1]
+            const contract = this.$store.state.crispContract
+
+            const lowerPrice = pos.sqrt_lower_bound_price * pos.sqrt_lower_bound_price
+            const upperPrice = pos.sqrt_upper_bound_price * pos.sqrt_upper_bound_price
+
+            if (contract) {
+                await contract.get_max_leverage(
+                    {
+                        pool_id: Number(pos.poolId),
+                        lower_bound_price: lowerPrice,
+                        upper_bound_price: upperPrice
+                    }
+                ).then(data => {
+                    this.maxLeverage = data
+                    this.leverageAmount = this.maxLeverage.toFixed(4)
+                    console.log(data)
+                })
+            }
+        },
+        handleSelection: async function (chartContext, {xaxis, yaxis}) {
+            console.log(chartContext)
+            console.log(xaxis, yaxis)
+            this.lowerPrice = xaxis.min
+            this.upperPrice = xaxis.max
+            this.drawAnnotations(xaxis.min, xaxis.max, this.currentPrice)
+        },
         isNumber,
         depositToken (token) {
             console.log(token)
             this.$store.dispatch('depositToken', token)
+        },
+        get_borrows_by_account: async function () {
+            const contract = this.$store.state.crispContract
+            if (contract) {
+                await contract.get_borrows_by_account(
+                    {
+                        account_id: this.$store.state.walletConnection.getAccountId()
+                    }
+                ).then(data => {
+                    console.log(data)
+                })
+            }
         },
         openNewPoolModal: function () {
             this.modalActive = true
@@ -926,6 +1166,24 @@ export default {
             } else if (pos.activeTab === 'out') {
                 pos.activeTab = 'in'
             }
+        },
+        swapDepositSource: function() {
+            this.calculateInit()
+            if (this.depositSource === 'outer') {
+                // ...
+                this.depositSource = 'inner'
+            } else {
+                // ...
+                this.depositSource = 'outer'
+            }
+        },
+        swapEditLiquiditySource: function (pos) {
+            if (this.editLiquiditySource === 'outer') {
+                this.editLiquiditySource = 'inner'
+            } else {
+                this.editLiquiditySource = 'outer'
+            }
+            this.calcEditDefault(pos)
         },
         confirmNewPoolModal: async function () {
             const contract = this.$store.state.crispContract
@@ -960,11 +1218,130 @@ export default {
         closeNewPositionModal: function () {
             this.modalActive = false
             this.newPositionModalActive = false
+            this.leverageAmount = null
+            this.expectedBorrowAmount = null
+            this.t0_liq = null
+            this.t1_liq = null
+            this.supplyPosAfterOpening = false
+            // this.leverageSupplyPosAfterOpening = false
+        },
+        openBorrowModal: async function (pos) {
+            this.modalActive = true
+            this.borrowModalActive = true
+            this.positionToBorrow = pos
+            await this.getMaxLeverageForExistingPosition(pos)
+            this.calculateBorrowAmount()
+        },
+        closeBorrowModal: function () {
+            this.modalActive = false
+            this.expectedBorrowAmount = null
+            // this.useLeverageInBorrow = false
+            this.leverageAmount = 2
+            this.borrowModalActive = false
+        },
+        returnBorrow: async function (pos) {
+            console.log(pos)
+            this.txPending = true
+
+            const contract = this.$store.state.crispContract
+
+            if (contract) {
+                try {
+                    await contract.return_collateral_and_repay(
+                            { 
+                                borrow_id: Number(pos.borrowId)
+                            }
+                        ).then(data => {
+                            console.log(data)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Return_collateral_and_repay() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
+                            this.txPending = false
+                        })
+                    }
+                catch (err) {
+                    console.log(err)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: err
+                    })
+                    this.txPending = false
+                }
+            }
+        },
+        calculateBorrowAmount: function () {
+            const pos = this.positionToBorrow
+            console.log(pos)
+            if (this.leverageAmount) {
+                this.expectedBorrowAmount = null
+                // const p = (this.$store.state.pools[pos.poolId].sqrt_price * this.$store.state.pools[pos.poolId].sqrt_price * Math.pow(10, this.$store.state.tokens[pos.token0].decimals - this.$store.state.tokens[pos.token1].decimals)).toFixed(2)
+                // const x = Number(pos.token0_real_liquidity)
+                // const y = Number(pos.token1_real_liquidity)
+                // const res = p * x + y
+                // if (this.useLeverageInBorrow) {
+                //     this.expectedBorrowAmount = res * this.leverageAmount
+                // } else {
+                //     this.expectedBorrowAmount = res
+                // }
+                const xValue = Number(pos.token0_real_liquidity) * (this.leverageAmount - 1)
+                const yValue = Number(pos.token1_real_liquidity) * (this.leverageAmount - 1)
+                const xMsg = xValue + ' of token ' + this.$store.state.tokens[pos.token0].symbol
+                const yMsg = yValue + ' of token ' + this.$store.state.tokens[pos.token1].symbol
+                this.expectedBorrowAmount = [xMsg, yMsg]
+                console.log(this.useLeverageInBorrow)
+            }
+        },
+        confirmBorrowModal: async function () {
+            const contract = this.$store.state.crispContract
+
+            if (contract && this.leverageAmount > 1) {
+                try {
+                    await contract.supply_collateral_and_borrow(
+                            { 
+                                pool_id: Number(this.positionToBorrow.poolId),
+                                position_id: Number(this.positionToBorrow.id),
+                                leverage: Number(this.leverageAmount)
+                            }
+                        ).then(data => {
+                            console.log(data)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Supply_collateral_and_borrow() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    }
+                catch (err) {
+                    console.log(err)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: err
+                    })
+                }
+            }
         },
         drawAnnotations: function (lp, up, cp) {
             console.log(lp, up, cp)
             this.defaultOptions = {
                 ...this.defaultOptions,
+                chart: {
+                    ...this.defaultOptions.chart,
+                    selection: {
+                        ...this.defaultOptions.chart.selection,
+                        xaxis: {
+                            min: undefined,
+                            max: undefined
+                        }
+                    }
+                },
                 annotations: {
                     position: 'front',
                     xaxis: [
@@ -1002,7 +1379,10 @@ export default {
                 }
             }
         },
-        calculateInit: function () {
+        calculateInit: async function () {
+            this.t0_liq = null
+            this.t1_liq = null
+            
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
@@ -1016,13 +1396,95 @@ export default {
             this.currentPrice = this.$store.state.pools[this.poolId].sqrt_price * this.$store.state.pools[this.poolId].sqrt_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)
             const balance0 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token0)
             const balance1 = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[this.poolId].token1)
+
+            console.log(this.$store.state.tokenBalances)
+            
+            // await this.$store.state.walletConnection.account().viewFunction(
+            //     {
+            //         contractId: tokenObj.token,
+            //         methodName: 'ft_balance_of',
+            //         args: {
+            //             account_id: this.$store.state.account.accountId
+            //         }
+            //     }
+            // ).then((res) => {
+            //     console.log(tokenObj)
+            //     console.log(res)
+            //     this.t0_near_balance = res / Math.pow(10, Number(tokenObj.decimals))
+            // })
+
+            // await this.$store.state.walletConnection.account().viewFunction(
+            //     {
+            //         contractId: tokenObj2.token,
+            //         methodName: 'ft_balance_of',
+            //         args: {
+            //             account_id: this.$store.state.account.accountId
+            //         }
+            //     }
+            // ).then((res) => {
+            //     console.log(tokenObj)
+            //     console.log(res)
+            //     this.t1_near_balance = res / Math.pow(10, Number(tokenObj2.decimals))
+            // })
+            
             this.t0_balance = balance0?.amount || 0
             this.t1_balance = balance1?.amount || 0
+            this.t0_near_balance = balance0?.nearBalance || 0
+            this.t1_near_balance = balance1?.nearBalance || 0
 
             // console.log(this.$store.state.pools[this.poolId])
             // console.log(this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * this.$store.state.pools[this.poolId].positions[0].sqrt_lower_bound_price * Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
             
             this.buildGraph()
+
+            this.tryToCalculateLiquidationPrice()
+        },
+        tryToCalculateLiquidationPrice: async function () {
+            if (this.leverageAmount == 1.0) {
+                this.supplyPosAfterOpening = false
+            } else {
+                this.supplyPosAfterOpening = true
+            }
+            this.liquidation_price_preview = null
+            this.expectedBorrowAmount = null
+            const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
+            const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
+
+            if (this.t0_liq && this.t1_liq) {
+                let leverage
+                if (this.useLeverageInBorrow) {
+                    leverage = this.leverageAmount
+                } else {
+                    leverage = 1
+                }
+
+                await this.$store.state.walletConnection.account().viewFunction(
+                    {
+                        contractId: CONTRACT_ID,
+                        methodName: 'get_liquidation_price',
+                        args: {
+                            pool_id: Number(this.poolId),
+                            token0_liquidity: addDecimals(this.t0_liq, tokenObj),
+                            lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                            upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                            borrowed0: addDecimals(this.t0_liq, tokenObj) * (leverage - 1),
+                            borrowed1: addDecimals(this.t1_liq, tokenObj2) * (leverage - 1)
+                        }
+                    }
+                ).then((res) => {
+                    this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
+                    
+                    // borrowed tokens values for display
+                    const xValue = this.t0_liq * (leverage - 1)
+                    const yValue = this.t1_liq * (leverage - 1)
+
+                    const xMsg = xValue + ' of token ' + tokenObj.symbol
+                    const yMsg = yValue + ' of token ' + tokenObj2.symbol
+
+                    this.expectedBorrowAmount = [xMsg, yMsg]
+                    console.log(this.liquidation_price_preview)
+                }) 
+            }
         },
         buildGraph: function () {
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
@@ -1092,6 +1554,7 @@ export default {
                 this.t1_liq = null
                 this.disabled.t1 = false
             }
+            this.tryToCalculateLiquidationPrice()
         },
         calculateDefault: function () {
             this.manual_input = 'first'
@@ -1105,13 +1568,20 @@ export default {
                 const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = (x * sp * sb) / (sb - sp)//  // amount of 2nd token
-                sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sp - sa) / Math.pow(10, tokenObj2.decimals)// //  // ?
+                const sa_tick = sqrt_price_to_tick(sa)
+                const sb_tick = sqrt_price_to_tick(sb)
+
+                const sa_sqrt = tick_to_sqrt_price(sa_tick)
+                const sb_sqrt = tick_to_sqrt_price(sb_tick)
+
+                const liquidity = (x * sp * sb_sqrt) / (sb_sqrt - sp)
+                sp = Math.max(Math.min(sp, sb_sqrt), sa_sqrt)
+                const res = liquidity * (sp - sa_sqrt) / Math.pow(10, tokenObj2.decimals)
 
                 this.t1_liq = toFixed(res)
-                // this.total = res
             }
+
+            this.tryToCalculateLiquidationPrice()
         },
         calculateAlternative: function () {
             this.manual_input = 'second'
@@ -1126,13 +1596,21 @@ export default {
                 const sb = Math.sqrt(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                 let sp = this.$store.state.pools[poolId].sqrt_price
 
-                const liquidity = x / (sp - sa)// amount of 1st token
-                sp = Math.max(Math.min(sp, sb), sa) // ?
-                const res = liquidity * (sb - sp) / (sp * sb) / Math.pow(10, tokenObj.decimals)//  // ?
+                const sa_tick = sqrt_price_to_tick(sa)
+                const sb_tick = sqrt_price_to_tick(sb)
+
+                const sa_sqrt = tick_to_sqrt_price(sa_tick)
+                const sb_sqrt = tick_to_sqrt_price(sb_tick)
+
+                const liquidity = x / (sb - sa_sqrt)// amount of 1st token
+                sp = Math.max(Math.min(sp, sb_sqrt), sa_sqrt) // ?
+                const res = liquidity * (sb_sqrt - sp) / (sp * sb_sqrt) / Math.pow(10, tokenObj.decimals)//  // ?
 
                 this.t0_liq = toFixed(res)
                 // this.total = res
             }
+
+            this.tryToCalculateLiquidationPrice()
         },
         calcEditDefault: function (pos) {
             this.editAddLiqErrorMsg = ''
@@ -1157,10 +1635,14 @@ export default {
 
                 this.edit_t1_liq = toFixed(res)
 
-                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+                const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+                const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
+                const t0_balance = t0BalanceObj.amount
+                const t1_balance = t1BalanceObj.amount
+                const t0_near_balance = t0BalanceObj.nearBalance
+                const t1_near_balance = t1BalanceObj.nearBalance
 
-                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                if (((Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) && this.editLiquiditySource === 'inner') || ((Number(this.edit_t0_liq) > Number(t0_near_balance) || Number(this.edit_t1_liq) > Number(t1_near_balance)) && this.editLiquiditySource === 'outer')) {
                     this.editAddLiqErrorMsg = 'Not enough balance'
                 }
             }
@@ -1185,10 +1667,14 @@ export default {
 
                 this.edit_t0_liq = toFixed(res)
                 // this.total = res
-                const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-                const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
+                const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+                const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
+                const t0_balance = t0BalanceObj.amount
+                const t1_balance = t1BalanceObj.amount
+                const t0_near_balance = t0BalanceObj.nearBalance
+                const t1_near_balance = t1BalanceObj.nearBalance
 
-                if (Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) {
+                if (((Number(this.edit_t0_liq) > Number(t0_balance) || Number(this.edit_t1_liq) > Number(t1_balance)) && this.editLiquiditySource === 'inner') || ((Number(this.edit_t0_liq) > Number(t0_near_balance) || Number(this.edit_t1_liq) > Number(t1_near_balance)) && this.editLiquiditySource === 'outer')) {
                     this.editAddLiqErrorMsg = 'Not enough balance'
                 }
             }
@@ -1266,10 +1752,16 @@ export default {
                 }
             }
 
-            console.log(t0_balance)
-            console.log(t1_balance)
+            let newId
+            await contract.positions_opened()
+            .then(
+                (async (res) => {
+                    newId = res
+                })
+            )
 
-            if (contract && this.t0_liq && this.t1_liq && t0_balance >= this.t0_liq && t1_balance >= this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
+
+            if (contract && tokenObj && tokenObj2 && this.t0_liq && this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
                 try {
                     console.log(Number(this.poolId))
@@ -1278,27 +1770,239 @@ export default {
                     console.log(Number(this.lowerPrice))
                     console.log(Number(this.upperPrice))
                     console.log(tokenObj2)
+                    console.log(this.depositSource)
+                    if (this.depositSource === 'outer') {
+                        // const t0amount = Math.ceil(Number(addDecimals(Number(this.t0_liq), tokenObj))).toString()
+                        // const t1amount = Math.ceil(Number(addDecimals(Number(this.t1_liq), tokenObj2))).toString()
+                        
+                        console.log(addDecimals)
+                        console.log(ethers)
+                        const t0amount = ethers.parseUnits(Math.ceil(this.t0_liq).toString(), tokenObj.decimals)
+                        const t1amount = ethers.parseUnits(Math.ceil(this.t1_liq).toString(), tokenObj2.decimals)
 
-                    await contract.open_position(
-                        {
+                        const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                        const argsTransferT0 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t0amount.toString(),
+                            msg: ``
+                            // msg: `{"actions":[{"Open_position":{"pool_id":${this.poolId},"token0_liquidity":${t0amount},"lower_bound_price":${lbp},"upper_bound_price":${ubp},"request_id":${request_id}}}]}`
+                        }
+                        const argsTransferT1 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t1amount.toString(),
+                            msg: ``
+                        }
+                        const argsOpenPos = {
                             pool_id: Number(this.poolId),
-                            token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                            token0_liquidity: ethers.parseUnits(this.t0_liq.toString(), tokenObj.decimals).toString(),
                             lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
-                    ).then(async (response) => {
-                        console.log(response)
-                        this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully opened'
-                        })
-                        this.txPending = false
-                        this.closeNewPositionModal()
-                        await this.$store.dispatch('reload', store.state)
-                        this.calculateInit()
-                    })
+                        console.log(t0amount, t1amount)
+
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                        if (this.supplyPosAfterOpening || this.leverageAmount > 1.0) {
+                            const argsSupplyLeveraged = {
+                                pool_id: Number(this.poolId),
+                                position_id: Number(newId),
+                                leverage: Number(this.leverageAmount)
+                            }
+                            await wallet.signAndSendTransactions({
+                                transactions: [
+                                    {
+                                        receiverId: tokenObj.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: tokenObj2.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "open_position",
+                                                    args: Buffer.from(JSON.stringify(argsOpenPos)),
+                                                    gas: 150000000000000
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "supply_collateral_and_borrow",
+                                                    args: Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                                    gas: 150000000000000
+                                                }
+                                            }
+                                        ]
+                                    }                                    
+                                ]
+                            })
+                        }
+                        else {
+                            await wallet.signAndSendTransactions({
+                                transactions: [
+                                    {
+                                        receiverId: tokenObj.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: tokenObj2.token,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "storage_deposit",
+                                                    args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            },
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "ft_transfer_call",
+                                                    args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                    gas: 150000000000000,
+                                                    deposit: 1
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "open_position",
+                                                    args: Buffer.from(JSON.stringify(argsOpenPos)),
+                                                    gas: 150000000000000
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                        }
+                    } else if (t0_balance >= this.t0_liq && t1_balance >= this.t1_liq) {
+                        console.log('weird')
+                        if (this.supplyPosAfterOpening) {
+                            const { transactions } = nearAPI
+
+                            const argsOpenPos = {
+                                pool_id: Number(this.poolId),
+                                token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                                lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                                upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                            }
+
+                            const argsSupplyLeveraged = {
+                                pool_id: Number(this.poolId),
+                                position_id: Number(newId),
+                                leverage: Number(this.leverageAmount)
+                            }
+                            await this.$store.state.walletConnection.account().signAndSendTransaction({
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    transactions.functionCall(
+                                        "open_position",
+                                        Buffer.from(JSON.stringify(argsOpenPos)),
+                                        150000000000000,
+                                    ),
+                                    transactions.functionCall(
+                                        'supply_collateral_and_borrow',
+                                        Buffer.from(JSON.stringify(argsSupplyLeveraged)),
+                                        150000000000000,
+                                        1
+                                    )
+                                ]
+                            })
+                        } else {
+                            await contract.open_position(
+                                {
+                                    pool_id: Number(this.poolId),
+                                    token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                                    lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                                    upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                                }
+                            ).then(async (response) => {
+                                console.log(response)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    // text: response
+                                    text: 'Position successfully opened'
+                                })
+                                this.txPending = false
+                                this.closeNewPositionModal()
+                                await this.$store.dispatch('reload', store.state)
+                                this.calculateInit()
+                            })
+                        }
+                    } else {
+                        throw('Insufficient balance on Crisp')
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
@@ -1321,32 +2025,172 @@ export default {
         editAddLiq: async function (pos) {
             this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
-            const t0_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0).amount.toFixed(4)
-            const t1_balance = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1).amount.toFixed(4)
-            if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
-                this.txPending = true
-                try {
-                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
-                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
-                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+            const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
+            const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
 
-                    await contract.add_liquidity(
-                        {
-                            pool_id: Number(pos.poolId),
-                            position_id: Number(pos.id),
-                            token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
-                        }
-                    ).then((response) => {
-                        console.log(response)
+            const t0_balance = t0BalanceObj.amount
+            const t1_balance = t1BalanceObj.amount
+            const t0_near_balance = t0BalanceObj.nearBalance
+            const t1_near_balance = t1BalanceObj.nearBalance
+
+            if (this.editLiquiditySource === 'inner') {
+                if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_balance) && Number(this.edit_t1_liq) < Number(t1_balance)) {
+                    this.txPending = true
+                    try {
+                        let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                        console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
+                        // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                        await contract.add_liquidity(
+                            {
+                                pool_id: Number(pos.poolId),
+                                position_id: Number(pos.id),
+                                token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    } catch (error) {
+                        console.log(error)
                         this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully changed'
+                            title: 'Error',
+                            type: 'error',
+                            text: error
                         })
                         this.txPending = false
-                        this.$store.dispatch('reload', store.state)
+                    }
+                } else if (!contract) {
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: 'Error: No contract!'
                     })
+                } else if (!this.edit_t0_liq) {
+                    this.editAddLiqErrorMsg = 'Wrong amount'
+                } else if (Number(this.edit_t0_liq) > Number(t0_balance)) {
+                    const ref = 'edit_t0' + pos.id
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                    this.$refs[ref][0].focus()
+                } else if (Number(this.edit_t1_liq) > Number(t1_balance)) {
+                    const ref = 'edit_t1' + pos.id
+                    this.editAddLiqErrorMsg = 'Not enough balance'
+                    this.$refs[ref][0].focus()
+                }
+            } else {
+                try {
+                    if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_near_balance) && Number(this.edit_t1_liq) < Number(t1_near_balance)) {
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                        const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+
+                        const t0amount = addDecimals(this.edit_t0_liq, tokenObj)
+                        const t1amount = addDecimals(this.edit_t1_liq, tokenObj2)
+
+                        const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
+                        const argsTransferT0 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t0amount,
+                            msg: ``
+                        }
+                        const argsTransferT1 = {
+                            receiver_id: CONTRACT_ID,
+                            amount: t1amount,
+                            msg: ``
+                        }
+                        const argsAddLiquidity = {
+                            pool_id: Number(pos.poolId),
+                            position_id: Number(pos.id),
+                            token0_liquidity: t0amount
+                        }
+
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: tokenObj.token,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "storage_deposit",
+                                                args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        },
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "ft_transfer_call",
+                                                args: Buffer.from(JSON.stringify(argsTransferT0)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    receiverId: tokenObj2.token,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "storage_deposit",
+                                                args: Buffer.from(JSON.stringify(argsDeposit)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        },
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "ft_transfer_call",
+                                                args: Buffer.from(JSON.stringify(argsTransferT1)),
+                                                gas: 150000000000000,
+                                                deposit: 1
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "add_liquidity",
+                                                args: Buffer.from(JSON.stringify(argsAddLiquidity)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        })
+                    } else if (!contract) {
+                        this.$store.commit('pushNotification', {
+                            title: 'Error',
+                            type: 'error',
+                            text: 'Error: No contract!'
+                        })
+                    } else if (!this.edit_t0_liq) {
+                        this.editAddLiqErrorMsg = 'Wrong amount'
+                    } else if (Number(this.edit_t0_liq) > Number(t0_near_balance)) {
+                        const ref = 'edit_t0' + pos.id
+                        this.editAddLiqErrorMsg = 'Not enough balance'
+                        this.$refs[ref][0].focus()
+                    } else if (Number(this.edit_t1_liq) > Number(t1_near_balance)) {
+                        const ref = 'edit_t1' + pos.id
+                        this.editAddLiqErrorMsg = 'Not enough balance'
+                        this.$refs[ref][0].focus()
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
@@ -1354,24 +2198,7 @@ export default {
                         type: 'error',
                         text: error
                     })
-                    this.txPending = false
                 }
-            } else if (!contract) {
-                this.$store.commit('pushNotification', {
-                    title: 'Error',
-                    type: 'error',
-                    text: 'Error: No contract!'
-                })
-            } else if (!this.edit_t0_liq) {
-                this.editAddLiqErrorMsg = 'Wrong amount'
-            } else if (Number(this.edit_t0_liq) > Number(t0_balance)) {
-                const ref = 'edit_t0' + pos.id
-                this.editAddLiqErrorMsg = 'Not enough balance'
-                this.$refs[ref][0].focus()
-            } else if (Number(this.edit_t1_liq) > Number(t1_balance)) {
-                const ref = 'edit_t1' + pos.id
-                this.editAddLiqErrorMsg = 'Not enough balance'
-                this.$refs[ref][0].focus()
             }
         },
         editRemoveLiq: async function (pos) {
@@ -1379,31 +2206,97 @@ export default {
             if (contract && this.removeAmount > 0) {
                 this.txPending = true
                 try {
-                    let tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
-                    console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
-                    // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+                    const tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
+                    const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
+                    console.log(pos)
 
                     const currentT0liquidity = pos.token0_real_liquidity
+                    const currentT1liquidity = pos.token1_real_liquidity
 
-                    const desiredLiquidityForRemoval = currentT0liquidity / 100 * this.removeAmount
+                    const desiredLiquidityForRemoval = addDecimals(currentT0liquidity / 100 * this.removeAmount, tokenObj)
+                    const desiredLiquidity1ForRemoval = addDecimals(currentT1liquidity / 100 * this.removeAmount, tokenObj2)
 
-                    await contract.remove_liquidity(
-                        {
+                    if (this.editLiquiditySource === 'inner') {
+                        await contract.remove_liquidity(
+                            {
+                                pool_id: Number(pos.poolId),
+                                position_id: Number(pos.id),
+                                token0_liquidity: desiredLiquidityForRemoval
+                            }
+                        ).then((response) => {
+                            console.log(response)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                // text: response
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
+                        })
+                    } else {
+                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        
+                        const argsRemoveLiquidity = {
                             pool_id: Number(pos.poolId),
                             position_id: Number(pos.id),
-                            token0_liquidity: Number(desiredLiquidityForRemoval * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                            token0_liquidity: desiredLiquidityForRemoval
                         }
-                    ).then((response) => {
-                        console.log(response)
-                        this.$store.commit('pushNotification', {
-                            title: 'Success',
-                            type: 'success',
-                            // text: response
-                            text: 'Position successfully changed'
+
+                        const argsWithdraw = {
+                            token: this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0].token,
+                            amount: desiredLiquidityForRemoval
+                        }
+
+                        const argsWithdraw1 = {
+                            token: this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1].token,
+                            amount: desiredLiquidity1ForRemoval
+                        }
+
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "remove_liquidity",
+                                                args: Buffer.from(JSON.stringify(argsRemoveLiquidity)),
+                                                gas: 150000000000000
+                                            }
+                                        },
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "withdraw",
+                                                args: Buffer.from(JSON.stringify(argsWithdraw)),
+                                                gas: 150000000000000
+                                            }
+                                        },
+                                    ]
+                                },
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "withdraw",
+                                                args: Buffer.from(JSON.stringify(argsWithdraw1)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
                         })
-                        this.txPending = false
-                        this.$store.dispatch('reload', store.state)
-                    })
+                    }
                 } catch (error) {
                     console.log(error)
                     this.$store.commit('pushNotification', {
@@ -1417,6 +2310,7 @@ export default {
         },
         closePositionPrompt: function (pos) {
             console.log('1')
+            console.log(pos)
             this.positionChosenForClosing = pos
             this.modalActive = true
             this.deletePositionModalActive = true
@@ -1429,13 +2323,77 @@ export default {
         closePosition: async function (pos) {
             const contract = this.$store.state.crispContract
 
-            if (contract) {
+            console.log(pos)
+
+            if (pos.isBorrowed && contract) {
+                this.txPending = true
+
+                try {
+                    const wallet = await this.$store.state.selector.wallet("near-wallet")
+
+                    const argsReturnCollateral = {
+                        borrow_id: Number(pos.borrowId)
+                    }
+
+                    const argsClosePos = {
+                        pool_id: Number(pos.poolId),
+                        position_id: Number(pos.id)
+                    }
+
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "return_collateral_and_repay",
+                                            args: Buffer.from(JSON.stringify(argsReturnCollateral)),
+                                            gas: 150000000000000
+                                        }
+                                    },
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "close_position",
+                                            args: Buffer.from(JSON.stringify(argsClosePos)),
+                                            gas: 150000000000000
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then((response) => {
+                        console.log(response)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            // text: response
+                            text: 'Position successfully closed'
+                        })
+                        this.txPending = false
+                        this.modalActive = false
+                        this.deletePositionModalActive = false
+                        this.positionChosenForClosing = null
+                        this.$store.dispatch('reload', store.state)
+                    })
+                } catch (error) {
+                    console.log(error)
+                    this.$store.commit('pushNotification', {
+                        title: 'Error',
+                        type: 'error',
+                        text: error
+                    })
+                    this.txPending = false
+                }
+            } else if (contract) {
                 this.txPending = true
                 try {
                     await contract.close_position(
                         {
                             pool_id: Number(pos.poolId),
-                            id: Number(pos.id)
+                            position_id: Number(pos.id)
                         }
                     ).then((response) => {
                         console.log(response)
@@ -1463,6 +2421,7 @@ export default {
             }
         },
         expandPos: async function (pos) {
+            console.log(pos)
             this.editAddLiqErrorMsg = ''
             this.edit_t0_liq = 0
             this.edit_t1_liq = 0
@@ -1657,6 +2616,11 @@ export default {
     margin-right: 4px;
 }
 
+.small-icon-right {
+    margin-right: 0;
+    margin-left: 4px;
+}
+
 .icon {
     margin: 6px;
     margin-left: 0;
@@ -1668,6 +2632,26 @@ export default {
     font-weight: 500;
     color: $textHoverColor;
 }
+
+.toggler-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    margin-right: 18px;
+}
+
+.nomarginright {
+    margin-right: 0;
+}
+
+.toggler {
+    @extend %toggler;
+    margin-left: 6px;
+    margin-right: 6px;
+}
+
 .modal-wrapper {
     position: fixed;
     left: 0;
@@ -1682,6 +2666,11 @@ export default {
     background-color: rgb(59, 60, 63, 0.8);
     z-index: 600;
 
+}
+
+.modal-header-right {
+    display: flex;
+    flex-direction: row;
 }
 
 @keyframes appear {
@@ -1773,6 +2762,18 @@ export default {
     box-sizing: border-box;
 }
 
+.tinytextsize {
+    font-size: $tinyTextSize;
+}
+
+.input-flex-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 15px;
+}
+
 #currentPrice {
     display: flex;
     flex-direction: row;
@@ -1789,6 +2790,57 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+}
+
+.input-wrapper-margin-right {
+    margin-right: 30px;
+}
+
+.fixedwidth360 {
+    width: 360px !important;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.input-wrapper-element {
+    border: 0;
+    background-color: $elementBgColor;
+    font-size: $lesserTextSize;
+    border-radius: $borderRadius;
+    padding: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
+    transition: 0.3s;
+    min-width: 300px;
+    min-height: 60px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.alignedleverageboxelements {
+    width: 100%;
+    height: 92px;
+    align-items: flex-start;
+}
+
+.input-wrapper-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.input-wrapper-row:nth-child(2) {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.leverage-checkbox {
+    margin-right: 16px;
 }
 
 .input-title {
@@ -1811,6 +2863,45 @@ export default {
     align-items: center;
     padding-left: 18px;
     padding-right: 18px;
+}
+
+.modal-footer-extra {
+    justify-content: flex-start;
+}
+
+.split-footer {
+    justify-content: space-between;
+}
+
+.footer-toggler {
+    display: flex;
+    flex-direction: column;
+}
+
+.footer-toggler-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.toggler-response-btn {
+    border: 1px solid transparent;
+    width: 80px;
+    padding: 8px;
+    border-radius: $borderRadius;
+    background-color: #212121;
+    color: #F5C352;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-right: 8px;
+}
+
+.responseActive {
+    background-color: $buttonTextColor !important;
+    color: $buttonBgColor !important;
+    transition: 0.3s !important;
+    border: 1px solid $buttonBgColor !important;
 }
 
 .confirm-btn {
@@ -1903,11 +2994,50 @@ export default {
 .pos-table-expanded {
     background: #fff;
     display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 300px;
+}
+
+.table-liquidity-change {
+    // border-top: $border;
+    min-height: 300px;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
     box-sizing: border-box;
-    min-height: 300px;
+    width: 100%;
+}
+
+.table-leverage {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.table-leverage .section-block-wrapper {
+    box-sizing: border-box;
+    padding: 24px;
+}
+
+.table-leverage .table-header {
+    padding-top: 16px;
+    background-color: #d9d9d9;
+    border-top: $border;
+    border-bottom: $border;
+}
+
+.table-leverage .section-block-wrapper {
+    background-color: #f5f6fb;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 
 .pos-table_header {
@@ -1936,7 +3066,7 @@ export default {
 }
 
 .pos-table_header-cell:first-child {
-    justify-content: flex-start;
+    justify-content: space-between;
     font-size: $lesserTextSize;
 }
 
@@ -1944,6 +3074,32 @@ export default {
     justify-content: flex-end;
     border: 0;
     width: 10%;
+}
+
+.header-cell-unit {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.borrow-btn  {
+    border: 1px solid transparent;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: $buttonBgColor;
+    color: $buttonTextColor;
+    font-size: $lesserTextSize;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-left: 4px;
+}
+
+.borrow-btn:hover {
+    background-color: $buttonTextColor;
+    color: $buttonBgColor;
+    transition: 0.3s;
+    border: 1px solid $buttonBgColor;
 }
 
 .close-pos {
@@ -1976,6 +3132,9 @@ export default {
     justify-content: center;
     align-items: center;
     background-color: #fff;
+}
+
+.posTableBorderRadius {
     border-bottom-left-radius: $borderRadius;
     border-bottom-right-radius: $borderRadius;
 }
@@ -2169,6 +3328,7 @@ export default {
 }
 
 .section-block {
+    box-sizing: border-box;
     width: 100%;
     background-color: #f5f6fb;
     border-radius: $borderRadius;
