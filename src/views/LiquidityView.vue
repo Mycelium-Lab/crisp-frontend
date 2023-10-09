@@ -418,6 +418,14 @@
                                                             <span class="block-row_fee-amount">{{$store.state.pools[pos.poolId].protocol_fee}} %</span>
                                                         </div>
                                                     </div>
+                                                    <div class="block-row">
+                                                        <div class="block-row-left">
+                                                            <span class="block-row_fee-title">Total liquidity value</span>
+                                                        </div>
+                                                        <div class="block-row-right">
+                                                            <span class="block-row_fee-amount">{{pos.totalLiquidity}}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="section-block-wrapper">
@@ -1087,7 +1095,13 @@ export default {
                     if (this.leverageAmount && this.leverageAmount > this.maxLeverage || !this.leverageAmount) {
                         this.leverageAmount = this.maxLeverage.toFixed(4)
                     }
-                    console.log(this.leverageAmount)
+
+                    console.log('get_max_leverage() call with arguments:')
+                    console.log('pool_id: ' + Number(this.poolId))
+                    console.log('lower_bound_price: ' + Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                    console.log('upper_bound_price: ' + Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                    console.log('method resolved with: ' + data)
+                    // console.log(this.leverageAmount)
                 })
             }
         },
@@ -1111,7 +1125,13 @@ export default {
                 ).then(data => {
                     this.maxLeverage = data
                     this.leverageAmount = this.maxLeverage.toFixed(4)
-                    console.log(data)
+                    // console.log(data)
+
+                    console.log('get_max_leverage() call with arguments:')
+                    console.log('pool_id: ' + Number(pos.poolId))
+                    console.log('lower_bound_price: ' + lowerPrice)
+                    console.log('upper_bound_price: ' + upperPrice)
+                    console.log('method resolved with: ' + data)
                 })
             }
         },
@@ -1472,6 +1492,16 @@ export default {
                         }
                     }
                 ).then((res) => {
+                    console.log('get_liquidation_price() call with arguments:')
+                    console.log('pool_id: ' + Number(this.poolId))
+                    console.log('token0_liquidity: ' + addDecimals(this.t0_liq, tokenObj))
+                    console.log('lower_bound_price: ' + Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                    console.log('upper_bound_price: ' + Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)))
+                    console.log('borrowed0: ' + addDecimals(this.t0_liq, tokenObj) * (leverage - 1))
+                    console.log('borrowed1: ' + addDecimals(this.t1_liq, tokenObj2) * (leverage - 1))
+                    console.log('method resolved with: ' + res)
+
+
                     this.liquidation_price_preview = res.map((e) => {return e * Math.pow(10, tokenObj.decimals - tokenObj2.decimals)})
                     
                     // borrowed tokens values for display
@@ -1482,7 +1512,7 @@ export default {
                     const yMsg = yValue + ' of token ' + tokenObj2.symbol
 
                     this.expectedBorrowAmount = [xMsg, yMsg]
-                    console.log(this.liquidation_price_preview)
+                    // console.log(this.liquidation_price_preview)
                 }) 
             }
         },
@@ -3272,7 +3302,7 @@ export default {
 
 .section-top {
     width: 100%;
-    height: 500px;
+    height: 564px;
     filter: none;
     transition: 0.3s;
 }
