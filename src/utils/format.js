@@ -5,14 +5,11 @@ const { utils } = nearAPI
 
 export function addDecimals(amount, tokenObj) {
     let resolve
-    console.log(amount)
     if (tokenObj.symbol === 'wNEAR') {
         resolve = utils.format.parseNearAmount(amount.toString())
     } else {
         resolve = ethers.parseUnits(Number(amount).toFixed(6), tokenObj.decimals) // amount * Math.pow(10, tokenObj.decimals)
     }
-    console.log(resolve)
-    console.log(tokenObj)
     return resolve.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
 }
 
