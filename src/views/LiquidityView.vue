@@ -1478,6 +1478,12 @@ export default {
                     leverage = 1
                 }
 
+                console.log(this.t0_liq)
+                console.log(this.t1_liq)
+
+                console.log(addDecimals(this.t0_liq, tokenObj))
+                console.log(addDecimals(this.t1_liq, tokenObj2))
+
                 await this.$store.state.walletConnection.account().viewFunction(
                     {
                         contractId: CONTRACT_ID,
