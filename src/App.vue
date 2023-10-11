@@ -24,6 +24,14 @@
       
     </a>
   </div>
+  <div @click.self="toggleSidenav()" class="sidenav-mobile-wrapper" v-bind:class="{sidenavActive: sidenavActive}">
+    <div class="sidenav-mobile">
+      <router-link class="sidenav-link" to="/swap">Swap</router-link>
+      <router-link class="sidenav-link" to="/pools">Manage liquidity</router-link>
+      <router-link class="sidenav-link" to="/lending">Earn</router-link>
+      <router-link class="sidenav-link" to="/deposit">Balance</router-link>
+    </div>
+  </div>
   <header>
     <div class="header-nav">
         <router-link class="header-link" to="/swap"><img class="logo" src="../src/assets/crisp-logo.png"><span class="desktop-link">Swap</span></router-link>
@@ -32,13 +40,13 @@
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
     </div>
     <div class="header-nav">
-      <router-link v-if="$store.state.account" class="header-link" to="/deposit">Balance</router-link>
+      <router-link v-if="$store.state.account" class="header-link desktop-link" to="/deposit">Balance</router-link>
       <!--<button v-if="$store.state.account" @click="signOut()" class="header-link">Sign out</button>-->
       <button v-if="$store.state.account" @click="signOut()" class="header-link account"><span>{{ $store.state.account.accountId }}</span><img class="logout-gfx" src="./assets/icons/logout.svg"/></button>
       <button v-else @click="signIn()" class="header-link connect">Connect wallet</button>
     </div>
     <div class="burger-wrapper">
-      <button class="burger-button"></button>
+      <button @click="toggleSidenav()" class="burger-button"></button>
     </div>
   </header>
   <div class="page">
@@ -59,7 +67,8 @@ export default {
   store,
   data () {
     return {
-      closed: false
+      closed: false,
+      sidenavActive: false
     }
   },
   async created () {
@@ -100,6 +109,10 @@ export default {
     },
     removeNotif: async function(id) {
       await this.$store.commit('removeNotification', id)
+    },
+    toggleSidenav () {
+      console.log('click')
+      this.sidenavActive = !this.sidenavActive
     }
   }
 }
@@ -360,73 +373,6 @@ header {
   display: none;
 }
 
-@media screen and (max-width: 1050px) {
-  .desktop-link {
-    display: none;
-  }
-
-  #app {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  header {
-    padding-top: 44px;
-    width: 340px;
-  }
-
-  .header-link {
-    margin-right: 0;
-    padding-left: 0;
-  }
-
-  .connect {
-    background: #F5BF52;
-    font-size: 14px;
-    margin-right: 32px;
-    padding: 8px 20px !important;
-    height: 40px;
-  }
-
-  .account {
-    margin-right: 32px;
-    font-size: 16px;
-  }
-
-  .logout-gfx {
-    width: 16px;
-    height: 16px;
-  }
-
-  .logo {
-    margin: 0;
-  }
-
-  .burger-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding-top: 12px;
-  }
-
-  .burger-button {
-    width: 24px;
-    height: 24px;
-    background-color: transparent;
-    border: 0;
-    cursor: pointer;
-    background-image: url('./assets/icons/burger.svg');
-    background-repeat: no-repeat;
-    background-position: 100% 100%;
-  }
-
-  .socials-wrapper {
-    display: none;
-  }
-}
-
 @keyframes draw-loader {
       0% {
         width: 0;
@@ -489,5 +435,115 @@ header {
 .header-link.connect:hover {
   background-color: $buttonSecondaryColor;
   color: $blockBgColor !important;
+}
+
+.sidenav-mobile-wrapper {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  display: none;
+}
+
+@media screen and (max-width: 1050px) {
+  .sidenavActive {
+    display: flex;
+  }
+
+  .sidenav-mobile {
+    display: none;
+  }
+
+  .sidenavActive .sidenav-mobile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 192px;
+    height: 108px;
+    background-color: #f5bf52;
+    border: 0;
+    border-radius: $borderRadius;
+    padding: 12px 24px;
+    margin-top: 32px;
+    pointer-events: all;
+    margin-left: 16px;
+    box-sizing: border-box;
+    box-shadow: 4px 4px 5px 0px rgba(0,0,0,0.45);
+  }
+
+  .sidenav-link {
+    font-size: 16px;
+    text-decoration: none;
+    color: #0e111a !important;
+    font-weight: 500;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .desktop-link {
+    display: none;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    padding-top: 44px;
+    width: 340px;
+  }
+
+  .header-link {
+    margin-right: 0;
+    padding-left: 0;
+  }
+
+  .connect {
+    background: #F5BF52;
+    font-size: 14px;
+    margin-right: 32px;
+    padding: 8px 20px !important;
+    height: 40px;
+  }
+
+  .account {
+    margin-right: 16px;
+    font-size: 16px;
+    padding-left: 12px;
+  }
+
+  .logout-gfx {
+    width: 16px;
+    height: 16px;
+  }
+
+  .logo {
+    margin: 0;
+  }
+
+  .burger-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-top: 0;
+  }
+
+  .burger-button {
+    width: 24px;
+    height: 24px;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    background-image: url('./assets/icons/burger.svg');
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+  }
+
+  .socials-wrapper {
+    display: none;
+  }
 }
 </style>

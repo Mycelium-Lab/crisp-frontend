@@ -1249,4 +1249,27 @@ export default {
     height: $textSize;
     margin-right: 24px;
 }
+
+@media screen and (max-width: 1050px) {
+    .wrapper {
+        width: auto;
+        max-width: 85vw;
+    }
+
+    .token-table .heading {
+        font-size: 18px;
+    }
+    
+    .table_wrapper {
+        max-width: none;
+    }
+
+    .icon {
+        width: 16px;
+    }
+
+    .deposit-unit {
+        font-size: 16px;
+    }
+}
 </style>
