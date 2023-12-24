@@ -7,6 +7,10 @@ import router from '../router'
 import { setupWalletSelector } from "@near-wallet-selector/core";
 import { setupModal } from "@near-wallet-selector/modal-ui-js";
 import { setupNearWallet } from "@near-wallet-selector/near-wallet";
+import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupHereWallet } from "@near-wallet-selector/here-wallet";
+import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+import { setupNearMobileWallet } from "@near-wallet-selector/near-mobile-wallet"; 
 import { toFixed } from '@/utils/number.js'
 import { removeDecimals } from '@/utils/format.js'
 
@@ -282,7 +286,13 @@ export default createStore({
 
       state.selector = await setupWalletSelector({
         network: "testnet",
-        modules: [setupNearWallet()],
+        modules: [
+          setupMyNearWallet(),
+          setupNearMobileWallet(),
+          setupMeteorWallet(),
+          setupNearWallet(),
+          setupHereWallet(),
+        ],
       });
       
       console.log(state.selector)
