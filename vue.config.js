@@ -1,7 +1,7 @@
 /*eslint-disable*/
 //prevents class name uglyfying
 const path = require('path');
-
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 module.exports = {
     chainWebpack: config => {
         config.optimization
@@ -29,5 +29,10 @@ module.exports = {
     transpileDependencies: [
         '@tanstack'
     ],
-    productionSourceMap: false
+    productionSourceMap: false,
+    configureWebpack: {
+      plugins: [
+        new NodePolyfillPlugin()
+      ]
+    }
 }
