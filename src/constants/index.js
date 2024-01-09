@@ -3,27 +3,23 @@ export const METHOD_NAMES = ['get_pools', 'get_balance', 'get_balance_all_tokens
 
 export const DEFAULT_SWAP_PAIR = {
     token_in: {
-        symbol:"wNEAR",
-        token:"wrap.testnet"
+        symbol:"USDT",
+        token:"usdt.fakes.testnet"
     },
     token_out: {
-        symbol:"USN",
-        token:"usdn.testnet"
+        symbol:"wNEAR",
+        token:"wrap.testnet"
     }
 }
 
 export const SWAP_TOKENS = [
-    // {
-    //     symbol: 'USDT',
-    //     token: 'usdt.fakes.testnet'
-    // },
     {
-        symbol: 'USDC.e',
-        token: 'usdc.fakes.testnet'
+        symbol: 'USDT',
+        token: 'usdt.fakes.testnet'
     },
     {
-        symbol: 'USN',
-        token: 'usdn.testnet'
+        symbol: 'USDC',
+        token: 'usdc.fakes.testnet'
     },
     {
         symbol: 'wNEAR',
