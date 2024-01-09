@@ -119,29 +119,14 @@ export default createStore({
     },
     async signIn ({state}) {
       state.modal.show();
-      // const wallet = await state.selector.wallet("near-wallet");
-      // state.accounts = await wallet.signIn({ contractId: CONTRACT_ID });
-      // await state.walletConnection.requestSignIn({
-      //   contractId: CONTRACT_ID,
-      //   methodNames: METHOD_NAMES
-      // }).then(() => {
-      //   // ..
-      // })
     },
     async signOut ({state}) {
-      const wallet = await state.selector.wallet("near-wallet");
+      const wallet = await state.selector.wallet();
       await wallet.signOut();
-      state.walletConnection.signOut()
-      location.reload()
+      state.walletConnection.signOut();
+      location.reload();
     },
     async fetchPools({state}) {
-      // const contract = state.crispContract
-      // if (contract) {
-      //     const response = await contract.get_pools()
-      //     console.log(response)
-      //     state.pools = response
-      //     state.loaded.pools = true
-      // }
       await state.walletConnection.account().viewFunction(
         {
           contractId: CONTRACT_ID,
@@ -173,9 +158,7 @@ export default createStore({
           })
         }
       }
-
       const tokensWithMetadata = []
-
       for (let i = 0; i < tokens.length; i++) {
         await state.walletConnection.account().viewFunction(
           {
@@ -279,10 +262,9 @@ export default createStore({
       state.loaded.positions = true
     },
     async fetchCrispContract ({state}) {
-      console.log(nearAPI)
+      console.log("nearAPI: ", nearAPI)
       const { connect, WalletConnection, Contract } = nearAPI
-      // const { Contract } = nearAPI
-      console.log(CONFIG.keyStore)
+      console.log("Keystore: ", CONFIG.keyStore)
 
       state.selector = await setupWalletSelector({
         network: "testnet",
@@ -294,12 +276,14 @@ export default createStore({
           setupHereWallet(),
         ],
       });
-      
-      console.log(state.selector)
+      console.log("Selector: ", state.selector)
 
       state.modal = setupModal(state.selector, {
         contractId: CONTRACT_ID,
         methodNames: METHOD_NAMES
+      });
+      state.modal.on("onHide", () => {
+        location.reload();
       });
 
       // connect to NEAR
@@ -308,12 +292,12 @@ export default createStore({
       state.walletConnection = await new WalletConnection(state.nearConnection, 'my-app');
 
       if (state.selector.isSignedIn()) {
-        const wallet = await state.selector.wallet("near-wallet")
+        const wallet = await state.selector.wallet()
         const accounts = await wallet.getAccounts()
         const account_id = accounts[0].accountId
 
         state.account = await state.nearConnection.account(account_id)
-        console.log(state.account)
+        console.log("Account: ", state.account)
         
         state.crispContract = await new Contract(
           state.account,
@@ -462,7 +446,6 @@ export default createStore({
       state.tokensBeingLoaded = false
     },
     async fetchDeposits ({state}) {
-      console.log(state.account.accountId)
       if (state.crispContract && state.selector.isSignedIn()) {
         try {
           await state.walletConnection.account().viewFunction(
