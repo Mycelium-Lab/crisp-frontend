@@ -38,7 +38,7 @@
         <router-link class="header-link desktop-link" to="/pools">Manage Liquidity</router-link>
         <router-link class="header-link desktop-link" to="/lending">Earn</router-link>
         <!--<router-link class="header-link" to="/swap">Swap</router-link>-->
-      <a class="header-link desktop-link" href="https://jelilat.github.io/near-faucet/" target="_blank" style="color: #f5bf52 !important; text-decoration: underline;">Get test tokens</a>
+      <a class="header-link desktop-link" href="https://near-faucet.io/" target="_blank" style="color: #f5bf52 !important; text-decoration: underline;">Get test tokens</a>
     </div>
     <div class="header-nav">
       <router-link v-if="$store.state.account" class="header-link desktop-link" to="/deposit">Balance</router-link>
