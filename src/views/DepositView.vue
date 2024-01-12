@@ -68,8 +68,8 @@
                         <option value="usdc.fakes.testnet">
                             USDC
                         </option>
-                        <option value="usdn.testnet">
-                            USN
+                        <option value="usdt.fakes.testnet">
+                            USDT
                         </option>
                         <option value="wrap.testnet">
                             wNEAR

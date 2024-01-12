@@ -543,6 +543,7 @@ export default {
         },  
         initTokens: async function () {
             this.tokens = SWAP_TOKENS
+            console.log("initTokens: ", this.tokens)
             const storageSwapPair = getStorageItem('swap_pair')
             this.token_in = storageSwapPair?.token_in || DEFAULT_SWAP_PAIR.token_in
             this.token_out = storageSwapPair?.token_out || DEFAULT_SWAP_PAIR.token_out
