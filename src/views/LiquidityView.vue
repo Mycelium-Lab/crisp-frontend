@@ -1460,13 +1460,14 @@ export default {
             this.tryToCalculateLiquidationPrice()
         },
         tryToCalculateLiquidationPrice: async function () {
+            this.liquidation_price_preview = null
+            this.expectedBorrowAmount = null
             if (this.leverageAmount == 1.0) {
                 this.supplyPosAfterOpening = false
+                return;
             } else {
                 this.supplyPosAfterOpening = true
             }
-            this.liquidation_price_preview = null
-            this.expectedBorrowAmount = null
             const tokenObj = this.$store.state.tokens[this.$store.state.pools[this.poolId].token0]
             const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[this.poolId].token1]
 
