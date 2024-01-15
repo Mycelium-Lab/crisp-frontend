@@ -221,7 +221,7 @@ export default {
                 const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                 const argsTransfer = { receiver_id: CONTRACT_ID, amount: addDecimals(this.amount, tokenObj), msg: "" }
 
-                const wallet = await this.$store.state.selector.wallet("near-wallet")
+                const wallet = await this.$store.state.selector.wallet()
 
                 // const allowedStorage = await this.$store.state.walletConnection.account().viewFunction(
                 //         {

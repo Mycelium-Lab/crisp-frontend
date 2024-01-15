@@ -594,7 +594,7 @@ export default {
                                     msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
                                 }
 
-                                const wallet = await this.$store.state.selector.wallet("near-wallet")
+                                const wallet = await this.$store.state.selector.wallet()
 
                                 await wallet.signAndSendTransactions({
                                     transactions: [

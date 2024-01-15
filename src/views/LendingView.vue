@@ -476,7 +476,7 @@ export default {
                             this.$store.dispatch('reload', store.state)
                         })
                     } else {
-                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const wallet = await this.$store.state.selector.wallet()
 
                         const argsDeposit = { registration_only: true, account_id: CONTRACT_ID }
                         const argsTransfer = {
@@ -585,7 +585,7 @@ export default {
 
             console.log(deposit)
 
-            const wallet = await this.$store.state.selector.wallet("near-wallet")
+            const wallet = await this.$store.state.selector.wallet()
             const amount = this.close_deposit_amount * Math.pow(10, tokenObj.decimals)
 
             if (this.withdrawTarget === 'inner') {

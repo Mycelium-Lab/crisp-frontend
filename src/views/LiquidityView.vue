@@ -1837,7 +1837,7 @@ export default {
                         }
                         console.log(t0amount, t1amount)
 
-                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const wallet = await this.$store.state.selector.wallet()
 
                         if (this.supplyPosAfterOpening || this.leverageAmount > 1.0) {
                             const argsSupplyLeveraged = {
@@ -2124,7 +2124,7 @@ export default {
             } else {
                 try {
                     if (contract && Number(this.edit_t0_liq) > 0 && Number(this.edit_t0_liq) < Number(t0_near_balance) && Number(this.edit_t1_liq) < Number(t1_near_balance)) {
-                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const wallet = await this.$store.state.selector.wallet()
                         const tokenObj = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0]
                         const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
 
@@ -2272,7 +2272,7 @@ export default {
                             this.$store.dispatch('reload', store.state)
                         })
                     } else {
-                        const wallet = await this.$store.state.selector.wallet("near-wallet")
+                        const wallet = await this.$store.state.selector.wallet()
                         
                         const argsRemoveLiquidity = {
                             pool_id: Number(pos.poolId),
@@ -2366,7 +2366,7 @@ export default {
                 this.txPending = true
 
                 try {
-                    const wallet = await this.$store.state.selector.wallet("near-wallet")
+                    const wallet = await this.$store.state.selector.wallet()
 
                     const argsReturnCollateral = {
                         borrow_id: Number(pos.borrowId)
