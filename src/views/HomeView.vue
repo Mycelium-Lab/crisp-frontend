@@ -61,7 +61,7 @@ export default {
         },
         gas: 1,
         // gas: DEFAULT_FUNCTION_CALL_GAS,
-        attachedDeposit: 1
+        attachedDeposit: utils.format.parseNearAmount("0.000000000000000000000001")
       }).then((res) => {
         console.log(res)
       })

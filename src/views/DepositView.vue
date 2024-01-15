@@ -244,7 +244,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: utils.format.parseNearAmount("1")
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             },
                                             {
@@ -253,7 +253,7 @@ export default {
                                                     methodName: "ft_transfer_call",
                                                     args: Buffer.from(JSON.stringify(argsTransfer)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             }
                             ]

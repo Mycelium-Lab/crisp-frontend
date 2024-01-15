@@ -1768,6 +1768,7 @@ export default {
             this.buildGraph()
         },
         confirmNewPositionModal: async function () {
+            const { utils } = nearAPI
             this.lowerPrice = Number(this.lowerPrice)
             this.upperPrice = Number(this.upperPrice)
             const contract = this.$store.state.crispContract
@@ -1856,7 +1857,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             },
                                             {
@@ -1865,7 +1866,7 @@ export default {
                                                     methodName: "ft_transfer_call",
                                                     args: Buffer.from(JSON.stringify(argsTransferT0)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                                 }
                                             }
                                         ]
@@ -1879,7 +1880,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             },
                                             {
@@ -1888,7 +1889,7 @@ export default {
                                                     methodName: "ft_transfer_call",
                                                     args: Buffer.from(JSON.stringify(argsTransferT1)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                                 }
                                             }
                                         ]
@@ -1929,7 +1930,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             },
                                             {
@@ -1938,7 +1939,7 @@ export default {
                                                     methodName: "ft_transfer_call",
                                                     args: Buffer.from(JSON.stringify(argsTransferT0)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                                 }
                                             }
                                         ]
@@ -1952,7 +1953,7 @@ export default {
                                                     methodName: "storage_deposit",
                                                     args: Buffer.from(JSON.stringify(argsDeposit)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.01")
                                                 }
                                             },
                                             {
@@ -1961,7 +1962,7 @@ export default {
                                                     methodName: "ft_transfer_call",
                                                     args: Buffer.from(JSON.stringify(argsTransferT1)),
                                                     gas: 150000000000000,
-                                                    deposit: 1
+                                                    deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                                 }
                                             }
                                         ]
@@ -2060,6 +2061,8 @@ export default {
             }
         },
         editAddLiq: async function (pos) {
+            const { utils } = nearAPI
+
             this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
             const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
@@ -2159,7 +2162,7 @@ export default {
                                                 methodName: "storage_deposit",
                                                 args: Buffer.from(JSON.stringify(argsDeposit)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.01")
                                             }
                                         },
                                         {
@@ -2168,7 +2171,7 @@ export default {
                                                 methodName: "ft_transfer_call",
                                                 args: Buffer.from(JSON.stringify(argsTransferT0)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                             }
                                         }
                                     ]
@@ -2182,7 +2185,7 @@ export default {
                                                 methodName: "storage_deposit",
                                                 args: Buffer.from(JSON.stringify(argsDeposit)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.01")
                                             }
                                         },
                                         {
@@ -2191,7 +2194,7 @@ export default {
                                                 methodName: "ft_transfer_call",
                                                 args: Buffer.from(JSON.stringify(argsTransferT1)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                             }
                                         }
                                     ]

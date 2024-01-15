@@ -151,7 +151,7 @@ import { isNumber, toFixed } from '../utils/number'
 import { getStorageItem, setStorageItem } from '../utils/localStorage'
 import { DEFAULT_SWAP_PAIR, SWAP_TOKENS, NOT_ENOUGH_LIQUIDITY_ERROR } from '../constants/index'
 import { addDecimals } from '@/utils/format'
-// import * as nearAPI from "near-api-js"
+import * as nearAPI from "near-api-js"
 export default {
     name: 'SwapView',
     store,
@@ -562,7 +562,7 @@ export default {
             const contract = this.$store.state.crispContract
 
             if (contract && this.token_in.token && this.token_out.token && this.token_in.token !== this.token_out.token && Number(this.token_in_amnt)) {
-                // const { utils, transactions } = nearAPI
+                const { utils } = nearAPI
                 this.txPending = true
                 // if (this.manual_input === 'in') {
                 //     // swap_in
@@ -607,7 +607,7 @@ export default {
                                                         methodName: "storage_deposit",
                                                         args: Buffer.from(JSON.stringify(argsDeposit)),
                                                         gas: 150000000000000,
-                                                        deposit: 1
+                                                        deposit: utils.format.parseNearAmount("0.01")
                                                     }
                                                 },
                                                 {
@@ -616,7 +616,7 @@ export default {
                                                         methodName: "ft_transfer_call",
                                                         args: Buffer.from(JSON.stringify(argsTransfer)),
                                                         gas: 150000000000000,
-                                                        deposit: 1
+                                                        deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                                     }
                                                 }
                                             ]

@@ -273,7 +273,7 @@ import { SWAP_TOKENS } from '@/constants'
 import { isNumber } from '../utils/number'
 import { addDecimals } from '@/utils/format'
 import store from '../store'
-// import * as nearAPI from "near-api-js"
+import * as nearAPI from "near-api-js"
 
 export default {
     name: 'LendingView',
@@ -446,6 +446,7 @@ export default {
             }
         },
         create_deposit: async function () {
+            const { utils } = nearAPI
             this.txPending = true
             const contract = this.$store.state.crispContract
 
@@ -500,7 +501,7 @@ export default {
                                                 methodName: "storage_deposit",
                                                 args: Buffer.from(JSON.stringify(argsDeposit)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.01")
                                             }
                                         },
                                         {
@@ -509,7 +510,7 @@ export default {
                                                 methodName: "ft_transfer_call",
                                                 args: Buffer.from(JSON.stringify(argsTransfer)),
                                                 gas: 150000000000000,
-                                                deposit: 1
+                                                deposit: utils.format.parseNearAmount("0.000000000000000000000001")
                                             }
                                         }
                                     ]
@@ -523,7 +524,6 @@ export default {
                                                 methodName: "create_deposit",
                                                 args: Buffer.from(JSON.stringify(argsCreateDeposit)),
                                                 gas: 150000000000000
-                                                // deposit: 1
                                             }
                                         }
                                     ]
