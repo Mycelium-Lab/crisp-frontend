@@ -269,9 +269,9 @@ export default createStore({
       state.selector = await setupWalletSelector({
         network: "testnet",
         modules: [
+          setupMeteorWallet(),
           setupMyNearWallet(),
           setupNearMobileWallet(),
-          setupMeteorWallet(),
           setupNearWallet(),
           setupHereWallet(),
         ],
