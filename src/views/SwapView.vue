@@ -560,6 +560,7 @@ export default {
         },
         confirmSwap: async function () {
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract && this.token_in.token && this.token_out.token && this.token_in.token !== this.token_out.token && Number(this.token_in_amnt)) {
                 const { utils } = nearAPI
@@ -594,8 +595,6 @@ export default {
                                     msg: `{"actions":[{"Swap":{"amount_in":"${depositAmount}","pool_id":${this.pool_id},"token_in":"${this.token_in.token}","token_out":"${this.token_out.token}"}},{"Withdraw":{"amount":"${withdrawAmount}","token":"${this.token_out.token}"}}]}`
                                 }
 
-                                const wallet = await this.$store.state.selector.wallet()
-
                                 await wallet.signAndSendTransactions({
                                     transactions: [
                                         {
@@ -622,17 +621,40 @@ export default {
                                             ]
                                         }
                                     ]
+                                }).then((response) => {
+                                    console.log(response)
+                                    this.$store.commit('pushNotification', {
+                                        title: 'Success',
+                                        type: 'success',
+                                        text: 'Swap is successful'
+                                    })
+                                    this.txPending = false
+                                    this.$store.dispatch('reload', store.state)
                                 })
                             })
                         } else if (tokenObj) {
-                            await contract.swap(
-                                {
-                                    pool_id: this.pool_id,
-                                    token_in: this.token_in.token,
-                                    amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
-                                    token_out: this.token_out.token
-                                }
-                            ).then((response) => {
+                            await wallet.signAndSendTransactions({
+                                transactions: [
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "swap",
+                                                    args: Buffer.from(JSON.stringify({
+                                                        pool_id: this.pool_id,
+                                                        token_in: this.token_in.token,
+                                                        amount_in: ((Number(this.token_in_amnt) * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })),
+                                                        token_out: this.token_out.token
+                                                    })),
+                                                    gas: 150000000000000,
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }).then((response) => {
                                 console.log(response)
                                 this.$store.commit('pushNotification', {
                                     title: 'Success',

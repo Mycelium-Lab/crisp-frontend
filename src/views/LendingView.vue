@@ -449,6 +449,7 @@ export default {
             const { utils } = nearAPI
             this.txPending = true
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract) {
                 try {
@@ -459,19 +460,33 @@ export default {
                     const amount = addDecimals(this.create_deposit_amount, tokenObj)
 
                     if (this.depositSource === 'inner') {
-                        await contract.create_deposit(
-                            { 
-                                asset: this.create_deposit_asset,
-                                amount: amount
-                            }
-                        ).then(data => {
+                        const args = { 
+                            asset: this.create_deposit_asset,
+                            amount: amount
+                        }
+                        await wallet.signAndSendTransactions({
+                            transactions: [
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "create_deposit",
+                                                args: Buffer.from(JSON.stringify(args)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }).then(data => {
                             this.txPending = false
                             console.log(data)
                             this.closeDepositModal()
                             this.$store.commit('pushNotification', {
                                 title: 'Success',
                                 type: 'success',
-                                // text: response
                                 text: 'Create_deposit() is successful'
                             })
                             this.$store.dispatch('reload', store.state)
@@ -529,6 +544,16 @@ export default {
                                     ]
                                 }
                             ]
+                        }).then(data => {
+                            this.txPending = false
+                            console.log(data)
+                            this.closeDepositModal()
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                text: 'Create_deposit() is successful'
+                            })
+                            this.$store.dispatch('reload', store.state)
                         })
                     }
                 }
@@ -547,19 +572,34 @@ export default {
             console.log(id)
             this.txPending = true
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract) {
                 try {
-                    await contract.close_deposit(
-                        { 
-                            deposit_id: Number(id)
-                        }
-                    ).then(data => {
+                    const args = {
+                        deposit_id: Number(id)
+                    }
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "close_deposit",
+                                            args: Buffer.from(JSON.stringify(args)),
+                                            gas: 150000000000000
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then(data => {
                         console.log(data)
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
-                            // text: response
                             text: 'Close_deposit() is successful'
                         })
                         this.$store.dispatch('reload', store.state)
@@ -610,7 +650,15 @@ export default {
                             ]
                         }
                     ]
-                })
+                }).then(data => {
+                    console.log(data)
+                    this.$store.commit('pushNotification', {
+                        title: 'Success',
+                        type: 'success',
+                        text: 'Close_deposit_by_token() is successful'
+                    })
+                    this.$store.dispatch('reload', store.state)
+                });
             } else {
                 const argsCloseDeposit = {
                     asset: deposit.asset,

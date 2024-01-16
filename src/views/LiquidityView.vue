@@ -108,11 +108,6 @@
                 </div>
                 <div class="modal-footer split-footer">
                     <div class="footer-toggler">
-                        <!--<span>Supply position as collateral after opening?</span>
-                        <div class="footer-toggler-row">
-                            <button v-bind:class="{responseActive: supplyPosAfterOpening}" @click="supplyPosAfterOpening = true" class="toggler-response-btn">Yes</button>
-                            <button v-bind:class="{responseActive: !supplyPosAfterOpening}" @click="supplyPosAfterOpening = false" class="toggler-response-btn">No</button>
-                        </div>-->
                     </div>
                     <img v-if="txPending" class="loader-icon" src="../assets/icons/loader.gif">
                     <button v-else @click="confirmNewPositionModal()" class="confirm-btn">Confirm</button>
@@ -122,7 +117,6 @@
                         <span class="input-title">Leverage</span>
                         <div class="modal-body_row-input input-wrapper-element">
                             <div class="input-wrapper-row">
-                                <!--<input @change="tryToCalculateLiquidationPrice()" type="checkbox" class="leverage-checkbox" v-model="leverageSupplyPosAfterOpening">-->
                                 <input @change="tryToCalculateLiquidationPrice()" class="block-rangeinput" :disabled="leverageSupplyPosAfterOpening === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
                             </div>
                             <div class="input-wrapper-row">
@@ -159,7 +153,6 @@
                             <span class="input-title"><span>Leverage</span></span>
                             <div v-if="maxLeverage > 1" class="input-wrapper-element alignedleverageboxelements">
                                 <div class="input-wrapper-row">
-                                    <!--<input @change="calculateBorrowAmount" type="checkbox" class="leverage-checkbox" v-model="useLeverageInBorrow">-->
                                     <input @change="calculateBorrowAmount" class="block-rangeinput" :disabled="useLeverageInBorrow === false" v-model="leverageAmount" type="range" min="1" :max="maxLeverage" step="0.0001">
                                 </div>
                                 <div v-if="useLeverageInBorrow" class="input-wrapper-row">
@@ -198,47 +191,11 @@
                 </div>
             </div>
         </div>
-        <!--<div v-if="noLogin">
-            Please, connect your wallet
-        </div>-->
         <template v-if="!loading">
             <template v-if="$store.state.userPositions">
                 <div class="heading">
                     <span class="title">Your positions</span><button @click="openNewPositionModal()" class="new-position-btn">+ New position</button>
                 </div>
-                <!--<div v-if="$store.state.userPositions[0]" class="list-header">
-                    <span class="pos-list-header_unit" style="width: 7%">
-                        # Pool
-                    </span>
-                    <span class="pos-list-header_unit" style="width: 7%">
-                        # Pos
-                    </span>
-                    <span class="pos-list-header_unit" style="width: 7%">
-                        Active
-                    </span>
-                    <span class="pos-list-header_unit" style="width: 14%">
-                        Pool tokens
-                    </span>
-                    <span class="pos-list-header_unit">
-                        Pool price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        L. bound price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        U. bound price
-                    </span>
-                    <span class="pos-list-header_unit">
-                        T0 Liquidity
-                    </span>
-                    <span class="pos-list-header_unit">
-                        T1 Liquidity
-                    </span>
-                    <span class="pos-list-header_unit close-header-unit">
-                        Close
-                    </span>
-                </div>
-                -->
                 <template v-if="$store.state.userPositions[0]">
                     <div v-for="pos in $store.state.userPositions" :key="pos.id" class="pos-table_wrapper">
                         <div class="pos-table">
@@ -349,15 +306,6 @@
                                                     <img class="small-icon small-icon-right" :src="pos.leverageAsset2.icon">
                                                 </div>
                                             </div>
-                                            <!--<div class="block-row">
-                                                <div class="block-row-left">
-                                                    <span class="block-row_symbol">Collateral</span>
-                                                </div>
-                                                <div class="block-row-right">
-                                                    <span class="block-row_liquidity">{{pos.collateral}}</span>
-                                                    <img class="small-icon small-icon-right" :src="pos.leverageAsset.icon">
-                                                </div>
-                                            </div>-->
                                             <div v-if="pos.leverage" class="block-row">
                                                 <div class="block-row-left">
                                                     <span class="block-row_fee-title">Leverage</span>
@@ -617,53 +565,6 @@
                         </div>
                     </div>
                 </template>
-                <!--<div v-if="$store.state.userPositions[0]" class="list">
-                    <div class="pool" v-for="pos in $store.state.userPositions" :key="pos.id">
-                        <span class="pos-list-pool_unit" style="width: 7%">
-                            {{pos.poolId}}
-                        </span>
-                        <span class="pos-list-pool_unit" style="width: 7%">
-                            {{pos.id}}
-                        </span>
-                        <span class="pos-list-pool_unit" style="width: 7%">
-                            <template v-if="pos.isActive">Yes</template>
-                            <template v-else>No</template>
-                        </span>
-                        <span v-if="$store.state.tokens" class="pos-list-pool_unit row" style="width: 14%">
-                            <img class="icon" :src="$store.state.tokens[pos.token0].icon">
-                            <img class="icon" :src="$store.state.tokens[pos.token1].icon">
-                            <div>
-                                {{$store.state.tokens[pos.token0].symbol}}<br>
-                                {{$store.state.tokens[pos.token1].symbol}}
-                            </div>
-                        </span>
-                        <span v-else class="pos-list-pool_unit row">
-                            {{pos.token0}}<br>
-                            {{pos.token1}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{($store.state.pools[pos.poolId].sqrt_price * $store.state.pools[pos.poolId].sqrt_price * Math.pow(10, $store.state.tokens[pos.token0].decimals - $store.state.tokens[pos.token1].decimals)).toFixed(2)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.lower_bound_price_decimals).toFixed(2)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.upper_bound_price_decimals).toFixed(2)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.token0_real_liquidity).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit">
-                            {{(pos.token1_real_liquidity).toFixed(6)}}
-                        </span>
-                        <span class="pos-list-pool_unit close-pos">
-                            <img v-if="txPending" class="loader-icon-small" src="../assets/icons/loader.gif">
-                            <button v-else @click="closePosition(pos)" class="close-btn">
-                                X
-                            </button>
-                        </span>
-                    </div>
-                </div>-->
             </template>
 
             <div v-if="$store.state.pools && $store.state.tokens" class="heading pools-heading">
@@ -1264,26 +1165,41 @@ export default {
             this.txPending = true
 
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract) {
                 try {
-                    await contract.return_collateral_and_repay(
-                            { 
-                                borrow_id: Number(pos.borrowId)
-                            }
-                        ).then(data => {
-                            console.log(data)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Return_collateral_and_repay() is successful'
-                            })
-                            this.$store.dispatch('reload', store.state)
-                            this.txPending = false
-                        })
+                    const args = { 
+                        borrow_id: Number(pos.borrowId)
                     }
-                catch (err) {
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: 'FunctionCall',
+                                        params: {
+                                            methodName: 'return_collateral_and_repay',
+                                            args: Buffer.from(JSON.stringify(args)),
+                                            gas: 300000000000000,
+                                            deposit: 0
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then(data => {
+                        console.log(data)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            text: 'Return_collateral_and_repay() is successful'
+                        })
+                        this.$store.dispatch('reload', store.state)
+                        this.txPending = false
+                    })
+                } catch (err) {
                     console.log(err)
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -1318,27 +1234,42 @@ export default {
         },
         confirmBorrowModal: async function () {
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract && this.leverageAmount > 1) {
                 try {
-                    await contract.supply_collateral_and_borrow(
-                            { 
-                                pool_id: Number(this.positionToBorrow.poolId),
-                                position_id: Number(this.positionToBorrow.id),
-                                leverage: Number(this.leverageAmount)
-                            }
-                        ).then(data => {
-                            console.log(data)
-                            this.$store.commit('pushNotification', {
-                                title: 'Success',
-                                type: 'success',
-                                // text: response
-                                text: 'Supply_collateral_and_borrow() is successful'
-                            })
-                            this.$store.dispatch('reload', store.state)
-                        })
+                    const args = { 
+                        pool_id: Number(this.positionToBorrow.poolId),
+                        position_id: Number(this.positionToBorrow.id),
+                        leverage: Number(this.leverageAmount)
                     }
-                catch (err) {
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: 'FunctionCall',
+                                        params: {
+                                            methodName: 'supply_collateral_and_borrow',
+                                            args: Buffer.from(JSON.stringify(args)),
+                                            gas: 300000000000000,
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then(data => {
+                        console.log(data)
+                        this.$store.commit('pushNotification', {
+                            title: 'Success',
+                            type: 'success',
+                            text: 'Supply_collateral_and_borrow() is successful'
+                        })
+                        this.closeBorrowModal()
+                        this.$store.dispatch('reload', store.state)
+                    })
+                } catch (err) {
                     console.log(err)
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -1801,6 +1732,7 @@ export default {
 
             if (contract && tokenObj && tokenObj2 && this.t0_liq && this.t1_liq && this.lowerPrice < this.upperPrice && this.upperPrice >= 0 && this.lowerPrice >= 0) {
                 this.txPending = true
+                const wallet = await this.$store.state.selector.wallet()
                 try {
                     console.log(Number(this.poolId))
                     console.log(Number(this.t0_liq).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }))
@@ -1837,8 +1769,6 @@ export default {
                             upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
                         }
                         console.log(t0amount, t1amount)
-
-                        const wallet = await this.$store.state.selector.wallet()
 
                         if (this.supplyPosAfterOpening || this.leverageAmount > 1.0) {
                             const argsSupplyLeveraged = {
@@ -1916,6 +1846,17 @@ export default {
                                         ]
                                     }                                    
                                 ]
+                            }).then((res) => {
+                                console.log(res)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    text: 'Position successfully opened'
+                                })
+                                this.txPending = false
+                                this.closeNewPositionModal()
+                                this.$store.dispatch('reload', store.state)
+                                this.calculateInit()
                             })
                         }
                         else {
@@ -1981,6 +1922,17 @@ export default {
                                         ]
                                     }
                                 ]
+                            }).then((res) => {
+                                console.log(res)
+                                this.$store.commit('pushNotification', {
+                                    title: 'Success',
+                                    type: 'success',
+                                    text: 'Position successfully opened'
+                                })
+                                this.txPending = false
+                                this.closeNewPositionModal()
+                                this.$store.dispatch('reload', store.state)
+                                this.calculateInit()
                             })
                         }
                     } else if (t0_balance >= this.t0_liq && t1_balance >= this.t1_liq) {
@@ -2017,19 +1969,33 @@ export default {
                                 ]
                             })
                         } else {
-                            await contract.open_position(
-                                {
-                                    pool_id: Number(this.poolId),
-                                    token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
-                                    lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
-                                    upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
-                                }
-                            ).then(async (response) => {
+                            const args = {
+                                pool_id: Number(this.poolId),
+                                token0_liquidity: Number(this.t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 }),
+                                lower_bound_price: Number(this.lowerPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals)),
+                                upper_bound_price: Number(this.upperPrice / Math.pow(10, tokenObj.decimals - tokenObj2.decimals))
+                            }
+                            await wallet.signAndSendTransaction({
+                                transactions: [
+                                    {
+                                        receiverId: CONTRACT_ID,
+                                        actions: [
+                                            {
+                                                type: "FunctionCall",
+                                                params: {
+                                                    methodName: "open_position",
+                                                    args: Buffer.from(JSON.stringify(args)),
+                                                    gas: 150000000000000
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }).then(async (response) => {
                                 console.log(response)
                                 this.$store.commit('pushNotification', {
                                     title: 'Success',
                                     type: 'success',
-                                    // text: response
                                     text: 'Position successfully opened'
                                 })
                                 this.txPending = false
@@ -2065,6 +2031,7 @@ export default {
 
             this.editAddLiqErrorMsg = ''
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
             const t0BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token0)
             const t1BalanceObj = this.$store.state.tokenBalances.find(item => item.token === this.$store.state.pools[pos.poolId].token1)
 
@@ -2081,18 +2048,32 @@ export default {
                         console.log(this.$store.state.tokens[this.$store.state.pools[pos.poolId].token0])
                         // const tokenObj2 = this.$store.state.tokens[this.$store.state.pools[pos.poolId].token1]
 
-                        await contract.add_liquidity(
-                            {
-                                pool_id: Number(pos.poolId),
-                                position_id: Number(pos.id),
-                                token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
-                            }
-                        ).then((response) => {
+                        const args = {
+                            pool_id: Number(pos.poolId),
+                            position_id: Number(pos.id),
+                            token0_liquidity: Number(this.edit_t0_liq * Math.pow(10, tokenObj.decimals)).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })
+                        }
+                        await wallet.signAndSendTransaction({
+                            transactions: [
+                                {
+                                    receiverId: CONTRACT_ID,
+                                    actions: [
+                                        {
+                                            type: "FunctionCall",
+                                            params: {
+                                                methodName: "add_liquidity",
+                                                args: Buffer.from(JSON.stringify(args)),
+                                                gas: 150000000000000
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }).then((response) => {
                             console.log(response)
                             this.$store.commit('pushNotification', {
                                 title: 'Success',
                                 type: 'success',
-                                // text: response
                                 text: 'Position successfully changed'
                             })
                             this.txPending = false
@@ -2213,6 +2194,15 @@ export default {
                                     ]
                                 }
                             ]
+                        }).then((res) => {
+                            console.log(res)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
                         })
                     } else if (!contract) {
                         this.$store.commit('pushNotification', {
@@ -2243,6 +2233,7 @@ export default {
         },
         editRemoveLiq: async function (pos) {
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
             if (contract && this.removeAmount > 0) {
                 this.txPending = true
                 try {
@@ -2257,18 +2248,30 @@ export default {
                     const desiredLiquidity1ForRemoval = addDecimals(currentT1liquidity / 100 * this.removeAmount, tokenObj2)
 
                     if (this.editLiquiditySource === 'inner') {
-                        await contract.remove_liquidity(
+                        const args = {
+                            pool_id: Number(pos.poolId),
+                            position_id: Number(pos.id),
+                            token0_liquidity: desiredLiquidityForRemoval
+                        }
+                        await wallet.signAndSendTransactions([
                             {
-                                pool_id: Number(pos.poolId),
-                                position_id: Number(pos.id),
-                                token0_liquidity: desiredLiquidityForRemoval
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "remove_liquidity",
+                                            args: Buffer.from(JSON.stringify(args)),
+                                            gas: 150000000000000
+                                        }
+                                    },
+                                ]
                             }
-                        ).then((response) => {
+                        ]).then((response) => {
                             console.log(response)
                             this.$store.commit('pushNotification', {
                                 title: 'Success',
                                 type: 'success',
-                                // text: response
                                 text: 'Position successfully changed'
                             })
                             this.txPending = false
@@ -2335,6 +2338,15 @@ export default {
                                     ]
                                 }
                             ]
+                        }).then((res) => {
+                            console.log(res)
+                            this.$store.commit('pushNotification', {
+                                title: 'Success',
+                                type: 'success',
+                                text: 'Position successfully changed'
+                            })
+                            this.txPending = false
+                            this.$store.dispatch('reload', store.state)
                         })
                     }
                 } catch (error) {
@@ -2349,8 +2361,6 @@ export default {
             }
         },
         closePositionPrompt: function (pos) {
-            console.log('1')
-            console.log(pos)
             this.positionChosenForClosing = pos
             this.modalActive = true
             this.deletePositionModalActive = true
@@ -2362,24 +2372,19 @@ export default {
         },
         closePosition: async function (pos) {
             const contract = this.$store.state.crispContract
-
-            console.log(pos)
-
+            console.log("Closing position: ", pos)
+            console.log("Contract: ", contract)
+            const wallet = await this.$store.state.selector.wallet()
+            const argsClosePos = {
+                pool_id: Number(pos.poolId),
+                position_id: Number(pos.id)
+            }
             if (pos.isBorrowed && contract) {
                 this.txPending = true
-
                 try {
-                    const wallet = await this.$store.state.selector.wallet()
-
                     const argsReturnCollateral = {
                         borrow_id: Number(pos.borrowId)
                     }
-
-                    const argsClosePos = {
-                        pool_id: Number(pos.poolId),
-                        position_id: Number(pos.id)
-                    }
-
                     await wallet.signAndSendTransactions({
                         transactions: [
                             {
@@ -2409,7 +2414,6 @@ export default {
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
-                            // text: response
                             text: 'Position successfully closed'
                         })
                         this.txPending = false
@@ -2430,17 +2434,27 @@ export default {
             } else if (contract) {
                 this.txPending = true
                 try {
-                    await contract.close_position(
-                        {
-                            pool_id: Number(pos.poolId),
-                            position_id: Number(pos.id)
-                        }
-                    ).then((response) => {
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "close_position",
+                                            args: Buffer.from(JSON.stringify(argsClosePos)),
+                                            gas: 150000000000000
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then((response) => {
                         console.log(response)
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
-                            // text: response
                             text: 'Position successfully closed'
                         })
                         this.txPending = false

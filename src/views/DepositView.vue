@@ -279,6 +279,7 @@ export default {
     withdraw: async function () {
         if (this.$store.state.account && this.$store.state.tokens && this.tokenW) {
             const contract = this.$store.state.crispContract
+            const wallet = await this.$store.state.selector.wallet()
 
             if (contract) {
                 this.txPending = true
@@ -288,17 +289,28 @@ export default {
                 }
 
                 try {
-                    await contract.withdraw(
-                        { 
-                            token: this.tokenW,
-                            amount: addDecimals(this.amountW, tokenObj),
-                        }
-                    ).then(data => {
+                    const argsWithdraw = { token: this.tokenW, amount: addDecimals(this.amountW, tokenObj) }
+                    await wallet.signAndSendTransactions({
+                        transactions: [
+                            {
+                                receiverId: CONTRACT_ID,
+                                actions: [
+                                    {
+                                        type: "FunctionCall",
+                                        params: {
+                                            methodName: "withdraw",
+                                            args: Buffer.from(JSON.stringify(argsWithdraw)),
+                                            gas: 150000000000000
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }).then(data => {
                         console.log(data)
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
-                            // text: response
                             text: 'Withdraw is successful'
                         })
                         this.txPending = false
