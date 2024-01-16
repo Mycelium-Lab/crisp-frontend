@@ -287,8 +287,8 @@ export default {
             depositModalActive: false,
             withdrawModalActive: false,
 
-            depositSource: 'inner',
-            withdrawTarget: 'inner',
+            depositSource: 'outer',
+            withdrawTarget: 'outer',
             tokenForDepositNearBalance: null,
             /**
              * create_reserve()
@@ -600,13 +600,12 @@ export default {
                         this.$store.commit('pushNotification', {
                             title: 'Success',
                             type: 'success',
-                            text: 'Close_deposit() is successful'
+                            text: 'Deposit is withdrawn successfully'
                         })
                         this.$store.dispatch('reload', store.state)
                         this.txPending = false
                     })
-                }
-                catch (err) {
+                } catch (err) {
                     console.log(err)
                     this.$store.commit('pushNotification', {
                         title: 'Error',
@@ -655,7 +654,7 @@ export default {
                     this.$store.commit('pushNotification', {
                         title: 'Success',
                         type: 'success',
-                        text: 'Close_deposit_by_token() is successful'
+                        text: 'Deposit is withdrawn successfully'
                     })
                     this.$store.dispatch('reload', store.state)
                 });
@@ -693,17 +692,17 @@ export default {
                             ]
                         }
                     ]
-                })
+                }).then(data => {
+                    console.log(data)
+                    this.$store.commit('pushNotification', {
+                        title: 'Success',
+                        type: 'success',
+                        text: 'Deposit is withdrawn successfully'
+                    })
+                    this.$store.dispatch('reload', store.state)
+                    this.txPending = false
+                });
             }
-            this.$store.commit('pushNotification', {
-                title: 'Success',
-                type: 'success',
-                // text: response
-                text: 'Close_deposit_by_token() is successful'
-            })
-            this.$store.dispatch('reload', store.state)
-
-            this.txPending = false
         },
         refresh_deposits_growth: async function () {
             const contract = this.$store.state.crispContract
